@@ -6,7 +6,8 @@
   "scripts": {
     "start": "bun run src/main.ts",
     "lint": "biome lint",
-    "format": "biome check --write"
+    "format": "biome check --write",
+    "test": "bun test"
   },
   "dependencies": {
     "@effect/cli": "^0.69.2",
