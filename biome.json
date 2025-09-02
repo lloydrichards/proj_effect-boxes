@@ -5,13 +5,19 @@
     "rules": {
       "nursery": {
         "noShadow": "off",
-        "useMaxParams": "off"
+        "useMaxParams": "off",
+        "useConsistentTypeDefinitions": "off"
       },
       "style": {
-        "useDefaultSwitchClause": "off"
+        "useDefaultSwitchClause": "off",
+        "noMagicNumbers": "off"
       },
       "performance": {
         "noBarrelFile": "off"
+      },
+      "suspicious": {
+        "noUnsafeDeclarationMerging": "off",
+        "noShadowRestrictedNames": "off"
       }
     }
   }
