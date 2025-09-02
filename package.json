@@ -4,12 +4,16 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "start": "bun run src/main.ts"
+    "start": "bun run src/main.ts",
+    "lint": "biome lint",
+    "format": "biome check --write"
   },
   "dependencies": {
     "@effect/cli": "^0.69.2",
     "@effect/platform": "^0.90.6",
     "@effect/platform-bun": "^0.79.0",
+    "@effect/printer": "^0.45.0",
+    "@effect/printer-ansi": "^0.45.0",
     "@opentui/core": "^0.1.14",
     "effect": "^3.17.10"
   },
@@ -17,6 +21,7 @@
     "@biomejs/biome": "2.2.2",
     "@effect/language-service": "^0.36.0",
     "@types/bun": "^1.2.21",
-    "typescript": "^5.9.2"
+    "typescript": "^5.9.2",
+    "ultracite": "5.3.1"
   }
 }
