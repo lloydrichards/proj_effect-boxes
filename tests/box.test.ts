@@ -1,21 +1,21 @@
 import { describe, expect, it } from "bun:test";
+import { String } from "effect";
 import {
   align,
-  hAppend,
+  Box,
+  bottom,
   center1,
   center2,
+  hAppend,
   hcat,
-  vAppend,
-  top,
-  bottom,
-  vcat,
   left,
-  right,
   render,
   renderWithSpaces,
-  Box,
+  right,
+  top,
+  vAppend,
+  vcat,
 } from "../src/Box";
-import { String } from "effect";
 
 describe("Box", () => {
   it("text trims trailing spaces per line", () => {
@@ -68,7 +68,8 @@ describe("Box", () => {
   });
 
   describe("Semigroup and Monoid", () => {
-    it("semigroup associativity: (a <> b) <> c = a <> (b <> c)", () => {
+    it("semigroup associativity", () => {
+      // (a <> b) <> c = a <> (b <> c)
       const a = Box.text("a");
       const b = Box.text("b");
       const c = Box.text("c");
@@ -78,14 +79,16 @@ describe("Box", () => {
       expect(render(left)).toBe("abc\n");
     });
 
-    it("monoid left identity: empty <> x = x", () => {
+    it("monoid left identity", () => {
+      // empty <> x = x
       const box = Box.text("box");
       const result = Box.combine(Box.null, box);
       expect(render(result)).toBe(render(box));
       expect(render(result)).toBe("box\n");
     });
 
-    it("monoid right identity: x <> empty = x", () => {
+    it("monoid right identity", () => {
+      // x <> empty = x
       const box = Box.text("world");
       const result = Box.combine(box, Box.null);
       expect(render(result)).toBe(render(box));
@@ -136,7 +139,13 @@ describe("issue38 parity tests", () => {
     const R = 2;
     const C = 3;
     const b = Box.empty(R, C);
-    expect(renderWithSpaces(b)).toBe(["   ", "   ", ""].join("\n"));
+    expect(renderWithSpaces(b).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|...
+         |...
+         |`
+      )
+    );
   });
 
   it("beside/above default to top alignment and match hcat/vcat", () => {
@@ -198,11 +207,12 @@ describe("issue38 parity tests", () => {
   it("A: align center1 center1 5x5 with text 'x'", () => {
     const H = 5;
     const W = 5;
-    const out = renderWithSpaces(
-      align(center1, center1, H, W, Box.text("x"))
-    ).replaceAll(" ", ".");
-    console.log(out);
-    expect(out).toBe(
+    expect(
+      renderWithSpaces(align(center1, center1, H, W, Box.text("x"))).replaceAll(
+        " ",
+        "."
+      )
+    ).toBe(
       String.stripMargin(
         `|.....
          |.....
@@ -216,10 +226,11 @@ describe("issue38 parity tests", () => {
   it("B: align center1 center1 5x5 with text 'x\\ny'", () => {
     const H = 5;
     const W = 5;
-    const out = renderWithSpaces(
-      align(center1, center1, H, W, Box.text("x\ny"))
-    ).replaceAll(" ", ".");
-    expect(out).toBe(
+    expect(
+      renderWithSpaces(
+        align(center1, center1, H, W, Box.text("x\ny"))
+      ).replaceAll(" ", ".")
+    ).toBe(
       String.stripMargin(
         `|.....
          |.....

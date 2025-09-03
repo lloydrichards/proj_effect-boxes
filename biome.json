@@ -10,7 +10,8 @@
       },
       "style": {
         "useDefaultSwitchClause": "off",
-        "noMagicNumbers": "off"
+        "noMagicNumbers": "off",
+        "useFilenamingConvention": "off"
       },
       "performance": {
         "noBarrelFile": "off"
