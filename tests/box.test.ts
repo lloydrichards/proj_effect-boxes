@@ -6,9 +6,11 @@ import {
   bottom,
   center1,
   center2,
+  columns,
   hAppend,
   hcat,
   left,
+  mkParaBox,
   render,
   renderWithSpaces,
   right,
@@ -166,43 +168,51 @@ describe("issue38 parity tests", () => {
     const short = Box.text("Z"); // height 1
     const c1 = hcat(center1, [tall, short]);
     const c2 = hcat(center2, [tall, short]);
-    const lines1 = renderWithSpaces(c1).split("\n").slice(0, -1);
-    const lines2 = renderWithSpaces(c2).split("\n").slice(0, -1);
+
     // Under center1 (ceil), Z should be on the bottom row
-    if (lines1.length >= 2) {
-      const l10 = lines1[0] as string;
-      const l11 = lines1[1] as string;
-      expect(l10.endsWith(" ")).toBe(true);
-      expect(l11.endsWith("Z")).toBe(true);
-    } else {
-      throw new Error("Unexpected lines1 length");
-    }
+    expect(renderWithSpaces(c1).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|x.
+         |yZ
+         |`
+      )
+    );
+
     // Under center2 (floor), Z should be on the top row
-    if (lines2.length >= 2) {
-      const l20 = lines2[0] as string;
-      const l21 = lines2[1] as string;
-      expect(l20.endsWith("Z")).toBe(true);
-      expect(l21.endsWith(" ")).toBe(true);
-    } else {
-      throw new Error("Unexpected lines2 length");
-    }
+    expect(renderWithSpaces(c2).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|xZ
+         |y.
+         |`
+      )
+    );
   });
 
   it("hcat bottom alignment places shorter box at bottom", () => {
     const tall = Box.text("x\ny\nz");
     const short = Box.text("Q");
-    const out = renderWithSpaces(hcat(bottom, [tall, short])).split("\n");
-    expect(out[0]?.endsWith(" ")).toBe(true);
-    expect(out[1]?.endsWith(" ")).toBe(true);
-    expect(out[2]?.endsWith("Q")).toBe(true);
+    expect(
+      renderWithSpaces(hcat(bottom, [tall, short])).replaceAll(" ", ".")
+    ).toBe(
+      String.stripMargin(
+        `|x.
+         |y.
+         |zQ
+         |`
+      )
+    );
   });
 
   it("vcat bottom (right align) pads shorter lines to the right", () => {
     const a = Box.text("a"); // width 1
     const b = Box.text("bb"); // width 2
-    const out = renderWithSpaces(vcat(right, [a, b])).split("\n");
-    expect(out[0]).toBe(" a");
-    expect(out[1]).toBe("bb");
+    expect(renderWithSpaces(vcat(right, [a, b])).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|.a
+         |bb
+         |`
+      )
+    );
   });
   it("A: align center1 center1 5x5 with text 'x'", () => {
     const H = 5;
@@ -256,6 +266,244 @@ describe("issue38 parity tests", () => {
          |..xy.
          |.....
          |.....
+         |`
+      )
+    );
+  });
+});
+
+describe("mkParaBox", () => {
+  it("creates box from list of strings with left alignment", () => {
+    const lines = ["hello", "world"];
+    const box = mkParaBox(left, 3, lines);
+    expect(box.rows).toBe(3);
+    expect(render(box)).toBe(
+      String.stripMargin(
+        `|hello
+         |world
+         |
+         |`
+      )
+    );
+  });
+
+  it("creates box from list of strings with right alignment", () => {
+    const box = mkParaBox(right, 4, ["hi", "there"]);
+    expect(box.rows).toBe(4);
+    const rendered = renderWithSpaces(box).replaceAll(" ", ".");
+    expect(rendered).toBe(
+      String.stripMargin(
+        `|...hi
+         |there
+         |.....
+         |.....
+         |`
+      )
+    );
+  });
+
+  it("creates box from list of strings with center alignment", () => {
+    const lines = ["x", "abc"];
+    const box = mkParaBox(center1, 3, lines);
+    expect(box.rows).toBe(3);
+    expect(renderWithSpaces(box).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|.x.
+         |abc
+         |...
+         |`
+      )
+    );
+  });
+
+  it("handles empty list of strings", () => {
+    const box = mkParaBox(left, 2, []);
+    expect(box.rows).toBe(2);
+    // Empty list creates a box with 0 cols, which renders as empty string
+    expect(renderWithSpaces(box)).toBe("");
+  });
+
+  it("handles single string", () => {
+    const box = mkParaBox(left, 1, ["test"]);
+    expect(box.rows).toBe(1);
+    expect(render(box)).toBe(
+      String.stripMargin(
+        `|test
+         |`
+      )
+    );
+  });
+
+  it("handles box height smaller than number of lines", () => {
+    const lines = ["line1", "line2", "line3"];
+    const box = mkParaBox(left, 2, lines);
+    expect(box.rows).toBe(2);
+    // Should still contain all text, just aligned within the specified height
+    const rendered = render(box);
+    expect(rendered).toContain("line1");
+    expect(rendered).toContain("line2");
+    expect(rendered).toContain("line3");
+  });
+});
+
+describe("columns", () => {
+  it("creates single column for short text", () => {
+    const text = "hello world";
+    const cols = columns(left, 20, 5, text);
+    expect(cols).toHaveLength(1);
+    expect(cols[0]?.rows).toBe(5);
+    expect(render(cols[0] as any)).toBe(
+      String.stripMargin(
+        `|hello world
+         |
+         |
+         |
+         |
+         |`
+      )
+    );
+  });
+
+  it("creates multiple columns for long text", () => {
+    const text =
+      "This is a very long text that should be split into multiple columns when the width is constrained and height is limited.";
+    const cols = columns(left, 10, 3, text);
+    expect(cols.length).toBeGreaterThan(1);
+    for (const col of cols) {
+      expect(col.rows).toBe(3);
+    }
+    const allText = cols.map((col) => render(col)).join("");
+    expect(allText).toContain("This is a");
+    expect(allText).toContain("very long");
+  });
+
+  it("handles text that fits exactly in one column", () => {
+    const text = "line1 line2 line3";
+    const cols = columns(left, 6, 3, text);
+    expect(cols).toHaveLength(1);
+    if (cols[0]) {
+      expect(render(cols[0])).toBe(
+        String.stripMargin(
+          `|line1
+           |line2
+           |line3
+           |`
+        )
+      );
+    }
+  });
+
+  it("creates columns with right alignment", () => {
+    const text = "short text here";
+    const cols = columns(right, 8, 2, text);
+    expect(cols.length).toBeGreaterThanOrEqual(1);
+    if (cols[0]) {
+      expect(cols[0].rows).toBe(2);
+      const lines = renderWithSpaces(cols[0]).split("\n").slice(0, -1);
+      const hasRightAlignment = lines.some(
+        (line) => line.startsWith(" ") && line.trim().length > 0
+      );
+      expect(hasRightAlignment).toBe(true);
+    }
+  });
+
+  it("handles empty text", () => {
+    const cols = columns(left, 10, 5, "");
+    expect(cols).toHaveLength(1);
+    expect(cols[0]?.rows).toBe(5);
+    expect(render(cols[0] as any)).toBe("");
+  });
+
+  it("handles single word", () => {
+    const cols = columns(left, 10, 3, "word");
+    expect(cols).toHaveLength(1);
+    expect(render(cols[0] as any)).toBe(
+      String.stripMargin(
+        `|word
+         |
+         |
+         |`
+      )
+    );
+  });
+
+  it("creates appropriate number of columns based on text length and constraints", () => {
+    const longText = new Array(100).fill("word").join(" ");
+    const cols = columns(left, 5, 2, longText);
+    expect(cols.length).toBeGreaterThan(10);
+    for (const col of cols) {
+      expect(col.rows).toBe(2);
+    }
+  });
+});
+
+describe("para", () => {
+  it("creates paragraph box with left alignment", () => {
+    const text = "This is a test paragraph that should flow nicely.";
+    const box = Box.para(left, 10, text);
+    expect(box.rows).toBeGreaterThan(0);
+    expect(box.cols).toBeLessThanOrEqual(10);
+    expect(render(box)).toBe(
+      String.stripMargin(
+        `|This is a
+         |test
+         |paragraph
+         |that
+         |should
+         |flow
+         |nicely.
+         |`
+      )
+    );
+  });
+
+  it("creates paragraph box with left alignment", () => {
+    const text = "This is a test paragraph that should flow nicely.";
+    const box = Box.para(right, 10, text);
+    expect(box.rows).toBeGreaterThan(0);
+    expect(box.cols).toBeLessThanOrEqual(10);
+    expect(render(box)).toBe(
+      String.stripMargin(
+        `|This is a
+         |     test
+         |paragraph
+         |     that
+         |   should
+         |     flow
+         |  nicely.
+         |`
+      )
+    );
+  });
+
+  it("creates paragraph box with center alignment", () => {
+    const text = "This is a test paragraph that should flow nicely.";
+    const box = Box.para(center1, 10, text);
+    expect(box.rows).toBeGreaterThan(0);
+    expect(box.cols).toBeLessThanOrEqual(10);
+    expect(render(box)).toBe(
+      String.stripMargin(
+        `|This is a
+         |   test
+         |paragraph
+         |   that
+         |  should
+         |   flow
+         | nicely.
+         |`
+      )
+    );
+  });
+
+  it("flows text to specified width", () => {
+    const text = "Something longer than the width.";
+    expect(render(Box.para(left, 4, text))).toBe(
+      String.stripMargin(
+        `|Some
+         |long
+         |than
+         |the
+         |widt
          |`
       )
     );

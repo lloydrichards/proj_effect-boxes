@@ -1,4 +1,7 @@
-import { Array, Schema, String } from "effect";
+import { Array, pipe, Schema, String } from "effect";
+
+// Regular expression for splitting text on whitespace
+const whitespaceRegex = /\s+/;
 
 // Data type for specifying the alignment of boxes.
 export const Alignment = Schema.Literal(
@@ -96,6 +99,13 @@ export class Box extends Schema.Class<Box>("Box")({
   // line :: String -> Box
   static line = (s: string): Box =>
     Box.unsafeLine(String.replace(/\n|\r/g, "")(s));
+
+  // @para algn w t@ is a box of width @w@, containing text @t@, aligned according to @algn@, flowed to fit within the given width.
+  // para :: Alignment -> Int -> String -> Box
+  static para = (a: Alignment, w: number, t: string): Box => {
+    const lines = flow(w, t);
+    return mkParaBox(a, lines.length, lines);
+  };
 
   // Semigroup instance for Box
   // instance Semigroup Box where
@@ -243,61 +253,162 @@ export const vsep = (sep: number, a: Alignment, bs: readonly Box[]): Box =>
  *  --------------------------------------------------------------------------------
  */
 
-// @para algn w t@ is a box of width @w@, containing text @t@, aligned according to @algn@, flowed to fit within the given width.
-// para :: Alignment -> Int -> String -> Box
-// TODO: implement para
+// data Word = Word { wLen :: Int, getWord  :: String }
+export class Word extends Schema.Class<Word>("Word")({
+  wLen: Schema.Number,
+  getWord: Schema.String,
+}) {
+  // mkWord :: String -> Word
+  static fromString(word: string): Word {
+    return {
+      wLen: word.length,
+      getWord: word,
+    };
+  }
+}
 
-// @columns w h t@ is a list of boxes, each of width @w@ and height at most @h@, containing text @t@ flowed into as many columns as necessary.
-// columns :: Alignment -> Int -> Int -> String -> [Box]
-// TODO: implement columns
-
-// @mkParaBox a n s@ makes a box of height @n@ with the text @s@ aligned according to @a@.
-// mkParaBox :: Alignment -> Int -> [String] -> Box
-// TODO: implement mkParaBox
-
-// Flow the given text into the given width.
-// flow :: Int -> String -> [String]
-// TODO: implement flow
-
-// data Para = Para { _paraWidth   :: Int
-//                  , _paraContent :: ParaContent
-//                  }
-// TODO: implement Para
+// data Line = Line { lLen :: Int, getWords :: [Word] }
+export class Line extends Schema.Class<Line>("Line")({
+  lLen: Schema.Number,
+  getWords: Schema.Array(Word),
+}) {
+  // mkLine :: [Word] -> Line
+  static fromWords = (words: Word[]): Line => ({
+    lLen: words.reduce((acc, w) => acc + w.wLen, Math.max(0, words.length - 1)),
+    getWords: words,
+  });
+}
 
 // data ParaContent = Block { _fullLines :: [Line]
 //                          , _lastLine  :: Line
 //                          }
-// TODO: implement ParaContent
+export class ParaContent extends Schema.Class<ParaContent>("ParaContent")({
+  fullLines: Schema.Array(Line),
+  lastLine: Line,
+}) {
+  static empty: ParaContent = {
+    fullLines: [],
+    lastLine: {
+      lLen: 0,
+      getWords: [],
+    },
+  };
+}
 
-// emptyPara :: Int -> Para
-// TODO: implement emptyPara
+// data Para = Para { _paraWidth   :: Int
+//                  , _paraContent :: ParaContent
+//                  }
+export class Para extends Schema.Class<Para>("Para")({
+  paraWidth: Schema.Number,
+  paraContent: ParaContent,
+}) {
+  // emptyPara :: Int -> Para
+  static empty = (paraWidth: number): Para => ({
+    paraWidth,
+    paraContent: ParaContent.empty,
+  });
+}
+
+// @columns w h t@ is a list of boxes, each of width @w@ and height at most @h@, containing text @t@ flowed into as many columns as necessary.
+// columns :: Alignment -> Int -> Int -> String -> [Box]
+export const columns = (a: Alignment, w: number, h: number, t: string): Box[] =>
+  pipe(
+    flow(w, t),
+    Array.chunksOf(h),
+    Array.map((chunk) => mkParaBox(a, h, chunk))
+  );
+
+// @mkParaBox a n s@ makes a box of height @n@ with the text @s@ aligned according to @a@.
+// mkParaBox :: Alignment -> Int -> [String] -> Box
+export const mkParaBox = (a: Alignment, n: number, s: string[]): Box => {
+  if (s.length === 0) {
+    return Box.empty(n, 0);
+  }
+  const textBoxes = s.map((line) => Box.text(line));
+  const combinedBox = vcat(a, textBoxes);
+  return alignVert(top, n, combinedBox);
+};
+
+// Flow the given text into the given width.
+// flow :: Int -> String -> [String]
+export const flow = (width: number, text: string): string[] => {
+  if (text.trim() === "") {
+    return [""];
+  }
+
+  return pipe(
+    text,
+    String.split(whitespaceRegex),
+    Array.filter((word) => word.length > 0),
+    Array.map(Word.fromString),
+    Array.reduce(Para.empty(width), (para, word) => addWordP(word)(para)),
+    getLines,
+    Array.map((line) => line.slice(0, width))
+  );
+};
 
 // getLines :: Para -> [String]
-// TODO: implement getLines
+export const getLines = ({
+  paraContent: { fullLines, lastLine },
+}: typeof Para.Type): string[] => {
+  const process = (lines: readonly Line[]): string[] =>
+    pipe(
+      Array.fromIterable(lines),
+      Array.reverse,
+      Array.map((line) =>
+        pipe(
+          line.getWords,
+          Array.reverse,
+          Array.map((word) => word.getWord),
+          Array.join(" ")
+        )
+      )
+    );
 
-// data Line = Line { lLen :: Int, getWords :: [Word] }
-// TODO: implement Line
-
-// mkLine :: [Word] -> Line
-// TODO: implement mkLine
+  return process(lastLine.lLen === 0 ? fullLines : [lastLine, ...fullLines]);
+};
 
 // startLine :: Word -> Line
-// TODO: implement startLine
-
-// data Word = Word { wLen :: Int, getWord  :: String }
-// TODO: implement Word
-
-// mkWord :: String -> Word
-// TODO: implement mkWord
+export const startLine = (word: Word): Line => ({
+  lLen: word.wLen,
+  getWords: [word],
+});
 
 // addWordP :: Para -> Word -> Para
-// TODO: implement addWordP
+export const addWordP =
+  (word: Word) =>
+  (para: Para): Para =>
+    wordFits(para.paraWidth, word, para.paraContent.lastLine)
+      ? {
+          paraWidth: para.paraWidth,
+          paraContent: {
+            fullLines: para.paraContent.fullLines,
+            lastLine: addWordL(word)(para.paraContent.lastLine),
+          },
+        }
+      : {
+          paraWidth: para.paraWidth,
+          paraContent: {
+            fullLines: [
+              para.paraContent.lastLine,
+              ...para.paraContent.fullLines,
+            ],
+            lastLine: startLine(word),
+          },
+        };
 
 // addWordL :: Word -> Line -> Line
-// TODO: implement addWordL
+const addWordL =
+  (word: Word) =>
+  (line: Line): Line => ({
+    lLen: line.lLen + word.wLen + 1,
+    getWords: [word, ...line.getWords],
+  });
 
 // wordFits :: Int -> Word -> Line -> Bool
-// TODO: implement wordFits
+const wordFits = (paraWidth: number, word: Word, line: Line): boolean =>
+  line.lLen === 0 || line.lLen + word.wLen + 1 <= paraWidth;
+
 /*
  *  --------------------------------------------------------------------------------
  *  --  Alignment  -----------------------------------------------------------------
