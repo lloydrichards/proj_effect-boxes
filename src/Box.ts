@@ -157,6 +157,9 @@ export const vcat = (a: Alignment, bs: readonly Box[]): Box => {
 //     mempty = nullBox
 //     mappend = (<>)
 //     mconcat = hcat top
+// TODO: implement mconcat
+// TODO: implement mempty
+// TODO: implement mconcat
 
 // Paste two boxes together horizontally.
 // instance Semigroup Box where
@@ -233,44 +236,59 @@ export const vsep = (sep: number, a: Alignment, bs: readonly Box[]): Box =>
 
 // @para algn w t@ is a box of width @w@, containing text @t@, aligned according to @algn@, flowed to fit within the given width.
 // para :: Alignment -> Int -> String -> Box
+// TODO: implement para
 
 // @columns w h t@ is a list of boxes, each of width @w@ and height at most @h@, containing text @t@ flowed into as many columns as necessary.
 // columns :: Alignment -> Int -> Int -> String -> [Box]
+// TODO: implement columns
 
 // @mkParaBox a n s@ makes a box of height @n@ with the text @s@ aligned according to @a@.
 // mkParaBox :: Alignment -> Int -> [String] -> Box
+// TODO: implement mkParaBox
 
 // Flow the given text into the given width.
 // flow :: Int -> String -> [String]
+// TODO: implement flow
 
 // data Para = Para { _paraWidth   :: Int
 //                  , _paraContent :: ParaContent
 //                  }
+// TODO: implement Para
 
 // data ParaContent = Block { _fullLines :: [Line]
 //                          , _lastLine  :: Line
 //                          }
+// TODO: implement ParaContent
 
 // emptyPara :: Int -> Para
+// TODO: implement emptyPara
 
 // getLines :: Para -> [String]
+// TODO: implement getLines
 
 // data Line = Line { lLen :: Int, getWords :: [Word] }
+// TODO: implement Line
 
 // mkLine :: [Word] -> Line
+// TODO: implement mkLine
 
 // startLine :: Word -> Line
+// TODO: implement startLine
 
 // data Word = Word { wLen :: Int, getWord  :: String }
+// TODO: implement Word
 
 // mkWord :: String -> Word
+// TODO: implement mkWord
 
 // addWordP :: Para -> Word -> Para
+// TODO: implement addWordP
 
 // addWordL :: Word -> Line -> Line
+// TODO: implement addWordL
 
 // wordFits :: Int -> Word -> Line -> Bool
-
+// TODO: implement wordFits
 /*
  *  --------------------------------------------------------------------------------
  *  --  Alignment  -----------------------------------------------------------------
@@ -439,21 +457,28 @@ export const renderWithSpaces = (b: Box): string => {
 };
 
 // dropWhileEnd :: (a -> Bool) -> [a] -> [a]
+// TODO: implement dropWhileEnd
 
 // Generate a string of spaces.
 // blanks :: Int -> String
+// TODO: implement blanks
 
 // Render a box as a list of lines, using a given number of rows.
 // renderBoxWithRows :: Int -> Box -> [String]
+// TODO: implement renderBoxWithRows
 
 // Render a box as a list of lines, using a given number of columns.
 // renderBoxWithCols :: Int -> Box -> [String]
+// TODO: implement renderBoxWithCols
 
 // Resize a rendered list of lines.
 // resizeBox :: Int -> Int -> [String] -> [String]
+// TODO: implement resizeBox
 
 // Resize a rendered list of lines, using given alignments.
 // resizeBoxAligned :: Int -> Int -> Alignment -> Alignment -> [String] -> [String]
+// TODO: implement resizeBoxAligned
 
 // A convenience function for rendering a box to stdout.
 // printBox :: Box -> IO ()
+// TODO: implement printBox
