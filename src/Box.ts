@@ -58,8 +58,11 @@ export class Box extends Schema.Class<Box>("Box")({
   content: Content,
 }) {
   // The null box, which has no content and no size.  It is quite useless.
+  // nullBox :: Box
   static nullBox: Box = { rows: 0, cols: 0, content: { _tag: "Blank" } };
+
   // @emptyBox r c@ is an empty box with @r@ rows and @c@ columns.
+  // emptyBox :: Int -> Int -> Box
   static emptyBox = (rows: number, cols: number): Box => ({
     rows: Math.max(0, rows),
     cols: Math.max(0, cols),
@@ -67,17 +70,22 @@ export class Box extends Schema.Class<Box>("Box")({
   });
 
   // A @1x1@ box containing a single character.
+  // char :: Char -> Box
   static char = (c: string): Box => ({
     rows: 1,
     cols: 1,
     content: { _tag: "Text", text: c[0] ?? " " },
   });
+
+  // unsafeLine :: String -> Box
   static unsafeLine = (t: string): Box => ({
     rows: 1,
     cols: t.length,
     content: { _tag: "Text", text: t },
   });
+
   // A box containing lines of text.
+  // text :: String -> Box
   static text = (s: string): Box =>
     vcat(
       left,
@@ -85,10 +93,13 @@ export class Box extends Schema.Class<Box>("Box")({
     );
 
   // A (@1 x len@) box containing a string length @len@
+  // line :: String -> Box
   static line = (s: string): Box =>
     Box.unsafeLine(String.replace(/\n|\r/g, "")(s));
 }
 
+// Calculate a sum and a maximum over a list in one pass. If the list is empty, the maximum is reported as the given default. This would normally be done using the foldl library, but we don't want that dependency.
+// sumMax :: (Num n, Ord b, Foldable f) => (a -> n) -> b -> (a -> b) -> f a -> (n, b)
 const sumMax = <A>(
   f: (a: A) => number,
   defaultMax: number,
@@ -104,28 +115,8 @@ const sumMax = <A>(
   return [sum, max];
 };
 
-// @align ah av r c bx@ creates an @r@ x @c@ box with the contents of @bx@, aligned horizontally according to @ah@ and vertically according to @av@.
-export const align = (
-  ah: Alignment,
-  av: Alignment,
-  r: number,
-  c: number,
-  b: Box
-): Box => ({
-  rows: r,
-  cols: c,
-  content: { _tag: "SubBox", xAlign: ah, yAlign: av, box: b },
-});
-
-// @alignHoriz algn n bx@ creates a box of width @n@, with the contents and height of @bx@, horizontally aligned according to @algn@.
-export const alignHoriz = (a: Alignment, c: number, b: Box): Box =>
-  align(a, "AlignFirst", b.rows, c, b);
-
-// @alignVert algn n bx@ creates a box of height @n@, with the contents and width of @bx@, vertically aligned according to @algn@.
-export const alignVert = (a: Alignment, r: number, b: Box): Box =>
-  align("AlignFirst", a, r, b.cols, b);
-
 // Glue a list of boxes together horizontally, with the given alignment.
+// hcat :: Foldable f => Alignment -> f Box -> Box
 export const hcat = (a: Alignment, bs: readonly Box[]): Box => {
   const [w, h] = sumMax(
     (b: Box) => b.cols,
@@ -144,6 +135,7 @@ export const hcat = (a: Alignment, bs: readonly Box[]): Box => {
 };
 
 // Glue a list of boxes together vertically, with the given alignment.
+// vcat :: Foldable f => Alignment -> f Box -> Box
 export const vcat = (a: Alignment, bs: readonly Box[]): Box => {
   const [h, w] = sumMax(
     (b: Box) => b.rows,
@@ -161,24 +153,32 @@ export const vcat = (a: Alignment, bs: readonly Box[]): Box => {
   };
 };
 
-// Paste two boxes together horizontally. Corresponds to `<>` in Haskell.
+// instance Monoid Box where
+//     mempty = nullBox
+//     mappend = (<>)
+//     mconcat = hcat top
+
+// Paste two boxes together horizontally.
+// instance Semigroup Box where
+// l <> r = hcat top [l,r]
 export const hAppend = (l: Box, r: Box): Box => hcat(top, [l, r]);
 
 // Paste two boxes together horizontally with a single intervening column of space.
-// Corresponds to `<+>` in Haskell.
+// (<+>) :: Box -> Box -> Box
 export const hcatWithSpace = (l: Box, r: Box): Box =>
   hcat(top, [l, Box.emptyBox(0, 1), r]);
 
 // Paste two boxes together vertically.
-// Corresponds to `//` in Haskell.
+// (//) :: Box -> Box -> Box
 export const vAppend = (t: Box, b: Box): Box => vcat(left, [t, b]);
 
 // Paste two boxes together vertically with a single intervening row of space.
-// Corresponds to `(/+/)` in Haskell.
+// (/+/) :: Box -> Box -> Box
 export const vcatWithSpace = (t: Box, b: Box): Box =>
   vcat(left, [t, Box.emptyBox(1, 0), b]);
 
 // @punctuateH a p bs@ horizontally lays out the boxes @bs@ with a copy of @p@ interspersed between each.
+// punctuateH :: Foldable f => Alignment -> Box -> f Box -> Box
 export const punctuateH = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
   if (bs.length === 0) {
     return Box.nullBox;
@@ -197,6 +197,7 @@ export const punctuateH = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
 };
 
 // A vertical version of 'punctuateH'.
+// punctuateV :: Foldable f => Alignment -> Box -> f Box -> Box
 export const punctuateV = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
   if (bs.length === 0) {
     return Box.nullBox;
@@ -215,29 +216,115 @@ export const punctuateV = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
 };
 
 // @hsep sep a bs@ lays out @bs@ horizontally with alignment @a@, with @sep@ amount of space in between each.
+// hsep :: Foldable f => Int -> Alignment -> f Box -> Box
 export const hsep = (sep: number, a: Alignment, bs: readonly Box[]): Box =>
   punctuateH(a, Box.emptyBox(0, sep), bs);
 
 // @vsep sep a bs@ lays out @bs@ vertically with alignment @a@, with @sep@ amount of space in between each.
+// vsep :: Foldable f => Int -> Alignment -> f Box -> Box
 export const vsep = (sep: number, a: Alignment, bs: readonly Box[]): Box =>
   punctuateV(a, Box.emptyBox(sep, 0), bs);
 
+/*
+ *  --------------------------------------------------------------------------------
+ *  --  Paragraph flowing  ---------------------------------------------------------
+ *  --------------------------------------------------------------------------------
+ */
+
+// @para algn w t@ is a box of width @w@, containing text @t@, aligned according to @algn@, flowed to fit within the given width.
+// para :: Alignment -> Int -> String -> Box
+
+// @columns w h t@ is a list of boxes, each of width @w@ and height at most @h@, containing text @t@ flowed into as many columns as necessary.
+// columns :: Alignment -> Int -> Int -> String -> [Box]
+
+// @mkParaBox a n s@ makes a box of height @n@ with the text @s@ aligned according to @a@.
+// mkParaBox :: Alignment -> Int -> [String] -> Box
+
+// Flow the given text into the given width.
+// flow :: Int -> String -> [String]
+
+// data Para = Para { _paraWidth   :: Int
+//                  , _paraContent :: ParaContent
+//                  }
+
+// data ParaContent = Block { _fullLines :: [Line]
+//                          , _lastLine  :: Line
+//                          }
+
+// emptyPara :: Int -> Para
+
+// getLines :: Para -> [String]
+
+// data Line = Line { lLen :: Int, getWords :: [Word] }
+
+// mkLine :: [Word] -> Line
+
+// startLine :: Word -> Line
+
+// data Word = Word { wLen :: Int, getWord  :: String }
+
+// mkWord :: String -> Word
+
+// addWordP :: Para -> Word -> Para
+
+// addWordL :: Word -> Line -> Line
+
+// wordFits :: Int -> Word -> Line -> Bool
+
+/*
+ *  --------------------------------------------------------------------------------
+ *  --  Alignment  -----------------------------------------------------------------
+ *  --------------------------------------------------------------------------------
+ */
+
+// @alignHoriz algn n bx@ creates a box of width @n@, with the contents and height of @bx@, horizontally aligned according to @algn@.
+// alignHoriz :: Alignment -> Int -> Box -> Box
+export const alignHoriz = (a: Alignment, c: number, b: Box): Box =>
+  align(a, "AlignFirst", b.rows, c, b);
+
+// @alignVert algn n bx@ creates a box of height @n@, with the contents and width of @bx@, vertically aligned according to @algn@.
+// alignVert :: Alignment -> Int -> Box -> Box
+export const alignVert = (a: Alignment, r: number, b: Box): Box =>
+  align("AlignFirst", a, r, b.cols, b);
+
+// @align ah av r c bx@ creates an @r@ x @c@ box with the contents of @bx@, aligned horizontally according to @ah@ and vertically according to @av@.
+// align :: Alignment -> Alignment -> Int -> Int -> Box -> Box
+export const align = (
+  ah: Alignment,
+  av: Alignment,
+  r: number,
+  c: number,
+  b: Box
+): Box => ({
+  rows: r,
+  cols: c,
+  content: { _tag: "SubBox", xAlign: ah, yAlign: av, box: b },
+});
+
 // Move a box "up" by putting it in a larger box with extra rows, aligned to the top.
+// moveUp :: Int -> Box -> Box
 export const moveUp = (n: number, b: Box): Box => alignVert(top, b.rows + n, b);
 
 // Move a box down by putting it in a larger box with extra rows, aligned to the bottom.
+// moveDown :: Int -> Box -> Box
 export const moveDown = (n: number, b: Box): Box =>
   alignVert(bottom, b.rows + n, b);
 
 // Move a box left by putting it in a larger box with extra columns, aligned left.
+// moveLeft :: Int -> Box -> Box
 export const moveLeft = (n: number, b: Box): Box =>
   alignHoriz(left, b.cols + n, b);
 
 // Move a box right by putting it in a larger box with extra columns, aligned right.
+// moveRight :: Int -> Box -> Box
 export const moveRight = (n: number, b: Box): Box =>
   alignHoriz(right, b.cols + n, b);
 
-// Rendering
+/*
+ *  --------------------------------------------------------------------------------
+ *  --  Implementation  ------------------------------------------------------------
+ *  --------------------------------------------------------------------------------
+ */
 
 const getPadding = (
   total: number,
@@ -321,7 +408,8 @@ const renderBoxContent = (
   }
 };
 
-// Render a box as a list of strings
+// Render a box as a list of lines.
+// renderBox :: Box -> [String]
 const renderBox = (b: Box): string[] => {
   if (b.rows === 0 || b.cols === 0) {
     return [];
@@ -331,6 +419,8 @@ const renderBox = (b: Box): string[] => {
 
 const trailingSpaceRegex = /\s+$/;
 
+// Render a 'Box' as a String, suitable for writing to the screen or a file.
+// render :: Box -> String
 export const render = (b: Box): string => {
   const lines = renderBox(b);
   return (
@@ -341,7 +431,29 @@ export const render = (b: Box): string => {
   );
 };
 
+// Like 'render' but preserves end-of-line whitespace.
+// renderWithSpaces :: Box -> String
 export const renderWithSpaces = (b: Box): string => {
   const lines = renderBox(b);
   return Array.join(lines, "\n") + (lines.length > 0 ? "\n" : "");
 };
+
+// dropWhileEnd :: (a -> Bool) -> [a] -> [a]
+
+// Generate a string of spaces.
+// blanks :: Int -> String
+
+// Render a box as a list of lines, using a given number of rows.
+// renderBoxWithRows :: Int -> Box -> [String]
+
+// Render a box as a list of lines, using a given number of columns.
+// renderBoxWithCols :: Int -> Box -> [String]
+
+// Resize a rendered list of lines.
+// resizeBox :: Int -> Int -> [String] -> [String]
+
+// Resize a rendered list of lines, using given alignments.
+// resizeBoxAligned :: Int -> Int -> Alignment -> Alignment -> [String] -> [String]
+
+// A convenience function for rendering a box to stdout.
+// printBox :: Box -> IO ()
