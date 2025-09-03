@@ -17,37 +17,36 @@ import {
 } from "../src/Box";
 import { String } from "effect";
 
-// Helpers
-const trimEnds = (s: string): string =>
-  s
-    .split("\n")
-    .map((l) => l.replace(/[\s\u00A0]+$/g, ""))
-    .join("\n") + (s.endsWith("\n") ? "" : "");
-
-describe("Box basic properties", () => {
-  it("prop_render_text: text trims trailing spaces per line", () => {
+describe("Box", () => {
+  it("text trims trailing spaces per line", () => {
     const s = "abc   \nxy  ";
-    expect(render(Box.text(s))).toBe(`${trimEnds(s)}\n`);
+    expect(render(Box.text(s))).toBe(
+      String.stripMargin(
+        `|abc
+         |xy
+         |`
+      )
+    );
   });
 
   it("empty right identity", () => {
     const b = hcat(top, [Box.text("hi"), Box.text("!")]);
-    expect(render(hAppend(b, Box.nullBox))).toBe(render(b));
+    expect(render(hAppend(b, Box.null))).toBe(render(b));
   });
 
   it("empty left identity", () => {
     const b = Box.text("Z");
-    expect(render(hAppend(Box.nullBox, b))).toBe(render(b));
+    expect(render(hAppend(Box.null, b))).toBe(render(b));
   });
 
   it("empty top identity", () => {
     const b = Box.text("Z");
-    expect(render(vAppend(Box.nullBox, b))).toBe(render(b));
+    expect(render(vAppend(Box.null, b))).toBe(render(b));
   });
 
   it("empty bottom identity", () => {
     const b = Box.text("Z");
-    expect(render(vAppend(b, Box.nullBox))).toBe(render(b));
+    expect(render(vAppend(b, Box.null))).toBe(render(b));
   });
 
   it("associativity horizontal", () => {
@@ -67,6 +66,48 @@ describe("Box basic properties", () => {
     const rightV = vAppend(vAppend(a, b), c);
     expect(render(leftV)).toBe(render(rightV));
   });
+
+  describe("Semigroup and Monoid", () => {
+    it("semigroup associativity: (a <> b) <> c = a <> (b <> c)", () => {
+      const a = Box.text("a");
+      const b = Box.text("b");
+      const c = Box.text("c");
+      const left = Box.combine(Box.combine(a, b), c);
+      const right = Box.combine(a, Box.combine(b, c));
+      expect(render(left)).toBe(render(right));
+      expect(render(left)).toBe("abc\n");
+    });
+
+    it("monoid left identity: empty <> x = x", () => {
+      const box = Box.text("box");
+      const result = Box.combine(Box.null, box);
+      expect(render(result)).toBe(render(box));
+      expect(render(result)).toBe("box\n");
+    });
+
+    it("monoid right identity: x <> empty = x", () => {
+      const box = Box.text("world");
+      const result = Box.combine(box, Box.null);
+      expect(render(result)).toBe(render(box));
+      expect(render(result)).toBe("world\n");
+    });
+
+    it("monoid combineAll with multiple boxes", () => {
+      const result = Box.combineAll([
+        Box.text("a"),
+        Box.text("b"),
+        Box.text("c"),
+        Box.text("d"),
+      ]);
+      expect(render(result)).toBe("abcd\n");
+    });
+
+    it("monoid combineAll with empty collection", () => {
+      const result = Box.combineAll([]);
+      expect(render(result)).toBe(render(Box.null));
+      expect(render(result)).toBe("");
+    });
+  });
 });
 
 describe("issue38 parity tests", () => {
@@ -82,8 +123,8 @@ describe("issue38 parity tests", () => {
     const C1 = 2;
     const R2 = 3;
     const C2 = 3;
-    const a = Box.emptyBox(R1, C1);
-    const b = Box.emptyBox(R2, C2);
+    const a = Box.empty(R1, C1);
+    const b = Box.empty(R2, C2);
     expect(a.rows).toBe(R1);
     expect(a.cols).toBe(C1);
     const c = hcat(top, [a, b]);
@@ -94,7 +135,7 @@ describe("issue38 parity tests", () => {
   it("emptyBox renders exact spaces grid", () => {
     const R = 2;
     const C = 3;
-    const b = Box.emptyBox(R, C);
+    const b = Box.empty(R, C);
     expect(renderWithSpaces(b)).toBe(["   ", "   ", ""].join("\n"));
   });
 

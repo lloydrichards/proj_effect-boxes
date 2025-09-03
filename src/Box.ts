@@ -59,11 +59,11 @@ export class Box extends Schema.Class<Box>("Box")({
 }) {
   // The null box, which has no content and no size.  It is quite useless.
   // nullBox :: Box
-  static nullBox: Box = { rows: 0, cols: 0, content: { _tag: "Blank" } };
+  static null: Box = { rows: 0, cols: 0, content: { _tag: "Blank" } };
 
-  // @emptyBox r c@ is an empty box with @r@ rows and @c@ columns.
-  // emptyBox :: Int -> Int -> Box
-  static emptyBox = (rows: number, cols: number): Box => ({
+  // @empty r c@ is an empty box with @r@ rows and @c@ columns.
+  // empty :: Int -> Int -> Box
+  static empty = (rows: number, cols: number): Box => ({
     rows: Math.max(0, rows),
     cols: Math.max(0, cols),
     content: { _tag: "Blank" },
@@ -96,6 +96,23 @@ export class Box extends Schema.Class<Box>("Box")({
   // line :: String -> Box
   static line = (s: string): Box =>
     Box.unsafeLine(String.replace(/\n|\r/g, "")(s));
+
+  // Semigroup instance for Box
+  // instance Semigroup Box where
+  //     l <> r = hcat top [l,r]
+  static combine = (l: Box, r: Box): Box => hcat(top, [l, r]);
+  static combineMany = (start: Box, collection: Iterable<Box>): Box =>
+    hcat(top, [start, ...Array.fromIterable(collection)]);
+
+  // Monoid instance for Box (extends Semigroup with empty element)
+  // instance Monoid Box where
+  //     mempty = nullBox
+  //     mappend = (<>)
+  //     mconcat = hcat top
+  static combineAll = (collection: Iterable<Box>): Box => {
+    const boxes = Array.fromIterable(collection);
+    return boxes.length === 0 ? Box.null : hcat(top, boxes);
+  };
 }
 
 // Calculate a sum and a maximum over a list in one pass. If the list is empty, the maximum is reported as the given default. This would normally be done using the foldl library, but we don't want that dependency.
@@ -153,14 +170,6 @@ export const vcat = (a: Alignment, bs: readonly Box[]): Box => {
   };
 };
 
-// instance Monoid Box where
-//     mempty = nullBox
-//     mappend = (<>)
-//     mconcat = hcat top
-// TODO: implement mconcat
-// TODO: implement mempty
-// TODO: implement mconcat
-
 // Paste two boxes together horizontally.
 // instance Semigroup Box where
 // l <> r = hcat top [l,r]
@@ -169,7 +178,7 @@ export const hAppend = (l: Box, r: Box): Box => hcat(top, [l, r]);
 // Paste two boxes together horizontally with a single intervening column of space.
 // (<+>) :: Box -> Box -> Box
 export const hcatWithSpace = (l: Box, r: Box): Box =>
-  hcat(top, [l, Box.emptyBox(0, 1), r]);
+  hcat(top, [l, Box.empty(0, 1), r]);
 
 // Paste two boxes together vertically.
 // (//) :: Box -> Box -> Box
@@ -178,13 +187,13 @@ export const vAppend = (t: Box, b: Box): Box => vcat(left, [t, b]);
 // Paste two boxes together vertically with a single intervening row of space.
 // (/+/) :: Box -> Box -> Box
 export const vcatWithSpace = (t: Box, b: Box): Box =>
-  vcat(left, [t, Box.emptyBox(1, 0), b]);
+  vcat(left, [t, Box.empty(1, 0), b]);
 
 // @punctuateH a p bs@ horizontally lays out the boxes @bs@ with a copy of @p@ interspersed between each.
 // punctuateH :: Foldable f => Alignment -> Box -> f Box -> Box
 export const punctuateH = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
   if (bs.length === 0) {
-    return Box.nullBox;
+    return Box.null;
   }
   const interspersed: Box[] = [];
   for (let i = 0; i < bs.length; i++) {
@@ -203,7 +212,7 @@ export const punctuateH = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
 // punctuateV :: Foldable f => Alignment -> Box -> f Box -> Box
 export const punctuateV = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
   if (bs.length === 0) {
-    return Box.nullBox;
+    return Box.null;
   }
   const interspersed: Box[] = [];
   for (let i = 0; i < bs.length; i++) {
@@ -221,12 +230,12 @@ export const punctuateV = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
 // @hsep sep a bs@ lays out @bs@ horizontally with alignment @a@, with @sep@ amount of space in between each.
 // hsep :: Foldable f => Int -> Alignment -> f Box -> Box
 export const hsep = (sep: number, a: Alignment, bs: readonly Box[]): Box =>
-  punctuateH(a, Box.emptyBox(0, sep), bs);
+  punctuateH(a, Box.empty(0, sep), bs);
 
 // @vsep sep a bs@ lays out @bs@ vertically with alignment @a@, with @sep@ amount of space in between each.
 // vsep :: Foldable f => Int -> Alignment -> f Box -> Box
 export const vsep = (sep: number, a: Alignment, bs: readonly Box[]): Box =>
-  punctuateV(a, Box.emptyBox(sep, 0), bs);
+  punctuateV(a, Box.empty(sep, 0), bs);
 
 /*
  *  --------------------------------------------------------------------------------
