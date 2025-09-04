@@ -1,4 +1,4 @@
-import { Array, Match, pipe, Schema, String } from "effect";
+import { Array, Console, Effect, Match, pipe, Schema, String } from "effect";
 
 // Regular expression for splitting text on whitespace
 const whitespaceRegex = /\s+/;
@@ -213,17 +213,7 @@ export const punctuateH = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
   if (bs.length === 0) {
     return nullBox;
   }
-  const interspersed: Box[] = [];
-  for (let i = 0; i < bs.length; i++) {
-    const box = bs[i];
-    if (box) {
-      interspersed.push(box);
-      if (i < bs.length - 1) {
-        interspersed.push(p);
-      }
-    }
-  }
-  return hcat(a, interspersed);
+  return hcat(a, Array.intersperse(bs, p));
 };
 
 // A vertical version of 'punctuateH'.
@@ -232,17 +222,7 @@ export const punctuateV = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
   if (bs.length === 0) {
     return nullBox;
   }
-  const interspersed: Box[] = [];
-  for (let i = 0; i < bs.length; i++) {
-    const box = bs[i];
-    if (box) {
-      interspersed.push(box);
-      if (i < bs.length - 1) {
-        interspersed.push(p);
-      }
-    }
-  }
-  return vcat(a, interspersed);
+  return vcat(a, Array.intersperse(bs, p));
 };
 
 // @hsep sep a bs@ lays out @bs@ horizontally with alignment @a@, with @sep@ amount of space in between each.
@@ -261,61 +241,31 @@ export const vsep = (sep: number, a: Alignment, bs: readonly Box[]): Box =>
  *  --------------------------------------------------------------------------------
  */
 
-// data Word = Word { wLen :: Int, getWord  :: String }
-class Word extends Schema.Class<Word>("Word")({
-  wLen: Schema.Number,
-  getWord: Schema.String,
-}) {
-  // mkWord :: String -> Word
-  static fromString(word: string): Word {
-    return {
-      wLen: word.length,
-      getWord: word,
-    };
-  }
-}
-
-// data Line = Line { lLen :: Int, getWords :: [Word] }
-class Line extends Schema.Class<Line>("Line")({
-  lLen: Schema.Number,
-  getWords: Schema.Array(Word),
-}) {
-  // mkLine :: [Word] -> Line
-  static fromWords = (words: Word[]): Line => ({
-    lLen: words.reduce((acc, w) => acc + w.wLen, Math.max(0, words.length - 1)),
-    getWords: words,
-  });
-}
-
 // data ParaContent = Block { _fullLines :: [Line]
 //                          , _lastLine  :: Line
 //                          }
-class ParaContent extends Schema.Class<ParaContent>("ParaContent")({
-  fullLines: Schema.Array(Line),
-  lastLine: Line,
-}) {
-  static empty: ParaContent = {
-    fullLines: [],
-    lastLine: {
-      lLen: 0,
-      getWords: [],
-    },
-  };
-}
+const ParaContent = Schema.Struct({
+  fullLines: Schema.Array(Schema.Array(Schema.NonEmptyString)),
+  lastLine: Schema.Array(Schema.NonEmptyString),
+});
 
 // data Para = Para { _paraWidth   :: Int
 //                  , _paraContent :: ParaContent
 //                  }
-class Para extends Schema.Class<Para>("Para")({
-  paraWidth: Schema.Number,
-  paraContent: ParaContent,
-}) {
-  // emptyPara :: Int -> Para
-  static empty = (paraWidth: number): Para => ({
-    paraWidth,
-    paraContent: ParaContent.empty,
-  });
-}
+const Para = Schema.Struct({
+  width: Schema.Number,
+  content: ParaContent,
+});
+type Para = typeof Para.Type;
+
+// emptyPara :: Int -> Para
+const emptyPara = (paraWidth: number): Para => ({
+  width: paraWidth,
+  content: {
+    fullLines: [],
+    lastLine: [],
+  },
+});
 
 // @columns w h t@ is a list of boxes, each of width @w@ and height at most @h@, containing text @t@ flowed into as many columns as necessary.
 // columns :: Alignment -> Int -> Int -> String -> [Box]
@@ -348,8 +298,7 @@ const flow = (width: number, text: string): string[] => {
     text,
     String.split(whitespaceRegex),
     Array.filter((word) => word.length > 0),
-    Array.map(Word.fromString),
-    Array.reduce(Para.empty(width), (para, word) => addWordP(word)(para)),
+    Array.reduce(emptyPara(width), (para, word) => addWordP(word)(para)),
     getLines,
     Array.map((line) => line.slice(0, width))
   );
@@ -357,65 +306,53 @@ const flow = (width: number, text: string): string[] => {
 
 // getLines :: Para -> [String]
 const getLines = ({
-  paraContent: { fullLines, lastLine },
+  content: { fullLines, lastLine },
 }: typeof Para.Type): string[] => {
-  const process = (lines: readonly Line[]): string[] =>
+  const process = (lines: readonly (readonly string[])[]): string[] =>
     pipe(
       Array.fromIterable(lines),
       Array.reverse,
-      Array.map((line) =>
-        pipe(
-          line.getWords,
-          Array.reverse,
-          Array.map((word) => word.getWord),
-          Array.join(" ")
-        )
-      )
+      Array.map((line) => pipe(line, Array.reverse, Array.join(" ")))
     );
 
-  return process(lastLine.lLen === 0 ? fullLines : [lastLine, ...fullLines]);
+  return process(lastLine.length === 0 ? fullLines : [lastLine, ...fullLines]);
 };
-
-// startLine :: Word -> Line
-const startLine = (word: Word): Line => ({
-  lLen: word.wLen,
-  getWords: [word],
-});
 
 // addWordP :: Para -> Word -> Para
 const addWordP =
-  (word: Word) =>
-  (para: Para): Para =>
-    wordFits(para.paraWidth, word, para.paraContent.lastLine)
-      ? {
-          paraWidth: para.paraWidth,
-          paraContent: {
-            fullLines: para.paraContent.fullLines,
-            lastLine: addWordL(word)(para.paraContent.lastLine),
+  (word: string) =>
+  (para: Para): Para => {
+    return {
+      width: para.width,
+      content: wordFits(para, word)
+        ? {
+            fullLines: para.content.fullLines,
+            lastLine: [word, ...para.content.lastLine],
+          }
+        : {
+            fullLines:
+              para.content.lastLine.length === 0
+                ? para.content.fullLines
+                : [para.content.lastLine, ...para.content.fullLines],
+            lastLine: [word],
           },
-        }
-      : {
-          paraWidth: para.paraWidth,
-          paraContent: {
-            fullLines: [
-              para.paraContent.lastLine,
-              ...para.paraContent.fullLines,
-            ],
-            lastLine: startLine(word),
-          },
-        };
-
-// addWordL :: Word -> Line -> Line
-const addWordL =
-  (word: Word) =>
-  (line: Line): Line => ({
-    lLen: line.lLen + word.wLen + 1,
-    getWords: [word, ...line.getWords],
-  });
+    };
+  };
 
 // wordFits :: Int -> Word -> Line -> Bool
-const wordFits = (paraWidth: number, word: Word, line: Line): boolean =>
-  line.lLen === 0 || line.lLen + word.wLen + 1 <= paraWidth;
+const wordFits = (
+  { content: paraContent, width: paraWidth }: typeof Para.Type,
+  word: string
+): boolean => {
+  if (line.length === 0) {
+    return word.length <= paraWidth;
+  }
+  const currentLength = paraContent.lastLine.reduce(
+    (acc, w) => acc + w.length,
+    line.length - 1
+  );
+  return currentLength + 1 + word.length <= paraWidth;
+};
 
 /*
  *  --------------------------------------------------------------------------------
@@ -494,38 +431,32 @@ const merge = (renderedBoxes: string[][]): string[] => {
 
 // Render a box as a list of lines.
 // renderBox :: Box -> [String]
-const renderBox = (b: Box): string[] => {
-  if (b.rows === 0 || b.cols === 0) {
+const renderBox = ({ cols, content, rows }: Box): string[] => {
+  if (rows === 0 || cols === 0) {
     return [];
   }
 
   return pipe(
-    b.content,
+    content,
     Match.type<Content>().pipe(
-      Match.tag("Blank", () => resizeBox(b.rows, b.cols, [""])),
-      Match.tag("Text", (content) => resizeBox(b.rows, b.cols, [content.text])),
-      Match.tag("Row", (content) =>
+      Match.tag("Blank", () => resizeBox(rows, cols, [""])),
+      Match.tag("Text", ({ text }) => resizeBox(rows, cols, [text])),
+      Match.tag("Row", ({ boxes }) =>
         resizeBox(
-          b.rows,
-          b.cols,
-          merge(content.boxes.map((box) => renderBoxWithRows(b.rows, box)))
+          rows,
+          cols,
+          merge(boxes.map((box) => renderBoxWithRows(rows, box)))
         )
       ),
-      Match.tag("Col", (content) =>
+      Match.tag("Col", ({ boxes }) =>
         resizeBox(
-          b.rows,
-          b.cols,
-          content.boxes.flatMap((box) => renderBoxWithCols(b.cols, box))
+          rows,
+          cols,
+          boxes.flatMap((box) => renderBoxWithCols(cols, box))
         )
       ),
-      Match.tag("SubBox", (content) =>
-        resizeBoxAligned(
-          b.rows,
-          b.cols,
-          content.xAlign,
-          content.yAlign,
-          renderBox(content.box)
-        )
+      Match.tag("SubBox", ({ box, xAlign, yAlign }) =>
+        resizeBoxAligned(rows, cols, xAlign, yAlign, renderBox(box))
       ),
       Match.exhaustive
     )
@@ -649,8 +580,7 @@ export const renderWithSpaces = (b: Box): string => {
 
 // A convenience function for rendering a box to stdout.
 // printBox :: Box -> IO ()
-export const printBox = (b: Box): void => {
-  // Using console.log is the closest equivalent to putStr in browser/Node environment
-  // biome-ignore lint/suspicious/noConsole: This is intentionally a print function
-  console.log(render(b));
-};
+export const printBox = (b: Box) =>
+  Effect.gen(function* () {
+    yield* Console.log(render(b));
+  });
