@@ -1,5 +1,6 @@
 import { Array, Console, Effect, Match, pipe, Schema, String } from "effect";
 import { dual } from "effect/Function";
+import { type Pipeable, pipeArguments } from "effect/Pipeable";
 
 // Regular expression for splitting text on whitespace
 const whitespaceRegex = /\s+/;
@@ -31,29 +32,55 @@ export const center1: Alignment = "AlignCenter1";
 // Align boxes centered, but biased to the right/bottom in case of unequal parities.
 export const center2: Alignment = "AlignCenter2";
 
-export interface Box {
+export interface Box extends Pipeable {
   readonly rows: number;
   readonly cols: number;
   readonly content: Content;
 }
+
+const _Box = Schema.suspend(
+  (): Schema.Schema<{ rows: number; cols: number; content: Content }> =>
+    Schema.Struct({
+      rows: Schema.Number,
+      cols: Schema.Number,
+      content: Content,
+    })
+);
 
 // Contents of a box.
 const Content = Schema.Union(
   Schema.TaggedStruct("Blank", {}),
   Schema.TaggedStruct("Text", { text: Schema.String }),
   Schema.TaggedStruct("Row", {
-    boxes: Schema.Array(Schema.suspend((): Schema.Schema<Box> => Box)),
+    boxes: Schema.Array(_Box),
   }),
   Schema.TaggedStruct("Col", {
-    boxes: Schema.Array(Schema.suspend((): Schema.Schema<Box> => Box)),
+    boxes: Schema.Array(_Box),
   }),
   Schema.TaggedStruct("SubBox", {
     xAlign: Alignment,
     yAlign: Alignment,
-    box: Schema.suspend((): Schema.Schema<Box> => Box),
+    box: _Box,
   })
 );
 type Content = typeof Content.Type;
+
+export const make = (b: {
+  rows: number;
+  cols: number;
+  content: Content;
+}): Box => {
+  const box = {
+    ...b,
+  } as Box;
+
+  box.pipe = function () {
+    // biome-ignore lint/complexity/noArguments: Effect's pipeArguments requires the arguments object
+    return pipeArguments(this, arguments);
+  };
+
+  return box;
+};
 
 // The basic data type.  A box has a specified size and some sort of contents.
 export const Box = Schema.Struct({
@@ -62,40 +89,44 @@ export const Box = Schema.Struct({
   content: Content,
 });
 
-export // The null box, which has no content and no size.  It is quite useless.
+// The null box, which has no content and no size.  It is quite useless.
 // nullBox :: Box
-const nullBox: Box = { rows: 0, cols: 0, content: { _tag: "Blank" } };
-
-// @empty r c@ is an empty box with @r@ rows and @c@ columns.
-// empty :: Int -> Int -> Box
-export const emptyBox = (rows: number, cols: number): Box => ({
-  rows: Math.max(0, rows),
-  cols: Math.max(0, cols),
+export const nullBox: Box = make({
+  rows: 0,
+  cols: 0,
   content: { _tag: "Blank" },
 });
 
+// @empty r c@ is an empty box with @r@ rows and @c@ columns.
+// empty :: Int -> Int -> Box
+export const emptyBox = (rows: number, cols: number): Box =>
+  make({
+    rows: Math.max(0, rows),
+    cols: Math.max(0, cols),
+    content: { _tag: "Blank" },
+  });
+
 // A @1x1@ box containing a single character.
 // char :: Char -> Box
-export const char = (c: string): Box => ({
-  rows: 1,
-  cols: 1,
-  content: { _tag: "Text", text: c[0] ?? " " },
-});
+export const char = (c: string): Box =>
+  make({
+    rows: 1,
+    cols: 1,
+    content: { _tag: "Text", text: c[0] ?? " " },
+  });
 
 // unsafeLine :: String -> Box
-const unsafeLine = (t: string): Box => ({
-  rows: 1,
-  cols: t.length,
-  content: { _tag: "Text", text: t },
-});
+const unsafeLine = (t: string): Box =>
+  make({
+    rows: 1,
+    cols: t.length,
+    content: { _tag: "Text", text: t },
+  });
 
 // A box containing lines of text.
 // text :: String -> Box
 export const text = (s: string): Box =>
-  vcat(
-    String.split(s, "\n").map((l) => unsafeLine(l)),
-    left
-  );
+  pipe(s, String.split("\n"), Array.map(unsafeLine), vcat(left));
 
 // A (@1 x len@) box containing a string length @len@
 // line :: String -> Box
@@ -167,14 +198,14 @@ export const hcat = dual<
   (self: readonly Box[], a: Alignment) => Box
 >(2, (self, a) => {
   const [w, h] = sumMax(cols, 0, rows, self);
-  return {
+  return make({
     rows: h,
     cols: w,
     content: {
       _tag: "Row",
       boxes: self.map(alignVert(a, h)),
     },
-  };
+  });
 });
 
 // Glue a list of boxes together vertically, with the given alignment.
@@ -184,14 +215,14 @@ export const vcat = dual<
   (self: readonly Box[], a: Alignment) => Box
 >(2, (self, a) => {
   const [h, w] = sumMax(rows, 0, cols, self);
-  return {
+  return make({
     rows: h,
     cols: w,
     content: {
       _tag: "Col",
       boxes: self.map(alignHoriz(a, w)),
     },
-  };
+  });
 });
 
 // Paste two boxes together horizontally.
@@ -374,12 +405,12 @@ const wordFits = (
   { content: paraContent, width: paraWidth }: typeof Para.Type,
   word: string
 ): boolean => {
-  if (line.length === 0) {
+  if (paraContent.lastLine.length === 0) {
     return word.length <= paraWidth;
   }
   const currentLength = paraContent.lastLine.reduce(
     (acc, w) => acc + w.length,
-    line.length - 1
+    paraContent.lastLine.length - 1
   );
   return currentLength + 1 + word.length <= paraWidth;
 };
@@ -409,11 +440,18 @@ export const alignVert = dual<
 export const align = dual<
   (ah: Alignment, av: Alignment, r: number, c: number) => (self: Box) => Box,
   (self: Box, ah: Alignment, av: Alignment, r: number, c: number) => Box
->(5, (self, ah, av, r, c) => ({
-  rows: r,
-  cols: c,
-  content: { _tag: "SubBox", xAlign: ah, yAlign: av, box: self },
-}));
+>(5, (self, ah, av, r, c) =>
+  make({
+    rows: r,
+    cols: c,
+    content: {
+      _tag: "SubBox",
+      xAlign: ah,
+      yAlign: av,
+      box: { rows: self.rows, cols: self.cols, content: self.content },
+    },
+  })
+);
 
 // Move a box "up" by putting it in a larger box with extra rows, aligned to the top.
 // moveUp :: Int -> Box -> Box
@@ -485,18 +523,18 @@ const renderBox = ({ cols, content, rows }: Box): string[] => {
         resizeBox(
           rows,
           cols,
-          merge(boxes.map((box) => renderBoxWithRows(rows, box)))
+          merge(boxes.map((box) => renderBoxWithRows(rows, make(box))))
         )
       ),
       Match.tag("Col", ({ boxes }) =>
         resizeBox(
           rows,
           cols,
-          boxes.flatMap((box) => renderBoxWithCols(cols, box))
+          boxes.flatMap((box) => renderBoxWithCols(cols, make(box)))
         )
       ),
       Match.tag("SubBox", ({ box, xAlign, yAlign }) =>
-        resizeBoxAligned(rows, cols, xAlign, yAlign, renderBox(box))
+        resizeBoxAligned(rows, cols, xAlign, yAlign, renderBox(make(box)))
       ),
       Match.exhaustive
     )
