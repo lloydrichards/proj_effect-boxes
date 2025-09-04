@@ -1,5 +1,5 @@
-import { describe, expect, it } from "bun:test";
 import { String } from "effect";
+import { describe, expect, it } from "vitest";
 import * as Box from "../src/Box";
 
 describe("Box", () => {
@@ -52,49 +52,66 @@ describe("Box", () => {
     expect(Box.render(leftV)).toBe(Box.render(rightV));
   });
 
-  describe("Semigroup and Monoid", () => {
-    it("semigroup associativity", () => {
-      // (a <> b) <> c = a <> (b <> c)
-      const a = Box.text("a");
-      const b = Box.text("b");
-      const c = Box.text("c");
-      const left = Box.combine(Box.combine(a, b), c);
-      const right = Box.combine(a, Box.combine(b, c));
-      expect(Box.render(left)).toBe(Box.render(right));
-      expect(Box.render(left)).toBe("abc\n");
-    });
+  it("semigroup associativity", () => {
+    // (a <> b) <> c = a <> (b <> c)
+    const a = Box.text("a");
+    const b = Box.text("b");
+    const c = Box.text("c");
+    const left = Box.combine(Box.combine(a, b), c);
+    const right = Box.combine(a, Box.combine(b, c));
+    expect(Box.render(left)).toBe(Box.render(right));
+    expect(Box.render(left)).toBe("abc\n");
+  });
 
-    it("monoid left identity", () => {
-      // empty <> x = x
-      const box = Box.text("box");
-      const result = Box.combine(Box.nullBox, box);
-      expect(Box.render(result)).toBe(Box.render(box));
-      expect(Box.render(result)).toBe("box\n");
-    });
+  it("monoid left identity", () => {
+    // empty <> x = x
+    const box = Box.text("box");
+    const result = Box.combine(Box.nullBox, box);
+    expect(Box.render(result)).toBe(Box.render(box));
+    expect(Box.render(result)).toBe("box\n");
+  });
 
-    it("monoid right identity", () => {
-      // x <> empty = x
-      const box = Box.text("world");
-      const result = Box.combine(box, Box.nullBox);
-      expect(Box.render(result)).toBe(Box.render(box));
-      expect(Box.render(result)).toBe("world\n");
-    });
+  it("monoid right identity", () => {
+    // x <> empty = x
+    const box = Box.text("world");
+    const result = Box.combine(box, Box.nullBox);
+    expect(Box.render(result)).toBe(Box.render(box));
+    expect(Box.render(result)).toBe("world\n");
+  });
 
-    it("monoid combineAll with multiple boxes", () => {
-      const result = Box.combineAll([
-        Box.text("a"),
-        Box.text("b"),
-        Box.text("c"),
-        Box.text("d"),
-      ]);
-      expect(Box.render(result)).toBe("abcd\n");
-    });
+  it("monoid combineAll with multiple boxes", () => {
+    const result = Box.combineAll([
+      Box.text("a"),
+      Box.text("b"),
+      Box.text("c"),
+      Box.text("d"),
+    ]);
+    expect(Box.render(result)).toBe("abcd\n");
+  });
 
-    it("monoid combineAll with empty collection", () => {
-      const result = Box.combineAll([]);
-      expect(Box.render(result)).toBe(Box.render(Box.nullBox));
-      expect(Box.render(result)).toBe("");
-    });
+  it("monoid combineAll with empty collection", () => {
+    const result = Box.combineAll([]);
+    expect(Box.render(result)).toBe(Box.render(Box.nullBox));
+    expect(Box.render(result)).toBe("");
+  });
+
+  it("combineMany combines a starting box with multiple boxes", () => {
+    const result = Box.combineMany(Box.text("start"), [
+      Box.text("1"),
+      Box.text("2"),
+      Box.text("3"),
+    ]);
+    expect(Box.render(result)).toBe("start123\n");
+  });
+
+  it("rows and cols can describe a Box", () => {
+    const box1 = Box.emptyBox(5, 3);
+    expect(Box.rows(box1)).toBe(5);
+    expect(Box.cols(box1)).toBe(3);
+
+    const box2 = Box.text("line1\nline2\nline3");
+    expect(Box.rows(box2)).toBe(3);
+    expect(Box.cols(box2)).toBe(5);
   });
 });
 
@@ -417,6 +434,304 @@ describe("para", () => {
          |than
          |the
          |widt
+         |`
+      )
+    );
+  });
+});
+
+describe("Spacing", () => {
+  it("hcatWithSpace concatenates boxes horizontally with space", () => {
+    const result = Box.hcatWithSpace(Box.text("left"), Box.text("right"));
+    expect(Box.render(result)).toBe("left right\n");
+  });
+
+  it("hcatWithSpace with multi-line boxes", () => {
+    const result = Box.hcatWithSpace(Box.text("A\nB"), Box.text("X\nY"));
+    expect(Box.render(result)).toBe(
+      String.stripMargin(
+        `|A X
+         |B Y
+         |`
+      )
+    );
+  });
+
+  it("vcatWithSpace concatenates boxes vertically with space", () => {
+    const result = Box.vcatWithSpace(Box.text("top"), Box.text("bottom"));
+    expect(Box.render(result)).toBe(
+      String.stripMargin(
+        `|top
+         |
+         |bottom
+         |`
+      )
+    );
+  });
+
+  it("vcatWithSpace with different widths", () => {
+    const result = Box.vcatWithSpace(
+      Box.text("short"),
+      Box.text("much longer text")
+    );
+    expect(Box.render(result)).toBe(
+      String.stripMargin(
+        `|short
+         |
+         |much longer text
+         |`
+      )
+    );
+  });
+});
+
+describe("Punctuation Functions", () => {
+  it("punctuateH intersperse with comma", () => {
+    const boxes = [Box.text("a"), Box.text("b"), Box.text("c")];
+    const result = Box.punctuateH(Box.left, Box.text(","), boxes);
+    expect(Box.render(result)).toBe(
+      String.stripMargin(
+        `|a,b,c
+         |`
+      )
+    );
+  });
+
+  it("punctuateH with single box", () => {
+    const boxes = [Box.text("solo")];
+    const result = Box.punctuateH(Box.left, Box.text("|"), boxes);
+    expect(Box.render(result)).toBe(
+      String.stripMargin(
+        `|solo
+         |`
+      )
+    );
+  });
+
+  it("punctuateH with different alignments", () => {
+    const result = Box.punctuateH(Box.bottom, Box.text("|"), [
+      Box.text("A\nB"),
+      Box.text("X"),
+    ]);
+    expect(Box.renderWithSpaces(result)).toBe(
+      String.stripMargin(
+        `|A  
+         |B|X
+         |`
+      )
+    );
+  });
+
+  it("punctuateV intersperse with separator", () => {
+    const result = Box.punctuateV(Box.left, Box.text("---"), [
+      Box.text("line1"),
+      Box.text("line2"),
+      Box.text("line3"),
+    ]);
+    expect(Box.render(result)).toBe(
+      String.stripMargin(
+        `|line1
+         |---
+         |line2
+         |---
+         |line3
+         |`
+      )
+    );
+  });
+
+  it("punctuateV with single box", () => {
+    const result = Box.punctuateV(Box.left, Box.text("***"), [
+      Box.text("only"),
+    ]);
+    expect(Box.render(result)).toBe(
+      String.stripMargin(
+        `|only
+         |`
+      )
+    );
+  });
+
+  it("punctuateV with different alignments", () => {
+    expect(
+      Box.render(
+        Box.punctuateV(Box.right, Box.text("--"), [
+          Box.text("A"),
+          Box.text("WIDE"),
+        ])
+      )
+    ).toBe(
+      String.stripMargin(
+        `|   A
+         |  --
+         |WIDE
+         |`
+      )
+    );
+  });
+});
+
+describe("Separation", () => {
+  it("hsep with zero separation", () => {
+    const result = Box.hsep(0, Box.left, [
+      Box.text("a"),
+      Box.text("b"),
+      Box.text("c"),
+    ]);
+    expect(Box.render(result)).toBe(
+      String.stripMargin(
+        `|abc
+         |`
+      )
+    );
+  });
+
+  it("hsep with spacing", () => {
+    const result = Box.hsep(3, Box.left, [Box.text("x"), Box.text("y")]);
+    expect(Box.render(result)).toBe("x   y\n");
+  });
+
+  it("hsep with different alignments", () => {
+    const result = Box.hsep(1, Box.center1, [
+      Box.text("A\nB\nC"),
+      Box.text("X"),
+    ]);
+    expect(Box.renderWithSpaces(result)).toBe(
+      String.stripMargin(
+        `|A  
+         |B X
+         |C  
+         |`
+      )
+    );
+  });
+
+  it("vsep with spacing", () => {
+    const result = Box.vsep(2, Box.left, [Box.text("top"), Box.text("bottom")]);
+    expect(Box.render(result)).toBe(
+      String.stripMargin(
+        `|top
+         |
+         |
+         |bottom
+         |`
+      )
+    );
+  });
+
+  it("vsep with different alignments", () => {
+    const result = Box.vsep(1, Box.center1, [Box.text("A"), Box.text("WIDE")]);
+    expect(Box.renderWithSpaces(result)).toBe(
+      String.stripMargin(
+        `| A  
+         |    
+         |WIDE
+         |`
+      )
+    );
+  });
+});
+
+describe("Movement", () => {
+  const centerBox = Box.align(Box.center1, Box.center1, 3, 3, Box.text("x"));
+
+  it("moveUp adds rows below the box", () => {
+    const result = Box.moveUp(2, centerBox);
+    expect(Box.renderWithSpaces(result).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|...
+         |.x.
+         |...
+         |...
+         |...
+         |`
+      )
+    );
+  });
+
+  it("moveUp with single row movement", () => {
+    const result = Box.moveUp(1, centerBox);
+    expect(Box.renderWithSpaces(result).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|...
+         |.x.
+         |...
+         |...
+         |`
+      )
+    );
+  });
+
+  it("moveDown adds rows above the box", () => {
+    const result = Box.moveDown(2, centerBox);
+    expect(Box.renderWithSpaces(result).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|...
+         |...
+         |...
+         |.x.
+         |...
+         |`
+      )
+    );
+  });
+
+  it("moveDown with single row movement", () => {
+    const result = Box.moveDown(1, centerBox);
+    expect(Box.renderWithSpaces(result).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|...
+         |...
+         |.x.
+         |...
+         |`
+      )
+    );
+  });
+
+  it("moveLeft adds columns to the right", () => {
+    const result = Box.moveLeft(2, centerBox);
+    expect(Box.renderWithSpaces(result).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|.....
+         |.x...
+         |.....
+         |`
+      )
+    );
+  });
+
+  it("moveLeft with single column movement", () => {
+    const result = Box.moveLeft(1, centerBox);
+    expect(Box.renderWithSpaces(result).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|....
+         |.x..
+         |....
+         |`
+      )
+    );
+  });
+
+  it("moveRight adds columns to the left", () => {
+    const result = Box.moveRight(2, centerBox);
+    expect(Box.renderWithSpaces(result).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|.....
+         |...x.
+         |.....
+         |`
+      )
+    );
+  });
+
+  it("moveRight with single column movement", () => {
+    const result = Box.moveRight(1, centerBox);
+    expect(Box.renderWithSpaces(result).replaceAll(" ", ".")).toBe(
+      String.stripMargin(
+        `|....
+         |..x.
+         |....
          |`
       )
     );
