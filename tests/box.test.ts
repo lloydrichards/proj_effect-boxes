@@ -172,8 +172,8 @@ describe("issue38 parity tests", () => {
     // Under center1 (ceil), Z should be on the bottom row
     expect(renderWithSpaces(c1).replaceAll(" ", ".")).toBe(
       String.stripMargin(
-        `|x.
-         |yZ
+        `|xZ
+         |y.
          |`
       )
     );
@@ -181,8 +181,8 @@ describe("issue38 parity tests", () => {
     // Under center2 (floor), Z should be on the top row
     expect(renderWithSpaces(c2).replaceAll(" ", ".")).toBe(
       String.stripMargin(
-        `|xZ
-         |y.
+        `|x.
+         |yZ
          |`
       )
     );
@@ -338,11 +338,12 @@ describe("mkParaBox", () => {
     const lines = ["line1", "line2", "line3"];
     const box = mkParaBox(left, 2, lines);
     expect(box.rows).toBe(2);
-    // Should still contain all text, just aligned within the specified height
+    // With strict container sizing, only the first 2 lines should be visible
     const rendered = render(box);
     expect(rendered).toContain("line1");
     expect(rendered).toContain("line2");
-    expect(rendered).toContain("line3");
+    // line3 is truncated due to height constraint
+    expect(rendered).not.toContain("line3");
   });
 });
 

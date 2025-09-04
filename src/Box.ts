@@ -1,4 +1,4 @@
-import { Array, pipe, Schema, String } from "effect";
+import { Array, Match, pipe, Schema, String } from "effect";
 
 // Regular expression for splitting text on whitespace
 const whitespaceRegex = /\s+/;
@@ -464,86 +464,24 @@ export const moveRight = (n: number, b: Box): Box =>
  *  --------------------------------------------------------------------------------
  */
 
-const getPadding = (
-  total: number,
-  sub: number,
-  alignment: Alignment
-): [number, number] => {
-  const empty = total - sub;
-  let before: number;
-  switch (alignment) {
-    case "AlignFirst":
-      before = 0;
-      break;
-    case "AlignLast":
-      before = empty;
-      break;
-    case "AlignCenter1":
-      before = Math.ceil(empty / 2);
-      break;
-    case "AlignCenter2":
-      before = Math.floor(empty / 2);
-      break;
+// Helper function for merging rendered rows (equivalent to Haskell's merge)
+// merge = foldr (zipWith (++)) (repeat [])
+const merge = (renderedBoxes: string[][]): string[] => {
+  if (renderedBoxes.length === 0) {
+    return [];
   }
-  const after = empty - before;
-  return [before, after];
-};
-
-const renderBoxContent = (
-  content: Content,
-  rows: number,
-  cols: number
-): string[] => {
-  switch (content._tag) {
-    case "Blank":
-      return Array.makeBy(rows, () => String.repeat(cols)(" "));
-    case "Text":
-      return [content.text + String.repeat(cols - content.text.length)(" ")];
-    case "Row": {
-      const rendered = content.boxes.map(renderBox);
-      const result: string[] = Array.makeBy(rows, () => "");
-      for (let r = 0; r < rows; r++) {
-        for (const c of rendered) {
-          result[r] += c[r] ?? "";
-        }
-      }
-      return result;
-    }
-    case "Col": {
-      const result: string[] = [];
-      for (const c of content.boxes) {
-        result.push(...renderBox(c));
-      }
-      return result;
-    }
-    case "SubBox": {
-      const sub = renderBox(content.box);
-      const [topPad, bottomPad] = getPadding(
-        rows,
-        content.box.rows,
-        content.yAlign
-      );
-      const [leftPad, rightPad] = getPadding(
-        cols,
-        content.box.cols,
-        content.xAlign
-      );
-
-      const result: string[] = [];
-      for (let i = 0; i < topPad; i++) {
-        result.push(String.repeat(cols)(" "));
-      }
-      for (const line of sub) {
-        result.push(
-          String.repeat(leftPad)(" ") + line + String.repeat(rightPad)(" ")
-        );
-      }
-      for (let i = 0; i < bottomPad; i++) {
-        result.push(String.repeat(cols)(" "));
-      }
-      return result;
-    }
-  }
+  return pipe(
+    Array.makeBy(
+      Math.max(...renderedBoxes.map((lines) => lines.length)),
+      (i) => i
+    ),
+    Array.map((rowIndex) =>
+      pipe(
+        renderedBoxes,
+        Array.reduce("", (acc, lines) => acc + (lines[rowIndex] ?? ""))
+      )
+    )
+  );
 };
 
 // Render a box as a list of lines.
@@ -552,7 +490,38 @@ const renderBox = (b: Box): string[] => {
   if (b.rows === 0 || b.cols === 0) {
     return [];
   }
-  return renderBoxContent(b.content, b.rows, b.cols);
+
+  return pipe(
+    b.content,
+    Match.type<Content>().pipe(
+      Match.tag("Blank", () => resizeBox(b.rows, b.cols, [""])),
+      Match.tag("Text", (content) => resizeBox(b.rows, b.cols, [content.text])),
+      Match.tag("Row", (content) =>
+        resizeBox(
+          b.rows,
+          b.cols,
+          merge(content.boxes.map((box) => renderBoxWithRows(b.rows, box)))
+        )
+      ),
+      Match.tag("Col", (content) =>
+        resizeBox(
+          b.rows,
+          b.cols,
+          content.boxes.flatMap((box) => renderBoxWithCols(b.cols, box))
+        )
+      ),
+      Match.tag("SubBox", (content) =>
+        resizeBoxAligned(
+          b.rows,
+          b.cols,
+          content.xAlign,
+          content.yAlign,
+          renderBox(content.box)
+        )
+      ),
+      Match.exhaustive
+    )
+  );
 };
 
 const trailingSpaceRegex = /\s+$/;
@@ -576,29 +545,105 @@ export const renderWithSpaces = (b: Box): string => {
   return Array.join(lines, "\n") + (lines.length > 0 ? "\n" : "");
 };
 
-// dropWhileEnd :: (a -> Bool) -> [a] -> [a]
-// TODO: implement dropWhileEnd
+//  "Padded take": @takeP a n xs@ is the same as @take n xs@, if @n <= length xs@; otherwise it is @xs@ followed by enough copies of @a@ to make the length equal to @n@.
+// takeP :: a -> Int -> [a] -> [a]
+export const takeP = <A>(a: A, n: number, xs: readonly A[]): A[] => {
+  if (n <= 0) {
+    return [];
+  }
+  if (xs.length === 0) {
+    return Array.makeBy(n, () => a);
+  }
+  if (n <= xs.length) {
+    return xs.slice(0, n);
+  }
+  return [...xs, ...Array.makeBy(n - xs.length, () => a)];
+};
+
+//  @takePA @ is like 'takeP', but with alignment.  That is, we imagine a copy of @xs@ extended infinitely on both sides with copies of @a@, and a window of size @n@ placed so that @xs@ has the specified alignment within the window; @takePA algn a n xs@ returns the contents of this window.
+// takePA :: Alignment -> a -> Int -> [a] -> [a]
+export const takePA = <A>(
+  alignment: Alignment,
+  a: A,
+  n: number,
+  xs: readonly A[]
+): A[] => {
+  if (n <= 0) {
+    return [];
+  }
+
+  const numRev = (align: Alignment, size: number): number =>
+    Match.value(align).pipe(
+      Match.when("AlignFirst", () => 0),
+      Match.when("AlignLast", () => size),
+      Match.when("AlignCenter1", () => Math.ceil(size / 2)),
+      Match.when("AlignCenter2", () => Math.floor(size / 2)),
+      Match.exhaustive
+    );
+
+  const numFwd = (align: Alignment, size: number): number =>
+    Match.value(align).pipe(
+      Match.when("AlignFirst", () => size),
+      Match.when("AlignLast", () => 0),
+      Match.when("AlignCenter1", () => Math.floor(size / 2)),
+      Match.when("AlignCenter2", () => Math.ceil(size / 2)),
+      Match.exhaustive
+    );
+
+  const splitPos = numRev(alignment, xs.length);
+  const prefix = [...xs.slice(0, splitPos)].reverse();
+  const suffix = xs.slice(splitPos);
+
+  return [
+    ...takeP(a, numRev(alignment, n), prefix).reverse(),
+    ...takeP(a, numFwd(alignment, n), suffix),
+  ];
+};
 
 // Generate a string of spaces.
 // blanks :: Int -> String
-// TODO: implement blanks
+export const blanks = (n: number): string =>
+  pipe(" ", String.repeat(Math.max(0, n)));
 
 // Render a box as a list of lines, using a given number of rows.
 // renderBoxWithRows :: Int -> Box -> [String]
-// TODO: implement renderBoxWithRows
+export const renderBoxWithRows = (r: number, b: Box): string[] =>
+  renderBox({ ...b, rows: r });
 
 // Render a box as a list of lines, using a given number of columns.
 // renderBoxWithCols :: Int -> Box -> [String]
-// TODO: implement renderBoxWithCols
+export const renderBoxWithCols = (c: number, b: Box): string[] =>
+  renderBox({ ...b, cols: c });
 
 // Resize a rendered list of lines.
 // resizeBox :: Int -> Int -> [String] -> [String]
-// TODO: implement resizeBox
+export const resizeBox = (r: number, c: number, lines: string[]): string[] =>
+  takeP(
+    blanks(c),
+    r,
+    lines.map((line) => takeP(" ", c, [...line])).map((chars) => chars.join(""))
+  );
 
 // Resize a rendered list of lines, using given alignments.
 // resizeBoxAligned :: Int -> Int -> Alignment -> Alignment -> [String] -> [String]
-// TODO: implement resizeBoxAligned
+export const resizeBoxAligned = (
+  r: number,
+  c: number,
+  ha: Alignment,
+  va: Alignment,
+  lines: string[]
+): string[] =>
+  takePA(
+    va,
+    blanks(c),
+    r,
+    lines.map((line) => takePA(ha, " ", c, [...line]).join(""))
+  );
 
 // A convenience function for rendering a box to stdout.
 // printBox :: Box -> IO ()
-// TODO: implement printBox
+export const printBox = (b: Box): void => {
+  // Using console.log is the closest equivalent to putStr in browser/Node environment
+  // biome-ignore lint/suspicious/noConsole: This is intentionally a print function
+  console.log(render(b));
+};
