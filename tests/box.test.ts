@@ -15,7 +15,7 @@ describe("Box", () => {
   });
 
   it("empty right identity", () => {
-    const b = Box.hcat(Box.top, [Box.text("hi"), Box.text("!")]);
+    const b = Box.hcat([Box.text("hi"), Box.text("!")], Box.top);
     expect(Box.render(Box.hAppend(b, Box.nullBox))).toBe(Box.render(b));
   });
 
@@ -96,11 +96,10 @@ describe("Box", () => {
   });
 
   it("combineMany combines a starting box with multiple boxes", () => {
-    const result = Box.combineMany(Box.text("start"), [
-      Box.text("1"),
-      Box.text("2"),
-      Box.text("3"),
-    ]);
+    const result = Box.combineMany(
+      [Box.text("1"), Box.text("2"), Box.text("3")],
+      Box.text("start")
+    );
     expect(Box.render(result)).toBe("start123\n");
   });
 
@@ -132,7 +131,7 @@ describe("issue38 parity tests", () => {
     const b = Box.emptyBox(R2, C2);
     expect(a.rows).toBe(R1);
     expect(a.cols).toBe(C1);
-    const c = Box.hcat(Box.top, [a, b]);
+    const c = Box.hcat([a, b], Box.top);
     expect(c.rows).toBe(R1);
     expect(c.cols).toBe(C1 + C2);
   });
@@ -153,21 +152,21 @@ describe("issue38 parity tests", () => {
   it("beside/above default to top alignment and match Box.hcat/Box.vcat", () => {
     const a = Box.text("x\ny");
     const b = Box.text("Z");
-    const beside = (l: any, r: any) => Box.hcat(Box.top, [l, r]);
-    const above = (t: any, bot: any) => Box.vcat(Box.left, [t, bot]);
+    const beside = (l: any, r: any) => Box.hcat([l, r], Box.top);
+    const above = (t: any, bot: any) => Box.vcat([t, bot], Box.left);
     expect(Box.renderWith(beside(a, b))).toBe(
-      Box.renderWith(Box.hcat(Box.top, [a, b]))
+      Box.renderWith(Box.hcat([a, b], Box.top))
     );
     expect(Box.renderWith(above(b, a))).toBe(
-      Box.renderWith(Box.vcat(Box.left, [b, a]))
+      Box.renderWith(Box.vcat([b, a], Box.left))
     );
   });
 
   it("Box.hcat vertical alignment center2 vs center1 biases differ on odd free space", () => {
     const tall = Box.text("x\ny"); // height 2
     const short = Box.text("Z"); // height 1
-    const c1 = Box.hcat(Box.center1, [tall, short]);
-    const c2 = Box.hcat(Box.center2, [tall, short]);
+    const c1 = Box.hcat([tall, short], Box.center1);
+    const c2 = Box.hcat([tall, short], Box.center2);
 
     // Under center1 (ceil), Z should be on the bottom row
     expect(Box.renderWith(c1, ".")).toBe(
@@ -191,7 +190,7 @@ describe("issue38 parity tests", () => {
   it("Box.hcat bottom alignment places shorter box at bottom", () => {
     const tall = Box.text("x\ny\nz");
     const short = Box.text("Q");
-    expect(Box.renderWith(Box.hcat(Box.bottom, [tall, short]), ".")).toBe(
+    expect(Box.renderWith(Box.hcat([tall, short], Box.bottom), ".")).toBe(
       String.stripMargin(
         `|x.
          |y.
@@ -204,7 +203,7 @@ describe("issue38 parity tests", () => {
   it("Box.vcat bottom (right align) pads shorter lines to the right", () => {
     const a = Box.text("a"); // width 1
     const b = Box.text("bb"); // width 2
-    expect(Box.renderWith(Box.vcat(Box.right, [a, b]), ".")).toBe(
+    expect(Box.renderWith(Box.vcat([a, b], Box.right), ".")).toBe(
       String.stripMargin(
         `|.a
          |bb
@@ -217,7 +216,7 @@ describe("issue38 parity tests", () => {
     const W = 5;
     expect(
       Box.renderWith(
-        Box.align(Box.center1, Box.center1, H, W, Box.text("x")),
+        Box.align(Box.text("x"), Box.center1, Box.center1, H, W),
         "."
       )
     ).toBe(
@@ -236,7 +235,7 @@ describe("issue38 parity tests", () => {
     const W = 5;
     expect(
       Box.renderWith(
-        Box.align(Box.center1, Box.center1, H, W, Box.text("x\ny")),
+        Box.align(Box.text("x\ny"), Box.center1, Box.center1, H, W),
         "."
       )
     ).toBe(
@@ -256,7 +255,7 @@ describe("issue38 parity tests", () => {
     const W = 5;
     expect(
       Box.renderWith(
-        Box.align(Box.center1, Box.center1, H, W, Box.line("x\ny")),
+        Box.align(Box.line("x\ny"), Box.center1, Box.center1, H, W),
         "."
       )
     ).toBe(
@@ -275,7 +274,7 @@ describe("issue38 parity tests", () => {
 describe("columns", () => {
   it("creates single column for short text", () => {
     const text = "hello world";
-    const cols = Box.columns(Box.left, 20, 5, text);
+    const cols = Box.columns(text, Box.left, 20, 5);
     expect(cols).toHaveLength(1);
     expect(cols[0]?.rows).toBe(5);
     expect(Box.render(cols[0] as any)).toBe(
@@ -293,7 +292,7 @@ describe("columns", () => {
   it("creates multiple columns for long text", () => {
     const text =
       "This is a very long text that should be split into multiple columns when the width is constrained and height is limited.";
-    const cols = Box.columns(Box.left, 10, 3, text);
+    const cols = Box.columns(text, Box.left, 10, 3);
     expect(cols.length).toBeGreaterThan(1);
     for (const col of cols) {
       expect(col.rows).toBe(3);
@@ -305,7 +304,7 @@ describe("columns", () => {
 
   it("handles text that fits exactly in one column", () => {
     const text = "line1 line2 line3";
-    const cols = Box.columns(Box.left, 6, 3, text);
+    const cols = Box.columns(text, Box.left, 6, 3);
     expect(cols).toHaveLength(1);
     if (cols[0]) {
       expect(Box.render(cols[0])).toBe(
@@ -321,7 +320,7 @@ describe("columns", () => {
 
   it("creates columns with right alignment", () => {
     const text = "short text here";
-    const cols = Box.columns(Box.right, 8, 2, text);
+    const cols = Box.columns(text, Box.right, 8, 2);
     expect(cols.length).toBeGreaterThanOrEqual(1);
     if (cols[0]) {
       expect(cols[0].rows).toBe(2);
@@ -334,14 +333,14 @@ describe("columns", () => {
   });
 
   it("handles empty text", () => {
-    const cols = Box.columns(Box.left, 10, 5, "");
+    const cols = Box.columns("", Box.left, 10, 5);
     expect(cols).toHaveLength(1);
     expect(cols[0]?.rows).toBe(5);
     expect(Box.render(cols[0] as any)).toBe("");
   });
 
   it("handles single word", () => {
-    const cols = Box.columns(Box.left, 10, 3, "word");
+    const cols = Box.columns("word", Box.left, 10, 3);
     expect(cols).toHaveLength(1);
     expect(Box.render(cols[0] as any)).toBe(
       String.stripMargin(
@@ -355,7 +354,7 @@ describe("columns", () => {
 
   it("creates appropriate number of columns based on text length and constraints", () => {
     const longText = new Array(100).fill("word").join(" ");
-    const cols = Box.columns(Box.left, 5, 2, longText);
+    const cols = Box.columns(longText, Box.left, 5, 2);
     expect(cols.length).toBeGreaterThan(10);
     for (const col of cols) {
       expect(col.rows).toBe(2);
@@ -366,7 +365,7 @@ describe("columns", () => {
 describe("para", () => {
   it("creates paragraph box with left alignment", () => {
     const text = "This is a test paragraph that should flow nicely.";
-    const box = Box.para(Box.left, 10, text);
+    const box = Box.para(text, Box.left, 10);
     expect(box.rows).toBeGreaterThan(0);
     expect(box.cols).toBeLessThanOrEqual(10);
     expect(Box.render(box)).toBe(
@@ -385,7 +384,7 @@ describe("para", () => {
 
   it("creates paragraph box with left alignment", () => {
     const text = "This is a test paragraph that should flow nicely.";
-    const box = Box.para(Box.right, 10, text);
+    const box = Box.para(text, Box.right, 10);
     expect(box.rows).toBeGreaterThan(0);
     expect(box.cols).toBeLessThanOrEqual(10);
     expect(Box.render(box)).toBe(
@@ -404,7 +403,7 @@ describe("para", () => {
 
   it("creates paragraph box with center alignment", () => {
     const text = "This is a test paragraph that should flow nicely.";
-    const box = Box.para(Box.center1, 10, text);
+    const box = Box.para(text, Box.center1, 10);
     expect(box.rows).toBeGreaterThan(0);
     expect(box.cols).toBeLessThanOrEqual(10);
     expect(Box.render(box)).toBe(
@@ -423,7 +422,7 @@ describe("para", () => {
 
   it("flows text to specified width", () => {
     const text = "Something longer than the width.";
-    expect(Box.render(Box.para(Box.left, 4, text))).toBe(
+    expect(Box.render(Box.para(text, Box.left, 4))).toBe(
       String.stripMargin(
         `|Some
          |long
@@ -484,7 +483,7 @@ describe("Spacing", () => {
 describe("Punctuation Functions", () => {
   it("punctuateH intersperse with comma", () => {
     const boxes = [Box.text("a"), Box.text("b"), Box.text("c")];
-    const result = Box.punctuateH(Box.left, Box.text(","), boxes);
+    const result = Box.punctuateH(boxes, Box.left, Box.text(","));
     expect(Box.render(result)).toBe(
       String.stripMargin(
         `|a,b,c
@@ -495,7 +494,7 @@ describe("Punctuation Functions", () => {
 
   it("punctuateH with single box", () => {
     const boxes = [Box.text("solo")];
-    const result = Box.punctuateH(Box.left, Box.text("|"), boxes);
+    const result = Box.punctuateH(boxes, Box.left, Box.text("|"));
     expect(Box.render(result)).toBe(
       String.stripMargin(
         `|solo
@@ -505,10 +504,11 @@ describe("Punctuation Functions", () => {
   });
 
   it("punctuateH with different alignments", () => {
-    const result = Box.punctuateH(Box.bottom, Box.text("|"), [
-      Box.text("A\nB"),
-      Box.text("X"),
-    ]);
+    const result = Box.punctuateH(
+      [Box.text("A\nB"), Box.text("X")],
+      Box.bottom,
+      Box.text("|")
+    );
     expect(Box.renderWith(result)).toBe(
       String.stripMargin(
         `|A  
@@ -519,11 +519,11 @@ describe("Punctuation Functions", () => {
   });
 
   it("punctuateV intersperse with separator", () => {
-    const result = Box.punctuateV(Box.left, Box.text("---"), [
-      Box.text("line1"),
-      Box.text("line2"),
-      Box.text("line3"),
-    ]);
+    const result = Box.punctuateV(
+      [Box.text("line1"), Box.text("line2"), Box.text("line3")],
+      Box.left,
+      Box.text("---")
+    );
     expect(Box.render(result)).toBe(
       String.stripMargin(
         `|line1
@@ -537,9 +537,11 @@ describe("Punctuation Functions", () => {
   });
 
   it("punctuateV with single box", () => {
-    const result = Box.punctuateV(Box.left, Box.text("***"), [
-      Box.text("only"),
-    ]);
+    const result = Box.punctuateV(
+      [Box.text("only")],
+      Box.left,
+      Box.text("***")
+    );
     expect(Box.render(result)).toBe(
       String.stripMargin(
         `|only
@@ -551,10 +553,11 @@ describe("Punctuation Functions", () => {
   it("punctuateV with different alignments", () => {
     expect(
       Box.render(
-        Box.punctuateV(Box.right, Box.text("--"), [
-          Box.text("A"),
-          Box.text("WIDE"),
-        ])
+        Box.punctuateV(
+          [Box.text("A"), Box.text("WIDE")],
+          Box.right,
+          Box.text("--")
+        )
       )
     ).toBe(
       String.stripMargin(
@@ -569,11 +572,11 @@ describe("Punctuation Functions", () => {
 
 describe("Separation", () => {
   it("hsep with zero separation", () => {
-    const result = Box.hsep(0, Box.left, [
-      Box.text("a"),
-      Box.text("b"),
-      Box.text("c"),
-    ]);
+    const result = Box.hsep(
+      [Box.text("a"), Box.text("b"), Box.text("c")],
+      0,
+      Box.left
+    );
     expect(Box.render(result)).toBe(
       String.stripMargin(
         `|abc
@@ -583,15 +586,16 @@ describe("Separation", () => {
   });
 
   it("hsep with spacing", () => {
-    const result = Box.hsep(3, Box.left, [Box.text("x"), Box.text("y")]);
+    const result = Box.hsep([Box.text("x"), Box.text("y")], 3, Box.left);
     expect(Box.render(result)).toBe("x   y\n");
   });
 
   it("hsep with different alignments", () => {
-    const result = Box.hsep(1, Box.center1, [
-      Box.text("A\nB\nC"),
-      Box.text("X"),
-    ]);
+    const result = Box.hsep(
+      [Box.text("A\nB\nC"), Box.text("X")],
+      1,
+      Box.center1
+    );
     expect(Box.renderWith(result)).toBe(
       String.stripMargin(
         `|A  
@@ -603,7 +607,7 @@ describe("Separation", () => {
   });
 
   it("vsep with spacing", () => {
-    const result = Box.vsep(2, Box.left, [Box.text("top"), Box.text("bottom")]);
+    const result = Box.vsep([Box.text("top"), Box.text("bottom")], 2, Box.left);
     expect(Box.render(result)).toBe(
       String.stripMargin(
         `|top
@@ -616,7 +620,7 @@ describe("Separation", () => {
   });
 
   it("vsep with different alignments", () => {
-    const result = Box.vsep(1, Box.center1, [Box.text("A"), Box.text("WIDE")]);
+    const result = Box.vsep([Box.text("A"), Box.text("WIDE")], 1, Box.center1);
     expect(Box.renderWith(result)).toBe(
       String.stripMargin(
         `| A  
@@ -629,10 +633,10 @@ describe("Separation", () => {
 });
 
 describe("Movement", () => {
-  const centerBox = Box.align(Box.center1, Box.center1, 3, 3, Box.text("x"));
+  const centerBox = Box.align(Box.text("x"), Box.center1, Box.center1, 3, 3);
 
   it("moveUp adds rows below the box", () => {
-    const result = Box.moveUp(2, centerBox);
+    const result = Box.moveUp(centerBox, 2);
     expect(Box.renderWith(result, ".")).toBe(
       String.stripMargin(
         `|...
@@ -646,7 +650,7 @@ describe("Movement", () => {
   });
 
   it("moveUp with single row movement", () => {
-    const result = Box.moveUp(1, centerBox);
+    const result = Box.moveUp(centerBox, 1);
     expect(Box.renderWith(result, ".")).toBe(
       String.stripMargin(
         `|...
@@ -659,7 +663,7 @@ describe("Movement", () => {
   });
 
   it("moveDown adds rows above the box", () => {
-    const result = Box.moveDown(2, centerBox);
+    const result = Box.moveDown(centerBox, 2);
     expect(Box.renderWith(result, ".")).toBe(
       String.stripMargin(
         `|...
@@ -673,7 +677,7 @@ describe("Movement", () => {
   });
 
   it("moveDown with single row movement", () => {
-    const result = Box.moveDown(1, centerBox);
+    const result = Box.moveDown(centerBox, 1);
     expect(Box.renderWith(result, ".")).toBe(
       String.stripMargin(
         `|...
@@ -686,7 +690,7 @@ describe("Movement", () => {
   });
 
   it("moveLeft adds columns to the right", () => {
-    const result = Box.moveLeft(2, centerBox);
+    const result = Box.moveLeft(centerBox, 2);
     expect(Box.renderWith(result, ".")).toBe(
       String.stripMargin(
         `|.....
@@ -698,7 +702,7 @@ describe("Movement", () => {
   });
 
   it("moveLeft with single column movement", () => {
-    const result = Box.moveLeft(1, centerBox);
+    const result = Box.moveLeft(centerBox, 1);
     expect(Box.renderWith(result, ".")).toBe(
       String.stripMargin(
         `|....
@@ -710,7 +714,7 @@ describe("Movement", () => {
   });
 
   it("moveRight adds columns to the left", () => {
-    const result = Box.moveRight(2, centerBox);
+    const result = Box.moveRight(centerBox, 2);
     expect(Box.renderWith(result, ".")).toBe(
       String.stripMargin(
         `|.....
@@ -722,7 +726,7 @@ describe("Movement", () => {
   });
 
   it("moveRight with single column movement", () => {
-    const result = Box.moveRight(1, centerBox);
+    const result = Box.moveRight(centerBox, 1);
     expect(Box.renderWith(result, ".")).toBe(
       String.stripMargin(
         `|....
