@@ -1,4 +1,5 @@
 import { Array, Console, Effect, Match, pipe, Schema, String } from "effect";
+import { dual } from "effect/Function";
 
 // Regular expression for splitting text on whitespace
 const whitespaceRegex = /\s+/;
@@ -92,8 +93,8 @@ const unsafeLine = (t: string): Box => ({
 // text :: String -> Box
 export const text = (s: string): Box =>
   vcat(
-    left,
-    String.split(s, "\n").map((l) => unsafeLine(l))
+    String.split(s, "\n").map((l) => unsafeLine(l)),
+    left
   );
 
 // A (@1 x len@) box containing a string length @len@
@@ -103,17 +104,26 @@ export const line = (s: string): Box =>
 
 // @para algn w t@ is a box of width @w@, containing text @t@, aligned according to @algn@, flowed to fit within the given width.
 // para :: Alignment -> Int -> String -> Box
-export const para = (a: Alignment, w: number, t: string): Box => {
-  const lines = flow(w, t);
+export const para = dual<
+  (a: Alignment, w: number) => (self: string) => Box,
+  (self: string, a: Alignment, w: number) => Box
+>(3, (self, a, w) => {
+  const lines = flow(self, w);
   return mkParaBox(a, lines.length, lines);
-};
+});
 
 // Semigroup instance for Box
 // instance Semigroup Box where
 //     l <> r = hcat top [l,r]
-export const combine = (l: Box, r: Box): Box => hcat(top, [l, r]);
-export const combineMany = (start: Box, collection: Iterable<Box>): Box =>
-  hcat(top, [start, ...Array.fromIterable(collection)]);
+export const combine = dual<
+  (l: Box) => (self: Box) => Box,
+  (self: Box, l: Box) => Box
+>(2, (self, l) => hcat([self, l], top));
+
+export const combineMany = dual<
+  (start: Box) => (self: Iterable<Box>) => Box,
+  (self: Iterable<Box>, start: Box) => Box
+>(2, (self, start) => hcat([start, ...Array.fromIterable(self)], top));
 
 // Monoid instance for Box (extends Semigroup with empty element)
 // instance Monoid Box where
@@ -122,7 +132,7 @@ export const combineMany = (start: Box, collection: Iterable<Box>): Box =>
 //     mconcat = hcat top
 export const combineAll = (collection: Iterable<Box>): Box => {
   const boxes = Array.fromIterable(collection);
-  return boxes.length === 0 ? nullBox : hcat(top, boxes);
+  return boxes.length === 0 ? nullBox : hcat(boxes, top);
 };
 
 // Get the number of rows in a box
@@ -152,88 +162,104 @@ const sumMax = <A>(
 
 // Glue a list of boxes together horizontally, with the given alignment.
 // hcat :: Foldable f => Alignment -> f Box -> Box
-export const hcat = (a: Alignment, bs: readonly Box[]): Box => {
-  const [w, h] = sumMax(
-    (b: Box) => b.cols,
-    0,
-    (b: Box) => b.rows,
-    bs
-  );
+export const hcat = dual<
+  (a: Alignment) => (self: readonly Box[]) => Box,
+  (self: readonly Box[], a: Alignment) => Box
+>(2, (self, a) => {
+  const [w, h] = sumMax(cols, 0, rows, self);
   return {
     rows: h,
     cols: w,
     content: {
       _tag: "Row",
-      boxes: bs.map((b) => alignVert(a, h, b)),
+      boxes: self.map(alignVert(a, h)),
     },
   };
-};
+});
 
 // Glue a list of boxes together vertically, with the given alignment.
 // vcat :: Foldable f => Alignment -> f Box -> Box
-export const vcat = (a: Alignment, bs: readonly Box[]): Box => {
-  const [h, w] = sumMax(
-    (b: Box) => b.rows,
-    0,
-    (b: Box) => b.cols,
-    bs
-  );
+export const vcat = dual<
+  (a: Alignment) => (self: readonly Box[]) => Box,
+  (self: readonly Box[], a: Alignment) => Box
+>(2, (self, a) => {
+  const [h, w] = sumMax(rows, 0, cols, self);
   return {
     rows: h,
     cols: w,
     content: {
       _tag: "Col",
-      boxes: bs.map((b) => alignHoriz(a, w, b)),
+      boxes: self.map(alignHoriz(a, w)),
     },
   };
-};
+});
 
 // Paste two boxes together horizontally.
 // instance Semigroup Box where
 // l <> r = hcat top [l,r]
-export const hAppend = (l: Box, r: Box): Box => hcat(top, [l, r]);
+export const hAppend = dual<
+  (l: Box) => (self: Box) => Box,
+  (self: Box, l: Box) => Box
+>(2, (self, l) => hcat([self, l], top));
 
 // Paste two boxes together horizontally with a single intervening column of space.
 // (<+>) :: Box -> Box -> Box
-export const hcatWithSpace = (l: Box, r: Box): Box =>
-  hcat(top, [l, emptyBox(0, 1), r]);
+export const hcatWithSpace = dual<
+  (l: Box) => (self: Box) => Box,
+  (self: Box, l: Box) => Box
+>(2, (self, l) => hcat([self, emptyBox(0, 1), l], top));
 
 // Paste two boxes together vertically.
 // (//) :: Box -> Box -> Box
-export const vAppend = (t: Box, b: Box): Box => vcat(left, [t, b]);
+export const vAppend = dual<
+  (t: Box) => (self: Box) => Box,
+  (self: Box, t: Box) => Box
+>(2, (self, t) => vcat([self, t], left));
 
 // Paste two boxes together vertically with a single intervening row of space.
 // (/+/) :: Box -> Box -> Box
-export const vcatWithSpace = (t: Box, b: Box): Box =>
-  vcat(left, [t, emptyBox(1, 0), b]);
+export const vcatWithSpace = dual<
+  (t: Box) => (self: Box) => Box,
+  (self: Box, t: Box) => Box
+>(2, (self, t) => vcat([self, emptyBox(1, 0), t], left));
 
 // @punctuateH a p bs@ horizontally lays out the boxes @bs@ with a copy of @p@ interspersed between each.
 // punctuateH :: Foldable f => Alignment -> Box -> f Box -> Box
-export const punctuateH = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
-  if (bs.length === 0) {
+export const punctuateH = dual<
+  (a: Alignment, p: Box) => (self: readonly Box[]) => Box,
+  (self: readonly Box[], a: Alignment, p: Box) => Box
+>(3, (self, a, p) => {
+  if (self.length === 0) {
     return nullBox;
   }
-  return hcat(a, Array.intersperse(bs, p));
-};
+  return hcat(Array.intersperse(self, p), a);
+});
 
 // A vertical version of 'punctuateH'.
 // punctuateV :: Foldable f => Alignment -> Box -> f Box -> Box
-export const punctuateV = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
-  if (bs.length === 0) {
+export const punctuateV = dual<
+  (a: Alignment, p: Box) => (self: readonly Box[]) => Box,
+  (self: readonly Box[], a: Alignment, p: Box) => Box
+>(3, (self, a, p) => {
+  if (self.length === 0) {
     return nullBox;
   }
-  return vcat(a, Array.intersperse(bs, p));
-};
+  return vcat(Array.intersperse(self, p), a);
+});
 
 // @hsep sep a bs@ lays out @bs@ horizontally with alignment @a@, with @sep@ amount of space in between each.
 // hsep :: Foldable f => Int -> Alignment -> f Box -> Box
-export const hsep = (sep: number, a: Alignment, bs: readonly Box[]): Box =>
-  punctuateH(a, emptyBox(0, sep), bs);
+export const hsep = dual<
+  (sep: number, a: Alignment) => (self: readonly Box[]) => Box,
+  (self: readonly Box[], sep: number, a: Alignment) => Box
+>(3, (self, sep, a) => punctuateH(self, a, emptyBox(0, sep)));
 
 // @vsep sep a bs@ lays out @bs@ vertically with alignment @a@, with @sep@ amount of space in between each.
 // vsep :: Foldable f => Int -> Alignment -> f Box -> Box
-export const vsep = (sep: number, a: Alignment, bs: readonly Box[]): Box =>
-  punctuateV(a, emptyBox(sep, 0), bs);
+export const vsep = dual<
+  (sep: number, a: Alignment) => (bs: readonly Box[]) => Box,
+  (self: readonly Box[], sep: number, a: Alignment) => Box
+>(3, (self, sep, a) => punctuateV(self, a, emptyBox(sep, 0)));
 
 /*
  *  --------------------------------------------------------------------------------
@@ -269,12 +295,16 @@ const emptyPara = (paraWidth: number): Para => ({
 
 // @columns w h t@ is a list of boxes, each of width @w@ and height at most @h@, containing text @t@ flowed into as many columns as necessary.
 // columns :: Alignment -> Int -> Int -> String -> [Box]
-export const columns = (a: Alignment, w: number, h: number, t: string): Box[] =>
+export const columns = dual<
+  (a: Alignment, w: number, h: number) => (self: string) => Box[],
+  (self: string, a: Alignment, w: number, h: number) => Box[]
+>(4, (self, a, w, h) =>
   pipe(
-    flow(w, t),
+    flow(self, w),
     Array.chunksOf(h),
     Array.map((chunk) => mkParaBox(a, h, chunk))
-  );
+  )
+);
 
 // @mkParaBox a n s@ makes a box of height @n@ with the text @s@ aligned according to @a@.
 // mkParaBox :: Alignment -> Int -> [String] -> Box
@@ -283,26 +313,28 @@ const mkParaBox = (a: Alignment, n: number, s: string[]): Box => {
     return emptyBox(n, 0);
   }
   const textBoxes = s.map((line) => text(line));
-  const combinedBox = vcat(a, textBoxes);
-  return alignVert(top, n, combinedBox);
+  return alignVert(vcat(textBoxes, a), top, n);
 };
 
 // Flow the given text into the given width.
 // flow :: Int -> String -> [String]
-const flow = (width: number, text: string): string[] => {
-  if (text.trim() === "") {
+const flow = dual<
+  (width: number) => (self: string) => string[],
+  (self: string, width: number) => string[]
+>(2, (self, width) => {
+  if (self.trim() === "") {
     return [""];
   }
 
   return pipe(
-    text,
+    self,
     String.split(whitespaceRegex),
     Array.filter((word) => word.length > 0),
-    Array.reduce(emptyPara(width), (para, word) => addWordP(word)(para)),
+    Array.reduce(emptyPara(width), addWordP),
     getLines,
     Array.map((line) => line.slice(0, width))
   );
-};
+});
 
 // getLines :: Para -> [String]
 const getLines = ({
@@ -319,25 +351,23 @@ const getLines = ({
 };
 
 // addWordP :: Para -> Word -> Para
-const addWordP =
-  (word: string) =>
-  (para: Para): Para => {
-    return {
-      width: para.width,
-      content: wordFits(para, word)
-        ? {
-            fullLines: para.content.fullLines,
-            lastLine: [word, ...para.content.lastLine],
-          }
-        : {
-            fullLines:
-              para.content.lastLine.length === 0
-                ? para.content.fullLines
-                : [para.content.lastLine, ...para.content.fullLines],
-            lastLine: [word],
-          },
-    };
+const addWordP = (para: Para, word: string): Para => {
+  return {
+    width: para.width,
+    content: wordFits(para, word)
+      ? {
+          fullLines: para.content.fullLines,
+          lastLine: [word, ...para.content.lastLine],
+        }
+      : {
+          fullLines:
+            para.content.lastLine.length === 0
+              ? para.content.fullLines
+              : [para.content.lastLine, ...para.content.fullLines],
+          lastLine: [word],
+        },
   };
+};
 
 // wordFits :: Int -> Word -> Line -> Bool
 const wordFits = (
@@ -362,46 +392,56 @@ const wordFits = (
 
 // @alignHoriz algn n bx@ creates a box of width @n@, with the contents and height of @bx@, horizontally aligned according to @algn@.
 // alignHoriz :: Alignment -> Int -> Box -> Box
-export const alignHoriz = (a: Alignment, c: number, b: Box): Box =>
-  align(a, "AlignFirst", b.rows, c, b);
+export const alignHoriz = dual<
+  (a: Alignment, c: number) => (self: Box) => Box,
+  (self: Box, a: Alignment, c: number) => Box
+>(3, (self, a, c) => align(self, a, left, self.rows, c));
 
 // @alignVert algn n bx@ creates a box of height @n@, with the contents and width of @bx@, vertically aligned according to @algn@.
 // alignVert :: Alignment -> Int -> Box -> Box
-export const alignVert = (a: Alignment, r: number, b: Box): Box =>
-  align("AlignFirst", a, r, b.cols, b);
+export const alignVert = dual<
+  (a: Alignment, r: number) => (self: Box) => Box,
+  (self: Box, a: Alignment, r: number) => Box
+>(3, (self, a, r) => align(self, top, a, r, self.cols));
 
 // @align ah av r c bx@ creates an @r@ x @c@ box with the contents of @bx@, aligned horizontally according to @ah@ and vertically according to @av@.
 // align :: Alignment -> Alignment -> Int -> Int -> Box -> Box
-export const align = (
-  ah: Alignment,
-  av: Alignment,
-  r: number,
-  c: number,
-  b: Box
-): Box => ({
+export const align = dual<
+  (ah: Alignment, av: Alignment, r: number, c: number) => (self: Box) => Box,
+  (self: Box, ah: Alignment, av: Alignment, r: number, c: number) => Box
+>(5, (self, ah, av, r, c) => ({
   rows: r,
   cols: c,
-  content: { _tag: "SubBox", xAlign: ah, yAlign: av, box: b },
-});
+  content: { _tag: "SubBox", xAlign: ah, yAlign: av, box: self },
+}));
 
 // Move a box "up" by putting it in a larger box with extra rows, aligned to the top.
 // moveUp :: Int -> Box -> Box
-export const moveUp = (n: number, b: Box): Box => alignVert(top, b.rows + n, b);
+export const moveUp = dual<
+  (n: number) => (b: Box) => Box,
+  (self: Box, n: number) => Box
+>(2, (self, n) => alignVert(self, top, self.rows + n));
 
 // Move a box down by putting it in a larger box with extra rows, aligned to the bottom.
 // moveDown :: Int -> Box -> Box
-export const moveDown = (n: number, b: Box): Box =>
-  alignVert(bottom, b.rows + n, b);
+export const moveDown = dual<
+  (n: number) => (self: Box) => Box,
+  (self: Box, n: number) => Box
+>(2, (self, n) => alignVert(self, bottom, self.rows + n));
 
 // Move a box left by putting it in a larger box with extra columns, aligned left.
 // moveLeft :: Int -> Box -> Box
-export const moveLeft = (n: number, b: Box): Box =>
-  alignHoriz(left, b.cols + n, b);
+export const moveLeft = dual<
+  (n: number) => (self: Box) => Box,
+  (self: Box, n: number) => Box
+>(2, (self, n) => alignHoriz(self, left, self.cols + n));
 
 // Move a box right by putting it in a larger box with extra columns, aligned right.
 // moveRight :: Int -> Box -> Box
-export const moveRight = (n: number, b: Box): Box =>
-  alignHoriz(right, b.cols + n, b);
+export const moveRight = dual<
+  (n: number) => (self: Box) => Box,
+  (self: Box, n: number) => Box
+>(2, (self, n) => alignHoriz(self, right, self.cols + n));
 
 /*
  *  --------------------------------------------------------------------------------
