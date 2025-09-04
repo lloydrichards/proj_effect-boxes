@@ -14,7 +14,8 @@
         "useFilenamingConvention": "off"
       },
       "performance": {
-        "noBarrelFile": "off"
+        "noBarrelFile": "off",
+        "noNamespaceImport": "off"
       },
       "suspicious": {
         "noUnsafeDeclarationMerging": "off",

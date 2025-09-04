@@ -37,7 +37,7 @@ export interface Box {
 }
 
 // Contents of a box.
-export const Content = Schema.Union(
+const Content = Schema.Union(
   Schema.TaggedStruct("Blank", {}),
   Schema.TaggedStruct("Text", { text: Schema.String }),
   Schema.TaggedStruct("Row", {
@@ -52,78 +52,86 @@ export const Content = Schema.Union(
     box: Schema.suspend((): Schema.Schema<Box> => Box),
   })
 );
-export type Content = typeof Content.Type;
+type Content = typeof Content.Type;
 
 // The basic data type.  A box has a specified size and some sort of contents.
-export class Box extends Schema.Class<Box>("Box")({
+export const Box = Schema.Struct({
   rows: Schema.Number,
   cols: Schema.Number,
   content: Content,
-}) {
-  // The null box, which has no content and no size.  It is quite useless.
-  // nullBox :: Box
-  static null: Box = { rows: 0, cols: 0, content: { _tag: "Blank" } };
+});
 
-  // @empty r c@ is an empty box with @r@ rows and @c@ columns.
-  // empty :: Int -> Int -> Box
-  static empty = (rows: number, cols: number): Box => ({
-    rows: Math.max(0, rows),
-    cols: Math.max(0, cols),
-    content: { _tag: "Blank" },
-  });
+export // The null box, which has no content and no size.  It is quite useless.
+// nullBox :: Box
+const nullBox: Box = { rows: 0, cols: 0, content: { _tag: "Blank" } };
 
-  // A @1x1@ box containing a single character.
-  // char :: Char -> Box
-  static char = (c: string): Box => ({
-    rows: 1,
-    cols: 1,
-    content: { _tag: "Text", text: c[0] ?? " " },
-  });
+// @empty r c@ is an empty box with @r@ rows and @c@ columns.
+// empty :: Int -> Int -> Box
+export const emptyBox = (rows: number, cols: number): Box => ({
+  rows: Math.max(0, rows),
+  cols: Math.max(0, cols),
+  content: { _tag: "Blank" },
+});
 
-  // unsafeLine :: String -> Box
-  static unsafeLine = (t: string): Box => ({
-    rows: 1,
-    cols: t.length,
-    content: { _tag: "Text", text: t },
-  });
+// A @1x1@ box containing a single character.
+// char :: Char -> Box
+export const char = (c: string): Box => ({
+  rows: 1,
+  cols: 1,
+  content: { _tag: "Text", text: c[0] ?? " " },
+});
 
-  // A box containing lines of text.
-  // text :: String -> Box
-  static text = (s: string): Box =>
-    vcat(
-      left,
-      String.split(s, "\n").map((l) => Box.unsafeLine(l))
-    );
+// unsafeLine :: String -> Box
+const unsafeLine = (t: string): Box => ({
+  rows: 1,
+  cols: t.length,
+  content: { _tag: "Text", text: t },
+});
 
-  // A (@1 x len@) box containing a string length @len@
-  // line :: String -> Box
-  static line = (s: string): Box =>
-    Box.unsafeLine(String.replace(/\n|\r/g, "")(s));
+// A box containing lines of text.
+// text :: String -> Box
+export const text = (s: string): Box =>
+  vcat(
+    left,
+    String.split(s, "\n").map((l) => unsafeLine(l))
+  );
 
-  // @para algn w t@ is a box of width @w@, containing text @t@, aligned according to @algn@, flowed to fit within the given width.
-  // para :: Alignment -> Int -> String -> Box
-  static para = (a: Alignment, w: number, t: string): Box => {
-    const lines = flow(w, t);
-    return mkParaBox(a, lines.length, lines);
-  };
+// A (@1 x len@) box containing a string length @len@
+// line :: String -> Box
+export const line = (s: string): Box =>
+  unsafeLine(String.replace(/\n|\r/g, "")(s));
 
-  // Semigroup instance for Box
-  // instance Semigroup Box where
-  //     l <> r = hcat top [l,r]
-  static combine = (l: Box, r: Box): Box => hcat(top, [l, r]);
-  static combineMany = (start: Box, collection: Iterable<Box>): Box =>
-    hcat(top, [start, ...Array.fromIterable(collection)]);
+// @para algn w t@ is a box of width @w@, containing text @t@, aligned according to @algn@, flowed to fit within the given width.
+// para :: Alignment -> Int -> String -> Box
+export const para = (a: Alignment, w: number, t: string): Box => {
+  const lines = flow(w, t);
+  return mkParaBox(a, lines.length, lines);
+};
 
-  // Monoid instance for Box (extends Semigroup with empty element)
-  // instance Monoid Box where
-  //     mempty = nullBox
-  //     mappend = (<>)
-  //     mconcat = hcat top
-  static combineAll = (collection: Iterable<Box>): Box => {
-    const boxes = Array.fromIterable(collection);
-    return boxes.length === 0 ? Box.null : hcat(top, boxes);
-  };
-}
+// Semigroup instance for Box
+// instance Semigroup Box where
+//     l <> r = hcat top [l,r]
+export const combine = (l: Box, r: Box): Box => hcat(top, [l, r]);
+export const combineMany = (start: Box, collection: Iterable<Box>): Box =>
+  hcat(top, [start, ...Array.fromIterable(collection)]);
+
+// Monoid instance for Box (extends Semigroup with empty element)
+// instance Monoid Box where
+//     mempty = nullBox
+//     mappend = (<>)
+//     mconcat = hcat top
+export const combineAll = (collection: Iterable<Box>): Box => {
+  const boxes = Array.fromIterable(collection);
+  return boxes.length === 0 ? nullBox : hcat(top, boxes);
+};
+
+// Get the number of rows in a box
+// rows :: Box -> Int
+export const rows = (b: Box): number => b.rows;
+
+// Get the number of columns in a box
+// cols :: Box -> Int
+export const cols = (b: Box): number => b.cols;
 
 // Calculate a sum and a maximum over a list in one pass. If the list is empty, the maximum is reported as the given default. This would normally be done using the foldl library, but we don't want that dependency.
 // sumMax :: (Num n, Ord b, Foldable f) => (a -> n) -> b -> (a -> b) -> f a -> (n, b)
@@ -188,7 +196,7 @@ export const hAppend = (l: Box, r: Box): Box => hcat(top, [l, r]);
 // Paste two boxes together horizontally with a single intervening column of space.
 // (<+>) :: Box -> Box -> Box
 export const hcatWithSpace = (l: Box, r: Box): Box =>
-  hcat(top, [l, Box.empty(0, 1), r]);
+  hcat(top, [l, emptyBox(0, 1), r]);
 
 // Paste two boxes together vertically.
 // (//) :: Box -> Box -> Box
@@ -197,13 +205,13 @@ export const vAppend = (t: Box, b: Box): Box => vcat(left, [t, b]);
 // Paste two boxes together vertically with a single intervening row of space.
 // (/+/) :: Box -> Box -> Box
 export const vcatWithSpace = (t: Box, b: Box): Box =>
-  vcat(left, [t, Box.empty(1, 0), b]);
+  vcat(left, [t, emptyBox(1, 0), b]);
 
 // @punctuateH a p bs@ horizontally lays out the boxes @bs@ with a copy of @p@ interspersed between each.
 // punctuateH :: Foldable f => Alignment -> Box -> f Box -> Box
 export const punctuateH = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
   if (bs.length === 0) {
-    return Box.null;
+    return nullBox;
   }
   const interspersed: Box[] = [];
   for (let i = 0; i < bs.length; i++) {
@@ -222,7 +230,7 @@ export const punctuateH = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
 // punctuateV :: Foldable f => Alignment -> Box -> f Box -> Box
 export const punctuateV = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
   if (bs.length === 0) {
-    return Box.null;
+    return nullBox;
   }
   const interspersed: Box[] = [];
   for (let i = 0; i < bs.length; i++) {
@@ -240,12 +248,12 @@ export const punctuateV = (a: Alignment, p: Box, bs: readonly Box[]): Box => {
 // @hsep sep a bs@ lays out @bs@ horizontally with alignment @a@, with @sep@ amount of space in between each.
 // hsep :: Foldable f => Int -> Alignment -> f Box -> Box
 export const hsep = (sep: number, a: Alignment, bs: readonly Box[]): Box =>
-  punctuateH(a, Box.empty(0, sep), bs);
+  punctuateH(a, emptyBox(0, sep), bs);
 
 // @vsep sep a bs@ lays out @bs@ vertically with alignment @a@, with @sep@ amount of space in between each.
 // vsep :: Foldable f => Int -> Alignment -> f Box -> Box
 export const vsep = (sep: number, a: Alignment, bs: readonly Box[]): Box =>
-  punctuateV(a, Box.empty(sep, 0), bs);
+  punctuateV(a, emptyBox(sep, 0), bs);
 
 /*
  *  --------------------------------------------------------------------------------
@@ -254,7 +262,7 @@ export const vsep = (sep: number, a: Alignment, bs: readonly Box[]): Box =>
  */
 
 // data Word = Word { wLen :: Int, getWord  :: String }
-export class Word extends Schema.Class<Word>("Word")({
+class Word extends Schema.Class<Word>("Word")({
   wLen: Schema.Number,
   getWord: Schema.String,
 }) {
@@ -268,7 +276,7 @@ export class Word extends Schema.Class<Word>("Word")({
 }
 
 // data Line = Line { lLen :: Int, getWords :: [Word] }
-export class Line extends Schema.Class<Line>("Line")({
+class Line extends Schema.Class<Line>("Line")({
   lLen: Schema.Number,
   getWords: Schema.Array(Word),
 }) {
@@ -282,7 +290,7 @@ export class Line extends Schema.Class<Line>("Line")({
 // data ParaContent = Block { _fullLines :: [Line]
 //                          , _lastLine  :: Line
 //                          }
-export class ParaContent extends Schema.Class<ParaContent>("ParaContent")({
+class ParaContent extends Schema.Class<ParaContent>("ParaContent")({
   fullLines: Schema.Array(Line),
   lastLine: Line,
 }) {
@@ -298,7 +306,7 @@ export class ParaContent extends Schema.Class<ParaContent>("ParaContent")({
 // data Para = Para { _paraWidth   :: Int
 //                  , _paraContent :: ParaContent
 //                  }
-export class Para extends Schema.Class<Para>("Para")({
+class Para extends Schema.Class<Para>("Para")({
   paraWidth: Schema.Number,
   paraContent: ParaContent,
 }) {
@@ -320,18 +328,18 @@ export const columns = (a: Alignment, w: number, h: number, t: string): Box[] =>
 
 // @mkParaBox a n s@ makes a box of height @n@ with the text @s@ aligned according to @a@.
 // mkParaBox :: Alignment -> Int -> [String] -> Box
-export const mkParaBox = (a: Alignment, n: number, s: string[]): Box => {
+const mkParaBox = (a: Alignment, n: number, s: string[]): Box => {
   if (s.length === 0) {
-    return Box.empty(n, 0);
+    return emptyBox(n, 0);
   }
-  const textBoxes = s.map((line) => Box.text(line));
+  const textBoxes = s.map((line) => text(line));
   const combinedBox = vcat(a, textBoxes);
   return alignVert(top, n, combinedBox);
 };
 
 // Flow the given text into the given width.
 // flow :: Int -> String -> [String]
-export const flow = (width: number, text: string): string[] => {
+const flow = (width: number, text: string): string[] => {
   if (text.trim() === "") {
     return [""];
   }
@@ -348,7 +356,7 @@ export const flow = (width: number, text: string): string[] => {
 };
 
 // getLines :: Para -> [String]
-export const getLines = ({
+const getLines = ({
   paraContent: { fullLines, lastLine },
 }: typeof Para.Type): string[] => {
   const process = (lines: readonly Line[]): string[] =>
@@ -369,13 +377,13 @@ export const getLines = ({
 };
 
 // startLine :: Word -> Line
-export const startLine = (word: Word): Line => ({
+const startLine = (word: Word): Line => ({
   lLen: word.wLen,
   getWords: [word],
 });
 
 // addWordP :: Para -> Word -> Para
-export const addWordP =
+const addWordP =
   (word: Word) =>
   (para: Para): Para =>
     wordFits(para.paraWidth, word, para.paraContent.lastLine)
@@ -526,28 +534,9 @@ const renderBox = (b: Box): string[] => {
 
 const trailingSpaceRegex = /\s+$/;
 
-// Render a 'Box' as a String, suitable for writing to the screen or a file.
-// render :: Box -> String
-export const render = (b: Box): string => {
-  const lines = renderBox(b);
-  return (
-    Array.join(
-      lines.map((l) => String.replace(trailingSpaceRegex, "")(l)),
-      "\n"
-    ) + (lines.length > 0 ? "\n" : "")
-  );
-};
-
-// Like 'render' but preserves end-of-line whitespace.
-// renderWithSpaces :: Box -> String
-export const renderWithSpaces = (b: Box): string => {
-  const lines = renderBox(b);
-  return Array.join(lines, "\n") + (lines.length > 0 ? "\n" : "");
-};
-
 //  "Padded take": @takeP a n xs@ is the same as @take n xs@, if @n <= length xs@; otherwise it is @xs@ followed by enough copies of @a@ to make the length equal to @n@.
 // takeP :: a -> Int -> [a] -> [a]
-export const takeP = <A>(a: A, n: number, xs: readonly A[]): A[] => {
+const takeP = <A>(a: A, n: number, xs: readonly A[]): A[] => {
   if (n <= 0) {
     return [];
   }
@@ -562,7 +551,7 @@ export const takeP = <A>(a: A, n: number, xs: readonly A[]): A[] => {
 
 //  @takePA @ is like 'takeP', but with alignment.  That is, we imagine a copy of @xs@ extended infinitely on both sides with copies of @a@, and a window of size @n@ placed so that @xs@ has the specified alignment within the window; @takePA algn a n xs@ returns the contents of this window.
 // takePA :: Alignment -> a -> Int -> [a] -> [a]
-export const takePA = <A>(
+const takePA = <A>(
   alignment: Alignment,
   a: A,
   n: number,
@@ -602,22 +591,21 @@ export const takePA = <A>(
 
 // Generate a string of spaces.
 // blanks :: Int -> String
-export const blanks = (n: number): string =>
-  pipe(" ", String.repeat(Math.max(0, n)));
+const blanks = (n: number): string => pipe(" ", String.repeat(Math.max(0, n)));
 
 // Render a box as a list of lines, using a given number of rows.
 // renderBoxWithRows :: Int -> Box -> [String]
-export const renderBoxWithRows = (r: number, b: Box): string[] =>
+const renderBoxWithRows = (r: number, b: Box): string[] =>
   renderBox({ ...b, rows: r });
 
 // Render a box as a list of lines, using a given number of columns.
 // renderBoxWithCols :: Int -> Box -> [String]
-export const renderBoxWithCols = (c: number, b: Box): string[] =>
+const renderBoxWithCols = (c: number, b: Box): string[] =>
   renderBox({ ...b, cols: c });
 
 // Resize a rendered list of lines.
 // resizeBox :: Int -> Int -> [String] -> [String]
-export const resizeBox = (r: number, c: number, lines: string[]): string[] =>
+const resizeBox = (r: number, c: number, lines: string[]): string[] =>
   takeP(
     blanks(c),
     r,
@@ -626,7 +614,7 @@ export const resizeBox = (r: number, c: number, lines: string[]): string[] =>
 
 // Resize a rendered list of lines, using given alignments.
 // resizeBoxAligned :: Int -> Int -> Alignment -> Alignment -> [String] -> [String]
-export const resizeBoxAligned = (
+const resizeBoxAligned = (
   r: number,
   c: number,
   ha: Alignment,
@@ -639,6 +627,25 @@ export const resizeBoxAligned = (
     r,
     lines.map((line) => takePA(ha, " ", c, [...line]).join(""))
   );
+
+// Render a 'Box' as a String, suitable for writing to the screen or a file.
+// render :: Box -> String
+export const render = (b: Box): string => {
+  const lines = renderBox(b);
+  return (
+    Array.join(
+      lines.map((l) => String.replace(trailingSpaceRegex, "")(l)),
+      "\n"
+    ) + (lines.length > 0 ? "\n" : "")
+  );
+};
+
+// Like 'render' but preserves end-of-line whitespace.
+// renderWithSpaces :: Box -> String
+export const renderWithSpaces = (b: Box): string => {
+  const lines = renderBox(b);
+  return Array.join(lines, "\n") + (lines.length > 0 ? "\n" : "");
+};
 
 // A convenience function for rendering a box to stdout.
 // printBox :: Box -> IO ()
