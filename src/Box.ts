@@ -578,6 +578,9 @@ export const renderWithSpaces = (b: Box): string => {
   return Array.join(lines, "\n") + (lines.length > 0 ? "\n" : "");
 };
 
+export const renderWith = (b: Box, sep = " ") =>
+  pipe(renderWithSpaces(b), String.replace(/ /g, sep));
+
 // A convenience function for rendering a box to stdout.
 // printBox :: Box -> IO ()
 export const printBox = (b: Box) =>
