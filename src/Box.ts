@@ -1,4 +1,5 @@
-import { Array, Console, Effect, Match, pipe, Schema, String } from "effect";
+import { Array, Console, Effect, Match, pipe, String } from "effect";
+import type { Equal } from "effect/Equal";
 import { dual } from "effect/Function";
 import { type Pipeable, pipeArguments } from "effect/Pipeable";
 
@@ -6,13 +7,11 @@ import { type Pipeable, pipeArguments } from "effect/Pipeable";
 const whitespaceRegex = /\s+/;
 
 // Data type for specifying the alignment of boxes.
-export const Alignment = Schema.Literal(
-  "AlignFirst",
-  "AlignCenter1",
-  "AlignCenter2",
-  "AlignLast"
-);
-export type Alignment = typeof Alignment.Type;
+export type Alignment =
+  | "AlignFirst"
+  | "AlignCenter1"
+  | "AlignCenter2"
+  | "AlignLast";
 
 // Align boxes along their tops.
 export const top: Alignment = "AlignFirst";
@@ -32,38 +31,19 @@ export const center1: Alignment = "AlignCenter1";
 // Align boxes centered, but biased to the right/bottom in case of unequal parities.
 export const center2: Alignment = "AlignCenter2";
 
-export interface Box extends Pipeable {
+export interface Box extends Pipeable, Equal {
   readonly rows: number;
   readonly cols: number;
   readonly content: Content;
 }
 
-const _Box = Schema.suspend(
-  (): Schema.Schema<{ rows: number; cols: number; content: Content }> =>
-    Schema.Struct({
-      rows: Schema.Number,
-      cols: Schema.Number,
-      content: Content,
-    })
-);
-
 // Contents of a box.
-const Content = Schema.Union(
-  Schema.TaggedStruct("Blank", {}),
-  Schema.TaggedStruct("Text", { text: Schema.String }),
-  Schema.TaggedStruct("Row", {
-    boxes: Schema.Array(_Box),
-  }),
-  Schema.TaggedStruct("Col", {
-    boxes: Schema.Array(_Box),
-  }),
-  Schema.TaggedStruct("SubBox", {
-    xAlign: Alignment,
-    yAlign: Alignment,
-    box: _Box,
-  })
-);
-type Content = typeof Content.Type;
+export type Content =
+  | { _tag: "Blank" }
+  | { _tag: "Text"; text: string }
+  | { _tag: "Row"; boxes: Box[] }
+  | { _tag: "Col"; boxes: Box[] }
+  | { _tag: "SubBox"; xAlign: Alignment; yAlign: Alignment; box: Box };
 
 export const make = (b: {
   rows: number;
@@ -75,19 +55,11 @@ export const make = (b: {
   } as Box;
 
   box.pipe = function () {
-    // biome-ignore lint/complexity/noArguments: Effect's pipeArguments requires the arguments object
     return pipeArguments(this, arguments);
   };
 
   return box;
 };
-
-// The basic data type.  A box has a specified size and some sort of contents.
-export const Box = Schema.Struct({
-  rows: Schema.Number,
-  cols: Schema.Number,
-  content: Content,
-});
 
 // The null box, which has no content and no size.  It is quite useless.
 // nullBox :: Box
@@ -301,19 +273,18 @@ export const vsep = dual<
 // data ParaContent = Block { _fullLines :: [Line]
 //                          , _lastLine  :: Line
 //                          }
-const ParaContent = Schema.Struct({
-  fullLines: Schema.Array(Schema.Array(Schema.NonEmptyString)),
-  lastLine: Schema.Array(Schema.NonEmptyString),
-});
+interface ParaContent {
+  readonly fullLines: readonly (readonly string[])[];
+  readonly lastLine: readonly string[];
+}
 
 // data Para = Para { _paraWidth   :: Int
 //                  , _paraContent :: ParaContent
 //                  }
-const Para = Schema.Struct({
-  width: Schema.Number,
-  content: ParaContent,
-});
-type Para = typeof Para.Type;
+interface Para {
+  readonly width: number;
+  readonly content: ParaContent;
+}
 
 // emptyPara :: Int -> Para
 const emptyPara = (paraWidth: number): Para => ({
@@ -368,9 +339,7 @@ const flow = dual<
 });
 
 // getLines :: Para -> [String]
-const getLines = ({
-  content: { fullLines, lastLine },
-}: typeof Para.Type): string[] => {
+const getLines = ({ content: { fullLines, lastLine } }: Para): string[] => {
   const process = (lines: readonly (readonly string[])[]): string[] =>
     pipe(
       Array.fromIterable(lines),
@@ -388,28 +357,31 @@ const addWordP = (para: Para, word: string): Para => {
     content: wordFits(para, word)
       ? {
           fullLines: para.content.fullLines,
-          lastLine: [word, ...para.content.lastLine],
+          lastLine: [word, ...para.content.lastLine] as readonly string[],
         }
       : {
           fullLines:
             para.content.lastLine.length === 0
               ? para.content.fullLines
-              : [para.content.lastLine, ...para.content.fullLines],
-          lastLine: [word],
+              : ([
+                  para.content.lastLine,
+                  ...para.content.fullLines,
+                ] as readonly (readonly string[])[]),
+          lastLine: [word] as readonly string[],
         },
   };
 };
 
 // wordFits :: Int -> Word -> Line -> Bool
 const wordFits = (
-  { content: paraContent, width: paraWidth }: typeof Para.Type,
+  { content: paraContent, width: paraWidth }: Para,
   word: string
 ): boolean => {
   if (paraContent.lastLine.length === 0) {
     return word.length <= paraWidth;
   }
   const currentLength = paraContent.lastLine.reduce(
-    (acc, w) => acc + w.length,
+    (acc: number, w: string) => acc + w.length,
     paraContent.lastLine.length - 1
   );
   return currentLength + 1 + word.length <= paraWidth;
@@ -448,7 +420,7 @@ export const align = dual<
       _tag: "SubBox",
       xAlign: ah,
       yAlign: av,
-      box: { rows: self.rows, cols: self.cols, content: self.content },
+      box: make({ rows: self.rows, cols: self.cols, content: self.content }),
     },
   })
 );
