@@ -1,4 +1,6 @@
 import { String } from "effect";
+import * as Equal from "effect/Equal";
+import * as Hash from "effect/Hash";
 import { describe, expect, it } from "vitest";
 import * as Box from "../src/Box";
 
@@ -735,5 +737,116 @@ describe("Movement", () => {
          |`
       )
     );
+  });
+});
+
+describe("Pipeable", () => {
+  it("supports basic pipe with single transformation", () => {
+    const result = Box.text("test").pipe(Box.alignHoriz(Box.center1, 10));
+    expect(result.rows).toBe(Box.text("test").rows);
+    expect(Box.render(result)).toContain("test");
+  });
+
+  it("supports pipe chaining with multiple transformations", (): void => {
+    const result = Box.text("hello").pipe(
+      Box.alignHoriz(Box.center1, 15),
+      Box.alignVert(Box.center1, 5),
+      Box.moveRight(2),
+      Box.moveDown(1)
+    );
+    expect(result.cols).toBe(17);
+    expect(result.rows).toBe(6);
+    expect(Box.render(result)).toContain("hello");
+  });
+
+  it("allows pipe without any arguments to return the same box", () => {
+    const box = Box.text("unchanged");
+    const result = box.pipe();
+    expect(Equal.equals(box, result)).toBe(true);
+    expect(Hash.hash(box)).toBe(Hash.hash(result));
+  });
+
+  it("works with complex combinations including vcat and hcat in pipe chains", () => {
+    const final = Box.vcat(
+      [
+        Box.text("A").pipe(Box.alignHoriz(Box.center1, 5)),
+        Box.text("B").pipe(Box.alignHoriz(Box.center1, 5)),
+        Box.text("C").pipe(Box.alignHoriz(Box.center1, 5)),
+      ],
+      Box.left
+    ).pipe(Box.alignVert(Box.center1, 10), Box.moveRight(3));
+    expect(final.cols).toBe(8);
+    expect(final.rows).toBe(10);
+    expect(Box.render(final)).toContain("A");
+    expect(Box.render(final)).toContain("B");
+    expect(Box.render(final)).toContain("C");
+  });
+});
+
+describe("Equal", () => {
+  it("compares identical boxes as equal", () => {
+    const box1 = Box.text("hello");
+    const box2 = Box.text("hello");
+    expect(Equal.equals(box1, box2)).toBe(true);
+  });
+
+  it("compares boxes with different content as not equal", () => {
+    const box1 = Box.text("hello");
+    const box2 = Box.text("world");
+    expect(Equal.equals(box1, box2)).toBe(false);
+  });
+
+  it("compares boxes with same content but different dimensions as not equal", () => {
+    const box1 = Box.emptyBox(2, 3);
+    const box2 = Box.emptyBox(3, 2);
+    expect(Equal.equals(box1, box2)).toBe(false);
+  });
+
+  it("compares complex boxes with same structure as equal", () => {
+    const box1 = Box.hcat([Box.text("a"), Box.text("b")], Box.top);
+    const box2 = Box.hcat([Box.text("a"), Box.text("b")], Box.top);
+    expect(Equal.equals(box1, box2)).toBe(true);
+  });
+
+  it("compares with non-Box objects as not equal", () => {
+    const box = Box.text("test");
+    const notBox = {
+      rows: 1,
+      cols: 4,
+      content: { _tag: "Text", text: "test" },
+    };
+    expect(Equal.equals(box, notBox)).toBe(false);
+  });
+});
+
+describe("Hash", () => {
+  it("generates same hash for identical boxes", () => {
+    const box1 = Box.text("hello");
+    const box2 = Box.text("hello");
+    expect(Hash.hash(box1)).toBe(Hash.hash(box2));
+  });
+
+  it("generates different hashes for boxes with different content", () => {
+    const box1 = Box.text("hello");
+    const box2 = Box.text("world");
+    expect(Hash.hash(box1)).not.toBe(Hash.hash(box2));
+  });
+
+  it("generates different hashes for boxes with different dimensions", () => {
+    const box1 = Box.emptyBox(2, 3);
+    const box2 = Box.emptyBox(3, 2);
+    expect(Hash.hash(box1)).not.toBe(Hash.hash(box2));
+  });
+
+  it("generates same hash for complex boxes with identical structure", () => {
+    const box1 = Box.vcat([Box.text("line1"), Box.text("line2")], Box.left);
+    const box2 = Box.vcat([Box.text("line1"), Box.text("line2")], Box.left);
+    expect(Hash.hash(box1)).toBe(Hash.hash(box2));
+  });
+
+  it("uses cached hash implementation for performance", () => {
+    const hash1 = Hash.hash(Box.text("cached"));
+    const hash2 = Hash.hash(Box.text("cached"));
+    expect(hash1).toBe(hash2);
   });
 });
