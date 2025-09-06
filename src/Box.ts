@@ -1,10 +1,10 @@
 import { Array, Console, Effect, Match, pipe, String } from "effect";
-import type { Equal } from "effect/Equal";
 import { dual } from "effect/Function";
 import { type Pipeable, pipeArguments } from "effect/Pipeable";
 
-// Regular expression for splitting text on whitespace
-const whitespaceRegex = /\s+/;
+export const BoxTypeId: unique symbol = Symbol.for("@effect/Box");
+
+export type BoxTypeId = typeof BoxTypeId;
 
 // Data type for specifying the alignment of boxes.
 export type Alignment =
@@ -31,12 +31,6 @@ export const center1: Alignment = "AlignCenter1";
 // Align boxes centered, but biased to the right/bottom in case of unequal parities.
 export const center2: Alignment = "AlignCenter2";
 
-export interface Box extends Pipeable, Equal {
-  readonly rows: number;
-  readonly cols: number;
-  readonly content: Content;
-}
-
 // Contents of a box.
 export type Content =
   | { _tag: "Blank" }
@@ -45,18 +39,31 @@ export type Content =
   | { _tag: "Col"; boxes: Box[] }
   | { _tag: "SubBox"; xAlign: Alignment; yAlign: Alignment; box: Box };
 
+// The Box data type, representing a rectangular area of text with various combinators for layout and alignment.
+export interface Box extends Pipeable {
+  readonly [BoxTypeId]: BoxTypeId;
+  readonly rows: number;
+  readonly cols: number;
+  readonly content: Content;
+}
+
+const proto: Omit<Box, "rows" | "content" | "cols"> = {
+  [BoxTypeId]: BoxTypeId,
+  pipe() {
+    // biome-ignore lint/correctness/noUndeclaredVariables: typescript does not recognize that this is a method on Box
+    return pipeArguments(this, arguments);
+  },
+};
+
 export const make = (b: {
   rows: number;
   cols: number;
   content: Content;
 }): Box => {
-  const box = {
-    ...b,
-  } as Box;
-
-  box.pipe = function () {
-    return pipeArguments(this, arguments);
-  };
+  const box = Object.create(proto);
+  box.rows = Math.max(0, b.rows);
+  box.cols = Math.max(0, b.cols);
+  box.content = b.content;
 
   return box;
 };
@@ -73,8 +80,8 @@ export const nullBox: Box = make({
 // empty :: Int -> Int -> Box
 export const emptyBox = (rows: number, cols: number): Box =>
   make({
-    rows: Math.max(0, rows),
-    cols: Math.max(0, cols),
+    rows,
+    cols,
     content: { _tag: "Blank" },
   });
 
@@ -317,6 +324,9 @@ const mkParaBox = (a: Alignment, n: number, s: string[]): Box => {
   const textBoxes = s.map((line) => text(line));
   return alignVert(vcat(textBoxes, a), top, n);
 };
+
+// Regular expression for splitting text on whitespace
+const whitespaceRegex = /\s+/;
 
 // Flow the given text into the given width.
 // flow :: Int -> String -> [String]
