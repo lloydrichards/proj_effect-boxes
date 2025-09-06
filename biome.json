@@ -8,6 +8,9 @@
         "useMaxParams": "off",
         "useConsistentTypeDefinitions": "off"
       },
+      "complexity": {
+        "noArguments": "off"
+      },
       "style": {
         "useDefaultSwitchClause": "off",
         "noMagicNumbers": "off",
