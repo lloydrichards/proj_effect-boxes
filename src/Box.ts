@@ -1,5 +1,7 @@
 import { Array, Console, Effect, Match, pipe, String } from "effect";
+import * as Equal from "effect/Equal";
 import { dual } from "effect/Function";
+import * as Hash from "effect/Hash";
 import { type Pipeable, pipeArguments } from "effect/Pipeable";
 
 export const BoxTypeId: unique symbol = Symbol.for("@effect/Box");
@@ -32,23 +34,116 @@ export const center1: Alignment = "AlignCenter1";
 export const center2: Alignment = "AlignCenter2";
 
 // Contents of a box.
-export type Content =
-  | { _tag: "Blank" }
-  | { _tag: "Text"; text: string }
-  | { _tag: "Row"; boxes: Box[] }
-  | { _tag: "Col"; boxes: Box[] }
-  | { _tag: "SubBox"; xAlign: Alignment; yAlign: Alignment; box: Box };
+type Blank = { _tag: "Blank" };
+type Text = { _tag: "Text"; text: string };
+type Row = { _tag: "Row"; boxes: Box[] };
+type Col = { _tag: "Col"; boxes: Box[] };
+type SubBox = {
+  _tag: "SubBox";
+  xAlign: Alignment;
+  yAlign: Alignment;
+  box: Box;
+};
+
+export type Content = Blank | Text | Row | Col | SubBox;
 
 // The Box data type, representing a rectangular area of text with various combinators for layout and alignment.
-export interface Box extends Pipeable {
+export interface Box extends Pipeable, Equal.Equal, Hash.Hash {
   readonly [BoxTypeId]: BoxTypeId;
   readonly rows: number;
   readonly cols: number;
   readonly content: Content;
 }
 
+const isBox = (u: unknown): u is Box =>
+  typeof u === "object" && u != null && BoxTypeId in u;
+
+const contentEquals = (self: Content, that: Content): boolean => {
+  if (self._tag !== that._tag) {
+    return false;
+  }
+
+  return pipe(
+    self,
+    Match.type<Content>().pipe(
+      Match.tag("Blank", () => true),
+      Match.tag("Text", ({ text }) => text === (that as Text).text),
+      Match.tag(
+        "Row",
+        ({ boxes }) =>
+          boxes.length === (that as Row).boxes.length &&
+          boxes.every((box, i) => Equal.equals(box, (that as Row).boxes[i]))
+      ),
+      Match.tag(
+        "Col",
+        ({ boxes }) =>
+          boxes.length === (that as Col).boxes.length &&
+          boxes.every((box, i) => Equal.equals(box, (that as Col).boxes[i]))
+      ),
+      Match.tag(
+        "SubBox",
+        ({ box, xAlign, yAlign }) =>
+          xAlign === (that as SubBox).xAlign &&
+          yAlign === (that as SubBox).yAlign &&
+          Equal.equals(box, (that as SubBox).box)
+      ),
+      Match.exhaustive
+    )
+  );
+};
+
+const contentHash = (content: Content): number =>
+  pipe(
+    content,
+    Match.type<Content>().pipe(
+      Match.tag("Blank", () => Hash.hash("Blank")),
+      Match.tag("Text", ({ text }) =>
+        Hash.combine(Hash.hash("Text"))(Hash.hash(text))
+      ),
+      Match.tag("Row", ({ boxes }) =>
+        boxes.reduce(
+          (acc, box) => Hash.combine(acc)(Hash.hash(box)),
+          Hash.hash("Row")
+        )
+      ),
+      Match.tag("Col", ({ boxes }) =>
+        boxes.reduce(
+          (acc, box) => Hash.combine(acc)(Hash.hash(box)),
+          Hash.hash("Col")
+        )
+      ),
+      Match.tag("SubBox", ({ box, xAlign, yAlign }) =>
+        pipe(
+          Hash.hash("SubBox"),
+          Hash.combine(Hash.hash(xAlign)),
+          Hash.combine(Hash.hash(yAlign)),
+          Hash.combine(Hash.hash(box))
+        )
+      ),
+      Match.exhaustive
+    )
+  );
+
 const proto: Omit<Box, "rows" | "content" | "cols"> = {
   [BoxTypeId]: BoxTypeId,
+  [Equal.symbol](this: Box, that: unknown): boolean {
+    return (
+      isBox(that) &&
+      this.rows === that.rows &&
+      this.cols === that.cols &&
+      contentEquals(this.content, that.content)
+    );
+  },
+  [Hash.symbol](this: Box) {
+    return Hash.cached(
+      this,
+      pipe(
+        Hash.hash(this.rows),
+        Hash.combine(Hash.hash(this.cols)),
+        Hash.combine(contentHash(this.content))
+      )
+    );
+  },
   pipe() {
     // biome-ignore lint/correctness/noUndeclaredVariables: typescript does not recognize that this is a method on Box
     return pipeArguments(this, arguments);
