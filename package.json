@@ -8,7 +8,8 @@
     "lint": "biome lint",
     "type-check": "tsc --noEmit",
     "format": "biome check --write",
-    "test": "vitest run"
+    "test": "vitest run",
+    "scratch": "bun run scratchpad/index.ts"
   },
   "dependencies": {
     "effect": "^3.17.13"

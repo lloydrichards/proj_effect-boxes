@@ -1,6 +1,9 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.2.3/schema.json",
   "extends": ["ultracite"],
+  "files": {
+    "includes": ["src/**/*.ts", "scratchpad/**/*.ts", "tests/**/*.ts"]
+  },
   "linter": {
     "rules": {
       "nursery": {
