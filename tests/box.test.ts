@@ -121,7 +121,7 @@ describe("issue38 parity tests", () => {
     const b = Box.char("A");
     expect(b.rows).toBe(1);
     expect(b.cols).toBe(1);
-    expect(Box.renderWith(b)).toBe("A\n");
+    expect(Box.render(b)).toBe("A\n");
   });
 
   it("rows/cols report correct sizes and after composition", () => {
@@ -156,11 +156,11 @@ describe("issue38 parity tests", () => {
     const b = Box.text("Z");
     const beside = (l: any, r: any) => Box.hcat([l, r], Box.top);
     const above = (t: any, bot: any) => Box.vcat([t, bot], Box.left);
-    expect(Box.renderWith(beside(a, b))).toBe(
-      Box.renderWith(Box.hcat([a, b], Box.top))
+    expect(Box.render(beside(a, b))).toBe(
+      Box.render(Box.hcat([a, b], Box.top))
     );
-    expect(Box.renderWith(above(b, a))).toBe(
-      Box.renderWith(Box.vcat([b, a], Box.left))
+    expect(Box.render(above(b, a))).toBe(
+      Box.render(Box.vcat([b, a], Box.left))
     );
   });
 
@@ -326,7 +326,7 @@ describe("columns", () => {
     expect(cols.length).toBeGreaterThanOrEqual(1);
     if (cols[0]) {
       expect(cols[0].rows).toBe(2);
-      const lines = Box.renderWith(cols[0]).split("\n").slice(0, -1);
+      const lines = Box.render(cols[0]).split("\n").slice(0, -1);
       const hasRightAlignment = lines.some(
         (line) => line.startsWith(" ") && line.trim().length > 0
       );
@@ -511,7 +511,7 @@ describe("Punctuation Functions", () => {
       Box.bottom,
       Box.text("|")
     );
-    expect(Box.renderWith(result)).toBe(
+    expect(Box.renderWithSpaces(result)).toBe(
       String.stripMargin(
         `|A  
          |B|X
@@ -598,7 +598,7 @@ describe("Separation", () => {
       1,
       Box.center1
     );
-    expect(Box.renderWith(result)).toBe(
+    expect(Box.renderWithSpaces(result)).toBe(
       String.stripMargin(
         `|A  
          |B X
@@ -623,7 +623,7 @@ describe("Separation", () => {
 
   it("vsep with different alignments", () => {
     const result = Box.vsep([Box.text("A"), Box.text("WIDE")], 1, Box.center1);
-    expect(Box.renderWith(result)).toBe(
+    expect(Box.renderWithSpaces(result)).toBe(
       String.stripMargin(
         `| A  
          |    

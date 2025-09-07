@@ -263,7 +263,7 @@ export const para = dual<
   (self: string, a: Alignment, w: number) => Box
 >(3, (self, a, w) => {
   const lines = flow(self, w);
-  return mkParaBox(a, lines.length, lines);
+  return mkParaBox(lines, a, lines.length);
 });
 
 /**
@@ -537,28 +537,26 @@ export const columns = dual<
   (a: Alignment, w: number, h: number) => (self: string) => Box[],
   (self: string, a: Alignment, w: number, h: number) => Box[]
 >(4, (self, a, w, h) =>
-  pipe(
-    flow(self, w),
-    Array.chunksOf(h),
-    Array.map((chunk) => mkParaBox(a, h, chunk))
-  )
+  pipe(self, flow(w), Array.chunksOf(h), Array.map(mkParaBox(a, h)))
 );
 
 /**
  * Creates a paragraph box from text lines with specified alignment and height.
+ * @param self - Array of text lines
  * @param a - Alignment for the text
  * @param n - Height of the resulting box
- * @param s - Array of text lines
  *
  * @note Haskell: `mkParaBox :: Alignment -> Int -> [String] -> Box`
  */
-const mkParaBox = (a: Alignment, n: number, s: string[]): Box => {
-  if (s.length === 0) {
+const mkParaBox = dual<
+  (a: Alignment, n: number) => (self: string[]) => Box,
+  (self: string[], a: Alignment, n: number) => Box
+>(3, (self, a, n) => {
+  if (self.length === 0) {
     return emptyBox(n, 0);
   }
-  const textBoxes = s.map((line) => text(line));
-  return alignVert(vcat(textBoxes, a), top, n);
-};
+  return pipe(self, Array.map(text), vcat(a), alignVert(top, n));
+});
 
 /**
  * Regular expression for splitting text on whitespace
@@ -794,7 +792,7 @@ const merge = (renderedBoxes: string[][]): string[] => {
 
 /**
  * Converts a box into an array of text lines for display.
- * @param box - The box to render as text lines
+ * @param self - The box to render as text lines
  *
  * @note Haskell: `renderBox :: Box -> [String]`
  */
@@ -806,68 +804,68 @@ const renderBox = ({ cols, content, rows }: Box): string[] => {
   return pipe(
     content,
     Match.type<Content>().pipe(
-      Match.tag("Blank", () => resizeBox(rows, cols, [""])),
-      Match.tag("Text", ({ text }) => resizeBox(rows, cols, [text])),
+      Match.tag("Blank", () => resizeBox([""], rows, cols)),
+      Match.tag("Text", ({ text }) => resizeBox([text], rows, cols)),
       Match.tag("Row", ({ boxes }) =>
-        resizeBox(
-          rows,
-          cols,
-          merge(boxes.map((box) => renderBoxWithRows(rows, make(box))))
+        pipe(
+          boxes,
+          Array.map(renderBoxWithRows(rows)),
+          merge,
+          resizeBox(rows, cols)
         )
       ),
       Match.tag("Col", ({ boxes }) =>
-        resizeBox(
-          rows,
-          cols,
-          boxes.flatMap((box) => renderBoxWithCols(cols, make(box)))
+        pipe(
+          boxes,
+          Array.flatMap(renderBoxWithCols(cols)),
+          resizeBox(rows, cols)
         )
       ),
       Match.tag("SubBox", ({ box, xAlign, yAlign }) =>
-        resizeBoxAligned(rows, cols, xAlign, yAlign, renderBox(make(box)))
+        pipe(box, renderBox, resizeBoxAligned(rows, cols, xAlign, yAlign))
       ),
       Match.exhaustive
     )
   );
 };
 
-const trailingSpaceRegex = /\s+$/;
-
 /**
  * Takes up to n elements from an array, padding with a default value if needed.
+ * @param self - Source array
  * @param a - Default value to use for padding
  * @param n - Target length
- * @param xs - Source array
  *
  * @note Haskell: `takeP :: a -> Int -> [a] -> [a]`
  */
-const takeP = <A>(a: A, n: number, xs: readonly A[]): A[] => {
+const takeP = dual<
+  <A>(a: A, n: number) => (self: readonly A[]) => A[],
+  <A>(self: readonly A[], a: A, n: number) => A[]
+>(3, (self, a, n) => {
   if (n <= 0) {
     return [];
   }
-  if (xs.length === 0) {
+  if (self.length === 0) {
     return Array.makeBy(n, () => a);
   }
-  if (n <= xs.length) {
-    return xs.slice(0, n);
+  if (n <= self.length) {
+    return self.slice(0, n);
   }
-  return [...xs, ...Array.makeBy(n - xs.length, () => a)];
-};
+  return [...self, ...Array.makeBy(n - self.length, () => a)];
+});
 
 /**
  * Takes elements from an array with alignment, padding as needed.
+ * @param self - Source array
  * @param alignment - How to align the original array within the result
  * @param a - Default value for padding
  * @param n - Target length
- * @param xs - Source array
  *
  * @note Haskell: `takePA :: Alignment -> a -> Int -> [a] -> [a]`
  */
-const takePA = <A>(
-  alignment: Alignment,
-  a: A,
-  n: number,
-  xs: readonly A[]
-): A[] => {
+const takePA = dual<
+  <A>(alignment: Alignment, a: A, n: number) => (xs: readonly A[]) => A[],
+  <A>(self: readonly A[], alignment: Alignment, a: A, n: number) => A[]
+>(4, <A>(self: readonly A[], alignment: Alignment, a: A, n: number) => {
   if (n <= 0) {
     return [];
   }
@@ -890,15 +888,15 @@ const takePA = <A>(
       Match.exhaustive
     );
 
-  const splitPos = numRev(alignment, xs.length);
-  const prefix = [...xs.slice(0, splitPos)].reverse();
-  const suffix = xs.slice(splitPos);
+  const splitPos = numRev(alignment, self.length);
+  const prefix = [...self.slice(0, splitPos)].reverse();
+  const suffix = self.slice(splitPos);
 
   return [
-    ...takeP(a, numRev(alignment, n), prefix).reverse(),
-    ...takeP(a, numFwd(alignment, n), suffix),
+    ...takeP(prefix, a, numRev(alignment, n)).reverse(),
+    ...takeP(suffix, a, numFwd(alignment, n)),
   ];
-};
+});
 
 /**
  * Creates a string of spaces with the specified length.
@@ -910,97 +908,118 @@ const blanks = (n: number): string => pipe(" ", String.repeat(Math.max(0, n)));
 
 /**
  * Renders a box with a specific number of rows.
+ * @param self - The box to render
  * @param r - Target number of rows
- * @param b - The box to render
  *
  * @note Haskell: `renderBoxWithRows :: Int -> Box -> [String]`
  */
-const renderBoxWithRows = (r: number, b: Box): string[] =>
-  renderBox({ ...b, rows: r });
+const renderBoxWithRows = dual<
+  (r: number) => (self: Box) => string[],
+  (self: Box, r: number) => string[]
+>(2, (self, r) => renderBox({ ...self, rows: r }));
 
 /**
  * Renders a box with a specific number of columns.
+ * @param self - The box to render
  * @param c - Target number of columns
- * @param b - The box to render
  *
  * @note Haskell: `renderBoxWithCols :: Int -> Box -> [String]`
  */
-const renderBoxWithCols = (c: number, b: Box): string[] =>
-  renderBox({ ...b, cols: c });
+const renderBoxWithCols = dual<
+  (c: number) => (self: Box) => string[],
+  (self: Box, c: number) => string[]
+>(2, (self, c) => renderBox({ ...self, cols: c }));
 
 /**
  * Adjusts the size of rendered text lines to specific dimensions.
+ * @param self - Text lines to resize
  * @param r - Target number of rows
  * @param c - Target number of columns
- * @param lines - Text lines to resize
  *
  * @note Haskell: `resizeBox :: Int -> Int -> [String] -> [String]`
  */
-const resizeBox = (r: number, c: number, lines: string[]): string[] =>
+const resizeBox = dual<
+  (r: number, c: number) => (self: string[]) => string[],
+  (self: string[], r: number, c: number) => string[]
+>(3, (self, r, c) =>
   takeP(
+    self.map((line) => takeP([...line], " ", c)).map((chars) => chars.join("")),
     blanks(c),
-    r,
-    lines.map((line) => takeP(" ", c, [...line])).map((chars) => chars.join(""))
-  );
+    r
+  )
+);
 
 /**
  * Adjusts the size of rendered text lines with alignment options.
+ * @param self - Text lines to resize
  * @param r - Target number of rows
  * @param c - Target number of columns
  * @param ha - Horizontal alignment
  * @param va - Vertical alignment
- * @param lines - Text lines to resize
  *
  * @note Haskell: `resizeBoxAligned :: Int -> Int -> Alignment -> Alignment -> [String] -> [String]`
  */
-const resizeBoxAligned = (
-  r: number,
-  c: number,
-  ha: Alignment,
-  va: Alignment,
-  lines: string[]
-): string[] =>
+const resizeBoxAligned = dual<
+  (
+    r: number,
+    c: number,
+    ha: Alignment,
+    va: Alignment
+  ) => (self: string[]) => string[],
+  (
+    self: string[],
+    r: number,
+    c: number,
+    ha: Alignment,
+    va: Alignment
+  ) => string[]
+>(5, (self, r, c, ha, va) =>
   takePA(
+    self.map((line) => takePA([...line], ha, " ", c).join("")),
     va,
     blanks(c),
-    r,
-    lines.map((line) => takePA(ha, " ", c, [...line]).join(""))
-  );
+    r
+  )
+);
 
 /**
  * Converts a box to a string suitable for display, removing trailing whitespace.
- * @param b - The box to render
+ * @param self - The box to render
  *
  * @note Haskell: `render :: Box -> String`
  */
-export const render = (b: Box): string => {
-  const lines = renderBox(b);
-  return (
-    Array.join(
-      lines.map((l) => String.replace(trailingSpaceRegex, "")(l)),
-      "\n"
-    ) + (lines.length > 0 ? "\n" : "")
+export const render = (self: Box): string =>
+  pipe(
+    renderBox(self),
+    Array.map(String.trimEnd),
+    Array.join("\n"),
+    (d) => d + (renderBox(self).length > 0 ? "\n" : "")
   );
-};
 
 /**
  * Converts a box to a string while preserving all whitespace including trailing spaces.
- * @param b - The box to render
+ * @param self - The box to render
  *
  * @note Haskell: `renderWithSpaces :: Box -> String`
  */
-export const renderWithSpaces = (b: Box): string => {
-  const lines = renderBox(b);
-  return Array.join(lines, "\n") + (lines.length > 0 ? "\n" : "");
-};
+export const renderWithSpaces = (self: Box): string =>
+  pipe(
+    renderBox(self),
+    Array.join("\n"),
+    (d) => d + (renderBox(self).length > 0 ? "\n" : "")
+  );
 
 /**
  * Converts a box to a string using a custom separator instead of spaces.
- * @param b - The box to render
+ * @param self - The box to render
  * @param sep - Separator to use instead of spaces (default is a single space)
  */
-export const renderWith = (b: Box, sep = " ") =>
-  pipe(renderWithSpaces(b), String.replace(/ /g, sep));
+export const renderWith = dual<
+  (sep?: string) => (self: Box) => string,
+  (self: Box, sep?: string) => string
+>(2, (self, sep) =>
+  pipe(renderWithSpaces(self), String.replace(/ /g, sep ?? " "))
+);
 
 /**
  * Prints a box to the console using the Effect Console.
