@@ -1,12 +1,12 @@
 import {
-  Effect,
-  Console,
-  Clock,
-  Stream,
-  Schedule,
-  Ref,
-  pipe,
   Array,
+  Clock,
+  Console,
+  Effect,
+  pipe,
+  Ref,
+  Schedule,
+  Stream,
 } from "effect";
 import * as Box from "../src/Box";
 
