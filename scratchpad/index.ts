@@ -95,7 +95,7 @@ const main = Effect.gen(function* () {
       yield* Box.printBox(
         pipe(
           [
-            ProgressBar(counter, COMPLETE, 89).pipe(Border),
+            ProgressBar(counter, COMPLETE, 69).pipe(Border),
             Box.text(`${((counter / COMPLETE) * 100).toFixed(0)}%`).pipe(
               Box.alignHoriz(Box.right, 5),
               Border
@@ -112,7 +112,7 @@ const main = Effect.gen(function* () {
           counter < COMPLETE ? "Running..." : "Completed!",
           counter,
           formatTime(timestamp)
-        ).pipe(Box.alignHoriz(Box.center1, 100), Border)
+        ).pipe(Box.alignHoriz(Box.center1, 80), Border)
       );
 
       if (counter < COMPLETE) {
