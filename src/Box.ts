@@ -3,6 +3,7 @@ import * as Equal from "effect/Equal";
 import { dual } from "effect/Function";
 import * as Hash from "effect/Hash";
 import { type Pipeable, pipeArguments } from "effect/Pipeable";
+import type { Annotation } from "./Annotation";
 
 export const BoxTypeId: unique symbol = Symbol.for("@effect/Box");
 
@@ -52,68 +53,69 @@ export const center2: Alignment = "AlignCenter2";
  */
 type Blank = { _tag: "Blank" };
 type Text = { _tag: "Text"; text: string };
-type Row = { _tag: "Row"; boxes: Box[] };
-type Col = { _tag: "Col"; boxes: Box[] };
-type SubBox = {
+type Row<A = never> = { _tag: "Row"; boxes: Box<A>[] };
+type Col<A = never> = { _tag: "Col"; boxes: Box<A>[] };
+type SubBox<A = never> = {
   _tag: "SubBox";
   xAlign: Alignment;
   yAlign: Alignment;
-  box: Box;
+  box: Box<A>;
 };
 
-export type Content = Blank | Text | Row | Col | SubBox;
+export type Content<A = never> = Blank | Text | Row<A> | Col<A> | SubBox<A>;
 
 /**
  * The Box data type, representing a rectangular area of text with various combinators for layout and alignment.
  */
-export interface Box extends Pipeable, Equal.Equal, Hash.Hash {
+export interface Box<A = never> extends Pipeable, Equal.Equal, Hash.Hash {
   readonly [BoxTypeId]: BoxTypeId;
   readonly rows: number;
   readonly cols: number;
-  readonly content: Content;
+  readonly content: Content<A>;
+  readonly annotation?: Annotation<A>;
 }
 
-const isBox = (u: unknown): u is Box =>
+const isBox = <A>(u: unknown): u is Box<A> =>
   typeof u === "object" && u != null && BoxTypeId in u;
 
-const contentEquals = (self: Content, that: Content): boolean => {
+const contentEquals = <A>(self: Content<A>, that: Content<A>): boolean => {
   if (self._tag !== that._tag) {
     return false;
   }
 
   return pipe(
     self,
-    Match.type<Content>().pipe(
+    Match.type<Content<A>>().pipe(
       Match.tag("Blank", () => true),
       Match.tag("Text", ({ text }) => text === (that as Text).text),
       Match.tag(
         "Row",
         ({ boxes }) =>
-          boxes.length === (that as Row).boxes.length &&
-          boxes.every((box, i) => Equal.equals(box, (that as Row).boxes[i]))
+          boxes.length === (that as Row<A>).boxes.length &&
+          boxes.every((box, i) => Equal.equals(box, (that as Row<A>).boxes[i]))
       ),
       Match.tag(
         "Col",
         ({ boxes }) =>
-          boxes.length === (that as Col).boxes.length &&
-          boxes.every((box, i) => Equal.equals(box, (that as Col).boxes[i]))
+          boxes.length === (that as Col<A>).boxes.length &&
+          boxes.every((box, i) => Equal.equals(box, (that as Col<A>).boxes[i]))
       ),
       Match.tag(
         "SubBox",
         ({ box, xAlign, yAlign }) =>
-          xAlign === (that as SubBox).xAlign &&
-          yAlign === (that as SubBox).yAlign &&
-          Equal.equals(box, (that as SubBox).box)
+          xAlign === (that as SubBox<A>).xAlign &&
+          yAlign === (that as SubBox<A>).yAlign &&
+          Equal.equals(box, (that as SubBox<A>).box)
       ),
       Match.exhaustive
     )
   );
 };
 
-const contentHash = (content: Content): number =>
+const contentHash = <A>(content: Content<A>): number =>
   pipe(
     content,
-    Match.type<Content>().pipe(
+    Match.type<Content<A>>().pipe(
       Match.tag("Blank", () => Hash.hash("Blank")),
       Match.tag("Text", ({ text }) =>
         Hash.combine(Hash.hash("Text"))(Hash.hash(text))
@@ -142,23 +144,25 @@ const contentHash = (content: Content): number =>
     )
   );
 
-const proto: Omit<Box, "rows" | "content" | "cols"> = {
+const proto: Omit<Box, "rows" | "content" | "cols" | "annotation"> = {
   [BoxTypeId]: BoxTypeId,
-  [Equal.symbol](this: Box, that: unknown): boolean {
+  [Equal.symbol]<A>(this: Box<A>, that: unknown): boolean {
     return (
-      isBox(that) &&
+      isBox<A>(that) &&
       this.rows === that.rows &&
       this.cols === that.cols &&
-      contentEquals(this.content, that.content)
+      contentEquals(this.content, that.content) &&
+      Equal.equals(this.annotation, that.annotation)
     );
   },
-  [Hash.symbol](this: Box) {
+  [Hash.symbol]<A>(this: Box<A>) {
     return Hash.cached(
       this,
       pipe(
         Hash.hash(this.rows),
         Hash.combine(Hash.hash(this.cols)),
-        Hash.combine(contentHash(this.content))
+        Hash.combine(contentHash(this.content)),
+        Hash.combine(Hash.hash(this.annotation))
       )
     );
   },
@@ -168,15 +172,19 @@ const proto: Omit<Box, "rows" | "content" | "cols"> = {
   },
 };
 
-export const make = (b: {
+export const make = <A>(b: {
   rows: number;
   cols: number;
-  content: Content;
-}): Box => {
+  content: Content<A>;
+  annotation?: Annotation<A>;
+}): Box<A> => {
   const box = Object.create(proto);
   box.rows = Math.max(0, b.rows);
   box.cols = Math.max(0, b.cols);
   box.content = b.content;
+  if (b.annotation !== undefined) {
+    box.annotation = b.annotation;
+  }
 
   return box;
 };
@@ -186,7 +194,7 @@ export const make = (b: {
  *
  * @note Haskell: `nullBox :: Box`
  */
-export const nullBox: Box = make({
+export const nullBox: Box<never> = make({
   rows: 0,
   cols: 0,
   content: { _tag: "Blank" },
@@ -199,7 +207,7 @@ export const nullBox: Box = make({
  *
  * @note Haskell: `empty :: Int -> Int -> Box`
  */
-export const emptyBox = (rows: number, cols: number): Box =>
+export const emptyBox = (rows: number, cols: number): Box<never> =>
   make({
     rows,
     cols,
@@ -212,7 +220,7 @@ export const emptyBox = (rows: number, cols: number): Box =>
  *
  * @note Haskell: `char :: Char -> Box`
  */
-export const char = (c: string): Box =>
+export const char = (c: string): Box<never> =>
   make({
     rows: 1,
     cols: 1,
@@ -225,7 +233,7 @@ export const char = (c: string): Box =>
  *
  * @note Haskell: `unsafeLine :: String -> Box`
  */
-const unsafeLine = (t: string): Box =>
+const unsafeLine = (t: string): Box<never> =>
   make({
     rows: 1,
     cols: t.length,
@@ -238,7 +246,7 @@ const unsafeLine = (t: string): Box =>
  *
  * @note Haskell: `text :: String -> Box`
  */
-export const text = (s: string): Box =>
+export const text = (s: string): Box<never> =>
   pipe(s, String.split("\n"), Array.map(unsafeLine), vcat(left));
 
 /**
@@ -247,7 +255,7 @@ export const text = (s: string): Box =>
  *
  * @note Haskell: `line :: String -> Box`
  */
-export const line = (s: string): Box =>
+export const line = (s: string): Box<never> =>
   unsafeLine(String.replace(/\n|\r/g, "")(s));
 
 /**
@@ -259,8 +267,8 @@ export const line = (s: string): Box =>
  * @note Haskell: `para :: Alignment -> Int -> String -> Box`
  */
 export const para = dual<
-  (a: Alignment, w: number) => (self: string) => Box,
-  (self: string, a: Alignment, w: number) => Box
+  (a: Alignment, w: number) => (self: string) => Box<never>,
+  (self: string, a: Alignment, w: number) => Box<never>
 >(3, (self, a, w) => {
   const lines = flow(self, w);
   return mkParaBox(lines, a, lines.length);
@@ -274,14 +282,18 @@ export const para = dual<
  * @note Haskell: `instance Semigroup Box where l <> r = hcat top [l,r]`
  */
 export const combine = dual<
-  (l: Box) => (self: Box) => Box,
-  (self: Box, l: Box) => Box
->(2, (self, l) => hcat([self, l], top));
+  <A>(l: Box<A>) => (self: Box<A>) => Box<A>,
+  <A>(self: Box<A>, l: Box<A>) => Box<A>
+>(2, <A>(self: Box<A>, l: Box<A>): Box<A> => hcat([self, l], top));
 
 export const combineMany = dual<
-  (start: Box) => (self: Iterable<Box>) => Box,
-  (self: Iterable<Box>, start: Box) => Box
->(2, (self, start) => hcat([start, ...Array.fromIterable(self)], top));
+  <A>(start: Box<A>) => (self: Iterable<Box<A>>) => Box<A>,
+  <A>(self: Iterable<Box<A>>, start: Box<A>) => Box<A>
+>(
+  2,
+  <A>(self: Iterable<Box<A>>, start: Box<A>): Box<A> =>
+    hcat([start, ...Array.fromIterable(self)], top)
+);
 
 /**
  * Combines all boxes in a collection horizontally, returning nullBox if empty.
@@ -289,9 +301,9 @@ export const combineMany = dual<
  *
  * @note Haskell: `instance Monoid Box where mempty = nullBox mappend = (<>) mconcat = hcat top`
  */
-export const combineAll = (collection: Iterable<Box>): Box => {
+export const combineAll = <A>(collection: Iterable<Box<A>>): Box<A> => {
   const boxes = Array.fromIterable(collection);
-  return boxes.length === 0 ? nullBox : hcat(boxes, top);
+  return boxes.length === 0 ? (nullBox as Box<A>) : hcat(boxes, top);
 };
 
 /**
@@ -300,7 +312,7 @@ export const combineAll = (collection: Iterable<Box>): Box => {
  *
  * @note Haskell: `rows :: Box -> Int`
  */
-export const rows = (b: Box): number => b.rows;
+export const rows = <A>(b: Box<A>): number => b.rows;
 
 /**
  * Gets the number of columns in a box.
@@ -308,7 +320,7 @@ export const rows = (b: Box): number => b.rows;
  *
  * @note Haskell: `cols :: Box -> Int`
  */
-export const cols = (b: Box): number => b.cols;
+export const cols = <A>(b: Box<A>): number => b.cols;
 
 /**
  * Calculates the sum and maximum of a list in a single pass for efficiency.
@@ -342,17 +354,17 @@ const sumMax = <A>(
  * @note Haskell: `hcat :: Foldable f => Alignment -> f Box -> Box`
  */
 export const hcat = dual<
-  (a: Alignment) => (self: readonly Box[]) => Box,
-  (self: readonly Box[], a: Alignment) => Box
->(2, (self, a) => {
+  (a: Alignment) => <A>(self: readonly Box<A>[]) => Box<A>,
+  <A>(self: readonly Box<A>[], a: Alignment) => Box<A>
+>(2, <A>(self: readonly Box<A>[], a: Alignment): Box<A> => {
   const [w, h] = sumMax(cols, 0, rows, self);
   return make({
     rows: h,
     cols: w,
     content: {
       _tag: "Row",
-      boxes: self.map(alignVert(a, h)),
-    },
+      boxes: self.map(alignVert(a, h)) as Box<A>[],
+    } as Content<A>,
   });
 });
 
@@ -364,17 +376,17 @@ export const hcat = dual<
  * @note Haskell: `vcat :: Foldable f => Alignment -> f Box -> Box`
  */
 export const vcat = dual<
-  (a: Alignment) => (self: readonly Box[]) => Box,
-  (self: readonly Box[], a: Alignment) => Box
->(2, (self, a) => {
+  (a: Alignment) => <A>(self: readonly Box<A>[]) => Box<A>,
+  <A>(self: readonly Box<A>[], a: Alignment) => Box<A>
+>(2, <A>(self: readonly Box<A>[], a: Alignment): Box<A> => {
   const [h, w] = sumMax(rows, 0, cols, self);
   return make({
     rows: h,
     cols: w,
     content: {
       _tag: "Col",
-      boxes: self.map(alignHoriz(a, w)),
-    },
+      boxes: self.map(alignHoriz(a, w)) as Box<A>[],
+    } as Content<A>,
   });
 });
 
@@ -386,9 +398,9 @@ export const vcat = dual<
  * @note Haskell: `instance Semigroup Box where l <> r = hcat top [l,r]`
  */
 export const hAppend = dual<
-  (l: Box) => (self: Box) => Box,
-  (self: Box, l: Box) => Box
->(2, (self, l) => hcat([self, l], top));
+  <A>(l: Box<A>) => (self: Box<A>) => Box<A>,
+  <A>(self: Box<A>, l: Box<A>) => Box<A>
+>(2, <A>(self: Box<A>, l: Box<A>): Box<A> => hcat([self, l], top));
 
 /**
  * Places two boxes side by side with a single space column between them.
@@ -398,9 +410,12 @@ export const hAppend = dual<
  * @note Haskell: `(<+>) :: Box -> Box -> Box`
  */
 export const hcatWithSpace = dual<
-  (l: Box) => (self: Box) => Box,
-  (self: Box, l: Box) => Box
->(2, (self, l) => hcat([self, emptyBox(0, 1), l], top));
+  <A>(l: Box<A>) => (self: Box<A>) => Box<A>,
+  <A>(self: Box<A>, l: Box<A>) => Box<A>
+>(
+  2,
+  <A>(self: Box<A>, l: Box<A>): Box<A> => hcat([self, emptyBox(0, 1), l], top)
+);
 
 /**
  * Stacks two boxes vertically, one above the other.
@@ -410,9 +425,9 @@ export const hcatWithSpace = dual<
  * @note Haskell: `(//) :: Box -> Box -> Box`
  */
 export const vAppend = dual<
-  (t: Box) => (self: Box) => Box,
-  (self: Box, t: Box) => Box
->(2, (self, t) => vcat([self, t], left));
+  <A>(t: Box<A>) => (self: Box<A>) => Box<A>,
+  <A>(self: Box<A>, t: Box<A>) => Box<A>
+>(2, <A>(self: Box<A>, t: Box<A>): Box<A> => vcat([self, t], left));
 
 /**
  * Stacks two boxes vertically with a single empty row between them.
@@ -422,9 +437,12 @@ export const vAppend = dual<
  * @note Haskell: `(/+/) :: Box -> Box -> Box`
  */
 export const vcatWithSpace = dual<
-  (t: Box) => (self: Box) => Box,
-  (self: Box, t: Box) => Box
->(2, (self, t) => vcat([self, emptyBox(1, 0), t], left));
+  <A>(t: Box<A>) => (self: Box<A>) => Box<A>,
+  <A>(self: Box<A>, t: Box<A>) => Box<A>
+>(
+  2,
+  <A>(self: Box<A>, t: Box<A>): Box<A> => vcat([self, emptyBox(1, 0), t], left)
+);
 
 /**
  * Arranges boxes horizontally with a separator box placed between each pair.
@@ -435,11 +453,11 @@ export const vcatWithSpace = dual<
  * @note Haskell: `punctuateH :: Foldable f => Alignment -> Box -> f Box -> Box`
  */
 export const punctuateH = dual<
-  (a: Alignment, p: Box) => (self: readonly Box[]) => Box,
-  (self: readonly Box[], a: Alignment, p: Box) => Box
->(3, (self, a, p) => {
+  <A>(a: Alignment, p: Box<A>) => (self: readonly Box<A>[]) => Box<A>,
+  <A>(self: readonly Box<A>[], a: Alignment, p: Box<A>) => Box<A>
+>(3, <A>(self: readonly Box<A>[], a: Alignment, p: Box<A>): Box<A> => {
   if (self.length === 0) {
-    return nullBox;
+    return nullBox as Box<A>;
   }
   return hcat(Array.intersperse(self, p), a);
 });
@@ -453,11 +471,11 @@ export const punctuateH = dual<
  * @note Haskell: `punctuateV :: Foldable f => Alignment -> Box -> f Box -> Box`
  */
 export const punctuateV = dual<
-  (a: Alignment, p: Box) => (self: readonly Box[]) => Box,
-  (self: readonly Box[], a: Alignment, p: Box) => Box
->(3, (self, a, p) => {
+  <A>(a: Alignment, p: Box<A>) => (self: readonly Box<A>[]) => Box<A>,
+  <A>(self: readonly Box<A>[], a: Alignment, p: Box<A>) => Box<A>
+>(3, <A>(self: readonly Box<A>[], a: Alignment, p: Box<A>): Box<A> => {
   if (self.length === 0) {
-    return nullBox;
+    return nullBox as Box<A>;
   }
   return vcat(Array.intersperse(self, p), a);
 });
@@ -471,9 +489,13 @@ export const punctuateV = dual<
  * @note Haskell: `hsep :: Foldable f => Int -> Alignment -> f Box -> Box`
  */
 export const hsep = dual<
-  (sep: number, a: Alignment) => (self: readonly Box[]) => Box,
-  (self: readonly Box[], sep: number, a: Alignment) => Box
->(3, (self, sep, a) => punctuateH(self, a, emptyBox(0, sep)));
+  (sep: number, a: Alignment) => <A>(self: readonly Box<A>[]) => Box<A>,
+  <A>(self: readonly Box<A>[], sep: number, a: Alignment) => Box<A>
+>(
+  3,
+  <A>(self: readonly Box<A>[], sep: number, a: Alignment): Box<A> =>
+    punctuateH(self, a, emptyBox(0, sep) as Box<A>)
+);
 
 /**
  * Arranges boxes vertically with the specified amount of space between each.
@@ -484,9 +506,13 @@ export const hsep = dual<
  * @note Haskell: `vsep :: Foldable f => Int -> Alignment -> f Box -> Box`
  */
 export const vsep = dual<
-  (sep: number, a: Alignment) => (bs: readonly Box[]) => Box,
-  (self: readonly Box[], sep: number, a: Alignment) => Box
->(3, (self, sep, a) => punctuateV(self, a, emptyBox(sep, 0)));
+  (sep: number, a: Alignment) => <A>(bs: readonly Box<A>[]) => Box<A>,
+  <A>(self: readonly Box<A>[], sep: number, a: Alignment) => Box<A>
+>(
+  3,
+  <A>(self: readonly Box<A>[], sep: number, a: Alignment): Box<A> =>
+    punctuateV(self, a, emptyBox(sep, 0) as Box<A>)
+);
 
 /*
  *  --------------------------------------------------------------------------------
@@ -669,9 +695,13 @@ const wordFits = (
  * @note Haskell: `alignHoriz :: Alignment -> Int -> Box -> Box`
  */
 export const alignHoriz = dual<
-  (a: Alignment, c: number) => (self: Box) => Box,
-  (self: Box, a: Alignment, c: number) => Box
->(3, (self, a, c) => align(self, a, left, self.rows, c));
+  (a: Alignment, c: number) => <A>(self: Box<A>) => Box<A>,
+  <A>(self: Box<A>, a: Alignment, c: number) => Box<A>
+>(
+  3,
+  <A>(self: Box<A>, a: Alignment, c: number): Box<A> =>
+    align(self, a, left, self.rows, c)
+);
 
 /**
  * Vertically aligns a box within a specified height.
@@ -682,9 +712,13 @@ export const alignHoriz = dual<
  * @note Haskell: `alignVert :: Alignment -> Int -> Box -> Box`
  */
 export const alignVert = dual<
-  (a: Alignment, r: number) => (self: Box) => Box,
-  (self: Box, a: Alignment, r: number) => Box
->(3, (self, a, r) => align(self, top, a, r, self.cols));
+  (a: Alignment, r: number) => <A>(self: Box<A>) => Box<A>,
+  <A>(self: Box<A>, a: Alignment, r: number) => Box<A>
+>(
+  3,
+  <A>(self: Box<A>, a: Alignment, r: number): Box<A> =>
+    align(self, top, a, r, self.cols)
+);
 
 /**
  * Aligns a box within specified dimensions using both horizontal and vertical alignment.
@@ -697,19 +731,54 @@ export const alignVert = dual<
  * @note Haskell: `align :: Alignment -> Alignment -> Int -> Int -> Box -> Box`
  */
 export const align = dual<
-  (ah: Alignment, av: Alignment, r: number, c: number) => (self: Box) => Box,
-  (self: Box, ah: Alignment, av: Alignment, r: number, c: number) => Box
->(5, (self, ah, av, r, c) =>
-  make({
-    rows: r,
-    cols: c,
-    content: {
-      _tag: "SubBox",
-      xAlign: ah,
-      yAlign: av,
-      box: make({ rows: self.rows, cols: self.cols, content: self.content }),
-    },
-  })
+  (
+    ah: Alignment,
+    av: Alignment,
+    r: number,
+    c: number
+  ) => <A>(self: Box<A>) => Box<A>,
+  <A>(
+    self: Box<A>,
+    ah: Alignment,
+    av: Alignment,
+    r: number,
+    c: number
+  ) => Box<A>
+>(
+  5,
+  <A>(
+    self: Box<A>,
+    ah: Alignment,
+    av: Alignment,
+    r: number,
+    c: number
+  ): Box<A> => {
+    const boxProps: {
+      rows: number;
+      cols: number;
+      content: Content<A>;
+      annotation?: Annotation<A>;
+    } = {
+      rows: self.rows,
+      cols: self.cols,
+      content: self.content,
+    };
+
+    if (self.annotation) {
+      boxProps.annotation = self.annotation;
+    }
+
+    return make({
+      rows: r,
+      cols: c,
+      content: {
+        _tag: "SubBox",
+        xAlign: ah,
+        yAlign: av,
+        box: make(boxProps),
+      } as Content<A>,
+    });
+  }
 );
 
 /**
@@ -720,9 +789,12 @@ export const align = dual<
  * @note Haskell: `moveUp :: Int -> Box -> Box`
  */
 export const moveUp = dual<
-  (n: number) => (b: Box) => Box,
-  (self: Box, n: number) => Box
->(2, (self, n) => alignVert(self, top, self.rows + n));
+  (n: number) => <A>(b: Box<A>) => Box<A>,
+  <A>(self: Box<A>, n: number) => Box<A>
+>(
+  2,
+  <A>(self: Box<A>, n: number): Box<A> => alignVert(self, top, self.rows + n)
+);
 
 /**
  * Moves a box down by adding empty rows above it.
@@ -732,9 +804,12 @@ export const moveUp = dual<
  * @note Haskell: `moveDown :: Int -> Box -> Box`
  */
 export const moveDown = dual<
-  (n: number) => (self: Box) => Box,
-  (self: Box, n: number) => Box
->(2, (self, n) => alignVert(self, bottom, self.rows + n));
+  (n: number) => <A>(self: Box<A>) => Box<A>,
+  <A>(self: Box<A>, n: number) => Box<A>
+>(
+  2,
+  <A>(self: Box<A>, n: number): Box<A> => alignVert(self, bottom, self.rows + n)
+);
 
 /**
  * Moves a box left by adding empty columns to the right.
@@ -744,9 +819,12 @@ export const moveDown = dual<
  * @note Haskell: `moveLeft :: Int -> Box -> Box`
  */
 export const moveLeft = dual<
-  (n: number) => (self: Box) => Box,
-  (self: Box, n: number) => Box
->(2, (self, n) => alignHoriz(self, left, self.cols + n));
+  (n: number) => <A>(self: Box<A>) => Box<A>,
+  <A>(self: Box<A>, n: number) => Box<A>
+>(
+  2,
+  <A>(self: Box<A>, n: number): Box<A> => alignHoriz(self, left, self.cols + n)
+);
 
 /**
  * Moves a box right by adding empty columns to the left.
@@ -756,15 +834,42 @@ export const moveLeft = dual<
  * @note Haskell: `moveRight :: Int -> Box -> Box`
  */
 export const moveRight = dual<
-  (n: number) => (self: Box) => Box,
-  (self: Box, n: number) => Box
->(2, (self, n) => alignHoriz(self, right, self.cols + n));
+  (n: number) => <A>(self: Box<A>) => Box<A>,
+  <A>(self: Box<A>, n: number) => Box<A>
+>(
+  2,
+  <A>(self: Box<A>, n: number): Box<A> => alignHoriz(self, right, self.cols + n)
+);
 
 /*
  *  --------------------------------------------------------------------------------
  *  --  Implementation  ------------------------------------------------------------
  *  --------------------------------------------------------------------------------
  */
+
+/**
+ * Configuration options for rendering boxes with annotations.
+ */
+export interface RenderConfig {
+  readonly style?: "pretty" | "plain";
+  readonly preserveWhitespace?: boolean;
+}
+
+/**
+ * Default render configuration that enables annotation rendering with pretty style.
+ */
+export const defaultRenderConfig: RenderConfig = {
+  style: "pretty",
+  preserveWhitespace: false,
+};
+
+/**
+ * Render configuration for plain text output (no annotations).
+ */
+export const plainTextRenderConfig: RenderConfig = {
+  style: "plain",
+  preserveWhitespace: false,
+};
 
 /**
  * Merges multiple arrays of rendered text lines into a single array.
@@ -983,18 +1088,43 @@ const resizeBoxAligned = dual<
 );
 
 /**
- * Converts a box to a string suitable for display, removing trailing whitespace.
+ * Converts a box to a string with custom render configuration.
  * @param self - The box to render
+ * @param config - Render configuration options
+ */
+export const renderWithConfig = dual<
+  (config: RenderConfig) => <A>(self: Box<A>) => string,
+  <A>(self: Box<A>, config: RenderConfig) => string
+>(2, <A>(self: Box<A>, config: RenderConfig): string => {
+  const rendered = renderBox(self as Box<never>);
+
+  if (config.preserveWhitespace) {
+    return pipe(
+      rendered,
+      Array.join("\n"),
+      (d) => d + (rendered.length > 0 ? "\n" : "")
+    );
+  }
+
+  // Plain style or no annotation
+  return pipe(
+    rendered,
+    Array.map(String.trimEnd),
+    Array.join("\n"),
+    (d) => d + (rendered.length > 0 ? "\n" : "")
+  );
+});
+
+/**
+ * Converts a box to a string suitable for display, removing trailing whitespace.
+ * Supports optional RenderConfig to control styling behavior.
+ * @param self - The box to render
+ * @param config - Optional render configuration (defaults to pretty style)
  *
  * @note Haskell: `render :: Box -> String`
  */
-export const render = (self: Box): string =>
-  pipe(
-    renderBox(self),
-    Array.map(String.trimEnd),
-    Array.join("\n"),
-    (d) => d + (renderBox(self).length > 0 ? "\n" : "")
-  );
+export const render = <A>(self: Box<A>, config?: RenderConfig): string =>
+  renderWithConfig(self, config || defaultRenderConfig);
 
 /**
  * Converts a box to a string while preserving all whitespace including trailing spaces.
@@ -1002,11 +1132,11 @@ export const render = (self: Box): string =>
  *
  * @note Haskell: `renderWithSpaces :: Box -> String`
  */
-export const renderWithSpaces = (self: Box): string =>
+export const renderWithSpaces = <A>(self: Box<A>): string =>
   pipe(
-    renderBox(self),
+    renderBox(self as Box<never>),
     Array.join("\n"),
-    (d) => d + (renderBox(self).length > 0 ? "\n" : "")
+    (d) => d + (renderBox(self as Box<never>).length > 0 ? "\n" : "")
   );
 
 /**
@@ -1015,9 +1145,9 @@ export const renderWithSpaces = (self: Box): string =>
  * @param sep - Separator to use instead of spaces (default is a single space)
  */
 export const renderWith = dual<
-  (sep?: string) => (self: Box) => string,
-  (self: Box, sep?: string) => string
->(2, (self, sep) =>
+  (sep?: string) => <A>(self: Box<A>) => string,
+  <A>(self: Box<A>, sep?: string) => string
+>(2, <A>(self: Box<A>, sep?: string): string =>
   pipe(renderWithSpaces(self), String.replace(/ /g, sep ?? " "))
 );
 
@@ -1027,7 +1157,145 @@ export const renderWith = dual<
  *
  * @note Haskell: `printBox :: Box -> IO ()`
  */
-export const printBox = (b: Box) =>
+export const printBox = <A>(b: Box<A>) =>
   Effect.gen(function* () {
     yield* Console.log(render(b));
   });
+
+/*
+ *  --------------------------------------------------------------------------------
+ *  --  Annotation Functions  ------------------------------------------------------
+ *  --------------------------------------------------------------------------------
+ */
+
+/**
+ * Adds an annotation to a box. Supports dual signatures:
+ * - annotate(box, annotation): Box<A>
+ * - annotate(annotation)(box): Box<A>
+ *
+ * @param self - The box to annotate
+ * @param annotation - The annotation to add
+ */
+export const annotate = dual<
+  <A>(annotation: Annotation<A>) => <B>(self: Box<B>) => Box<A>,
+  <B, A>(self: Box<B>, annotation: Annotation<A>) => Box<A>
+>(
+  2,
+  <B, A>(self: Box<B>, annotation: Annotation<A>): Box<A> =>
+    make({
+      rows: self.rows,
+      cols: self.cols,
+      content: self.content as Content<A>, // Cast is safe - content structure is preserved
+      annotation,
+    })
+);
+
+/**
+ * Removes the annotation from a box, returning a Box<never>.
+ *
+ * @param self - The box to remove annotation from
+ */
+export const unAnnotate = <A>(self: Box<A>): Box<never> =>
+  make({
+    rows: self.rows,
+    cols: self.cols,
+    content: self.content as Content<never>, // Safe cast - removing annotations
+  });
+
+/**
+ * Transforms the annotation of a box using a provided function.
+ * If the box has no annotation, returns the box unchanged.
+ *
+ * @param self - The box with annotation to transform
+ * @param transform - Function to transform the annotation
+ */
+export const reAnnotate = dual<
+  <A, B>(transform: (annotation: A) => B) => (self: Box<A>) => Box<B>,
+  <A, B>(self: Box<A>, transform: (annotation: A) => B) => Box<B>
+>(2, <A, B>(self: Box<A>, transform: (annotation: A) => B): Box<B> => {
+  if (!self.annotation) {
+    throw new Error("Cannot reAnnotate: Box has no annotation to transform");
+  }
+
+  return make({
+    rows: self.rows,
+    cols: self.cols,
+    content: self.content as Content<B>, // Safe cast - content structure preserved
+    annotation: {
+      ...self.annotation,
+      data: transform(self.annotation.data),
+    } as Annotation<B>,
+  });
+});
+
+/**
+ * Applies a function to modify annotations within a box structure, creating multiple boxes.
+ * The alter function receives an annotation and returns an array of new annotations.
+ * Returns an array of boxes, one for each annotation returned by the alter function.
+ * If the box has no annotation, throws an error.
+ *
+ * @param self - The box to process (must have an annotation)
+ * @param alter - Function that takes an annotation and returns an array of new annotations
+ * @returns Array of boxes, one for each annotation returned by alter function
+ */
+export const alterAnnotations = dual<
+  <A, B>(alter: (annotation: A) => B[]) => (self: Box<A>) => Box<B>[],
+  <A, B>(self: Box<A>, alter: (annotation: A) => B[]) => Box<B>[]
+>(2, <A, B>(self: Box<A>, alter: (annotation: A) => B[]): Box<B>[] => {
+  // Box must have an annotation to alter
+  if (!self.annotation) {
+    throw new Error("Cannot alter annotations on a box without annotation");
+  }
+
+  // Apply alter function to get array of new annotations
+  const newAnnotations = alter(self.annotation.data);
+
+  // Helper to recursively process content
+  // We don't alter annotations in nested content - only the top-level box annotation
+  const processContent = (content: Content<A>): Content<B> => {
+    return pipe(
+      content,
+      Match.type<Content<A>>().pipe(
+        Match.tag("Blank", (blank) => blank),
+        Match.tag("Text", (text) => text),
+        Match.tag("Row", ({ boxes }) => ({
+          _tag: "Row" as const,
+          boxes: boxes as unknown as Box<B>[], // Type cast - nested boxes maintain their structure
+        })),
+        Match.tag("Col", ({ boxes }) => ({
+          _tag: "Col" as const,
+          boxes: boxes as unknown as Box<B>[], // Type cast - nested boxes maintain their structure
+        })),
+        Match.tag("SubBox", ({ box, xAlign, yAlign }) => ({
+          _tag: "SubBox" as const,
+          box: box as unknown as Box<B>, // Type cast - nested box maintains its structure
+          xAlign,
+          yAlign,
+        })),
+        Match.exhaustive
+      )
+    );
+  };
+
+  // Create a box for each new annotation
+  return newAnnotations.map((newAnnotation) =>
+    make({
+      rows: self.rows,
+      cols: self.cols,
+      content: processContent(self.content),
+      annotation: { ...self.annotation, data: newAnnotation } as Annotation<B>,
+    })
+  );
+});
+
+/**
+ * Alias for `alterAnnotations` - applies a function to modify annotations within a box structure, creating multiple boxes.
+ * The alter function receives an annotation and returns an array of new annotations.
+ * Returns an array of boxes, one for each annotation returned by the alter function.
+ * If the box has no annotation, throws an error.
+ *
+ * @param self - The box to process (must have an annotation)
+ * @param alter - Function that takes an annotation and returns an array of new annotations
+ * @returns Array of boxes, one for each annotation returned by alter function
+ */
+export const alterAnnotate = alterAnnotations;
