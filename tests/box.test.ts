@@ -3,6 +3,7 @@ import * as Equal from "effect/Equal";
 import * as Hash from "effect/Hash";
 import { describe, expect, it } from "vitest";
 import * as Box from "../src/Box";
+import * as Annotation from "../src/Annotation";
 
 describe("Box", () => {
   it("text trims trailing spaces per line", () => {
@@ -848,5 +849,278 @@ describe("Hash", () => {
     const hash1 = Hash.hash(Box.text("cached"));
     const hash2 = Hash.hash(Box.text("cached"));
     expect(hash1).toBe(hash2);
+  });
+});
+
+describe("Annotation Functions", () => {
+  describe("annotate", () => {
+    it("adds annotation to a box without annotation", () => {
+      const box = Box.text("hello");
+      const annotation = Annotation.createAnnotation("my-annotation");
+      const annotatedBox = Box.annotate(box, annotation);
+
+      expect(annotatedBox.rows).toBe(box.rows);
+      expect(annotatedBox.cols).toBe(box.cols);
+      expect(annotatedBox.annotation).toEqual(annotation);
+      expect(Box.render(annotatedBox)).toBe(Box.render(box));
+    });
+
+    it("supports dual signature with annotation first", () => {
+      const box = Box.text("test");
+      const annotation = Annotation.createAnnotation({
+        type: "info",
+        value: 42,
+      });
+
+      // Test curried version
+      const annotator = Box.annotate(annotation);
+      const result = annotator(box);
+
+      expect(result.annotation?.data).toEqual({ type: "info", value: 42 });
+    });
+
+    it("replaces existing annotation when adding new one", () => {
+      const box = Box.text("content");
+      const firstAnnotation = Annotation.createAnnotation("first");
+      const secondAnnotation = Annotation.createAnnotation("second");
+
+      const firstAnnotated = Box.annotate(box, firstAnnotation);
+      const secondAnnotated = Box.annotate(firstAnnotated, secondAnnotation);
+
+      expect(firstAnnotated.annotation?.data).toBe("first");
+      expect(secondAnnotated.annotation?.data).toBe("second");
+    });
+
+    it("preserves box structure and content when annotating", () => {
+      const complexBox = Box.vcat(
+        [Box.hcat([Box.text("A"), Box.text("B")], Box.top), Box.text("C")],
+        Box.left
+      );
+
+      const annotation = Annotation.createAnnotation({ id: "complex-box" });
+      const annotated = Box.annotate(complexBox, annotation);
+
+      expect(Box.render(annotated)).toBe(Box.render(complexBox));
+      expect(annotated.rows).toBe(complexBox.rows);
+      expect(annotated.cols).toBe(complexBox.cols);
+      expect(annotated.annotation?.data).toEqual({ id: "complex-box" });
+    });
+  });
+
+  describe("unAnnotate", () => {
+    it("removes annotation from annotated box", () => {
+      const box = Box.text("hello");
+      const annotation = Annotation.createAnnotation("test-annotation");
+      const annotatedBox = Box.annotate(box, annotation);
+      const unAnnotatedBox = Box.unAnnotate(annotatedBox);
+
+      expect(unAnnotatedBox.annotation).toBeUndefined();
+      expect(unAnnotatedBox.rows).toBe(annotatedBox.rows);
+      expect(unAnnotatedBox.cols).toBe(annotatedBox.cols);
+      expect(Box.render(unAnnotatedBox)).toBe(Box.render(annotatedBox));
+    });
+
+    it("handles box without annotation gracefully", () => {
+      const box = Box.text("no annotation");
+      const result = Box.unAnnotate(box);
+
+      expect(result.annotation).toBeUndefined();
+      expect(result.rows).toBe(box.rows);
+      expect(result.cols).toBe(box.cols);
+      expect(Box.render(result)).toBe(Box.render(box));
+    });
+
+    it("preserves complex box structure when removing annotation", () => {
+      const complexBox = Box.hcat(
+        [Box.text("Left\nSide"), Box.text("Right")],
+        Box.center1
+      );
+
+      const annotated = Box.annotate(
+        complexBox,
+        Annotation.createAnnotation("remove-me")
+      );
+      const unAnnotated = Box.unAnnotate(annotated);
+
+      expect(unAnnotated.annotation).toBeUndefined();
+      expect(Box.render(unAnnotated)).toBe(Box.render(complexBox));
+    });
+  });
+
+  describe("reAnnotate", () => {
+    it("transforms annotation data using provided function", () => {
+      const box = Box.text("content");
+      const initialData = { count: 5, name: "test" };
+      const annotation = Annotation.createAnnotation(initialData);
+      const annotatedBox = Box.annotate(box, annotation);
+
+      const transform = (data: typeof initialData) => ({
+        count: data.count * 2,
+        name: data.name.toUpperCase(),
+        transformed: true,
+      });
+
+      const reAnnotated = Box.reAnnotate(annotatedBox, transform);
+
+      expect(reAnnotated.annotation?.data).toEqual({
+        count: 10,
+        name: "TEST",
+        transformed: true,
+      });
+      expect(Box.render(reAnnotated)).toBe(Box.render(box));
+    });
+
+    it("supports dual signature with transform function first", () => {
+      const box = Box.text("test");
+      const annotation = Annotation.createAnnotation(10);
+      const annotatedBox = Box.annotate(box, annotation);
+
+      const doubler = (n: number) => n * 2;
+      const transformer = Box.reAnnotate(doubler);
+      const result = transformer(annotatedBox);
+
+      expect(result.annotation?.data).toBe(20);
+    });
+
+    it("throws error when trying to reAnnotate box without annotation", () => {
+      const box = Box.text("no annotation");
+      const transform = (data: string) => data.toUpperCase();
+
+      expect(() => Box.reAnnotate(box, transform)).toThrow(
+        "Cannot reAnnotate: Box has no annotation to transform"
+      );
+    });
+
+    it("preserves annotation structure while transforming data", () => {
+      const box = Box.emptyBox(3, 3);
+      const originalAnnotation = Annotation.createAnnotation("original");
+      const annotated = Box.annotate(box, originalAnnotation);
+
+      const reAnnotated = Box.reAnnotate(
+        annotated,
+        (data: string) => data + "-modified"
+      );
+
+      expect(reAnnotated.annotation?.data).toBe("original-modified");
+      expect(Annotation.isAnnotation(reAnnotated.annotation)).toBe(true);
+    });
+  });
+
+  describe("alterAnnotations", () => {
+    it("creates multiple boxes from single annotation using alter function", () => {
+      const box = Box.text("base");
+      const annotation = Annotation.createAnnotation(["a", "b", "c"]);
+      const annotatedBox = Box.annotate(box, annotation);
+
+      const alter = (data: string[]) => data.map((item) => item.toUpperCase());
+      const resultBoxes = Box.alterAnnotations(annotatedBox, alter);
+
+      expect(resultBoxes).toHaveLength(3);
+      expect(resultBoxes[0]?.annotation?.data).toBe("A");
+      expect(resultBoxes[1]?.annotation?.data).toBe("B");
+      expect(resultBoxes[2]?.annotation?.data).toBe("C");
+
+      // All boxes should have same structure
+      resultBoxes.forEach((resultBox) => {
+        expect(Box.render(resultBox)).toBe(Box.render(box));
+        expect(resultBox.rows).toBe(box.rows);
+        expect(resultBox.cols).toBe(box.cols);
+      });
+    });
+
+    it("supports dual signature with alter function first", () => {
+      const box = Box.text("test");
+      const annotation = Annotation.createAnnotation(5);
+      const annotatedBox = Box.annotate(box, annotation);
+
+      const multiplier = (n: number) => [n * 2, n * 3, n * 4];
+      const alterer = Box.alterAnnotations(multiplier);
+      const results = alterer(annotatedBox);
+
+      expect(results).toHaveLength(3);
+      expect(results[0]?.annotation?.data).toBe(10);
+      expect(results[1]?.annotation?.data).toBe(15);
+      expect(results[2]?.annotation?.data).toBe(20);
+    });
+
+    it("throws error when trying to alter annotations on box without annotation", () => {
+      const box = Box.text("no annotation");
+      const alter = (data: string) => [data, data + "2"];
+
+      expect(() => Box.alterAnnotations(box, alter)).toThrow(
+        "Cannot alter annotations on a box without annotation"
+      );
+    });
+
+    it("handles alter function returning empty array", () => {
+      const box = Box.char("X");
+      const annotation = Annotation.createAnnotation("test");
+      const annotatedBox = Box.annotate(box, annotation);
+
+      const alter = () => [];
+      const results = Box.alterAnnotations(annotatedBox, alter);
+
+      expect(results).toHaveLength(0);
+      expect(Array.isArray(results)).toBe(true);
+    });
+
+    it("preserves complex box structure in all resulting boxes", () => {
+      const complexBox = Box.punctuateH(
+        [Box.text("A"), Box.text("B"), Box.text("C")],
+        Box.top,
+        Box.text("|")
+      );
+
+      const annotation = Annotation.createAnnotation({
+        type: "list",
+        items: 3,
+      });
+      const annotatedBox = Box.annotate(complexBox, annotation);
+
+      const alter = (data: { type: string; items: number }) =>
+        Array.from({ length: data.items }, (_, i) => ({
+          ...data,
+          index: i,
+          id: `item-${i}`,
+        }));
+
+      const results = Box.alterAnnotations(annotatedBox, alter);
+
+      expect(results).toHaveLength(3);
+      results.forEach((resultBox, index) => {
+        expect(Box.render(resultBox)).toBe(Box.render(complexBox));
+        expect(resultBox.annotation?.data.index).toBe(index);
+        expect(resultBox.annotation?.data.id).toBe(`item-${index}`);
+        expect(resultBox.annotation?.data.type).toBe("list");
+      });
+    });
+  });
+
+  describe("alterAnnotate (alias)", () => {
+    it("works as an alias for alterAnnotations", () => {
+      const box = Box.text("alias test");
+      const annotation = Annotation.createAnnotation([1, 2, 3]);
+      const annotatedBox = Box.annotate(box, annotation);
+
+      const alter = (data: number[]) => data.map((n) => n * 10);
+
+      // Test that alterAnnotate produces same results as alterAnnotations
+      const resultsFromAlias = Box.alterAnnotate(annotatedBox, alter);
+      const resultsFromOriginal = Box.alterAnnotations(annotatedBox, alter);
+
+      expect(resultsFromAlias).toHaveLength(resultsFromOriginal.length);
+      expect(resultsFromAlias).toHaveLength(3);
+
+      resultsFromAlias.forEach((aliasBox, index) => {
+        const originalBox = resultsFromOriginal[index];
+        expect(aliasBox.annotation?.data).toBe(originalBox?.annotation?.data);
+        expect(Box.render(aliasBox)).toBe(Box.render(originalBox!));
+      });
+
+      // Verify the actual results
+      expect(resultsFromAlias[0]?.annotation?.data).toBe(10);
+      expect(resultsFromAlias[1]?.annotation?.data).toBe(20);
+      expect(resultsFromAlias[2]?.annotation?.data).toBe(30);
+    });
   });
 });
