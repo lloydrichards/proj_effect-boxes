@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { pipe, String, Array } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 
@@ -189,6 +190,56 @@ describe("Ansi Module", () => {
 
       const rendered = Box.render(styledLayout, { style: "pretty" });
       expect(rendered).toBe("\u001b[32mRedBlue\u001b[0m\n");
+    });
+    it("should apply annotaion within a nested box without breaking the layout", () => {
+      const Border = <A>(self: Box.Box<A>) => {
+        const middleBorder = pipe(
+          Array.makeBy(self.rows, () => Box.char("│")),
+          Box.vcat(Box.left)
+        );
+        const topBorder = pipe(
+          [Box.char("┌"), Box.text("─".repeat(self.cols)), Box.char("┐")],
+          Box.hcat(Box.top)
+        );
+        const bottomBorder = pipe(
+          [Box.char("└"), Box.text("─".repeat(self.cols)), Box.char("┘")],
+          Box.hcat(Box.top)
+        );
+        const middleSection = pipe(
+          [middleBorder, self, middleBorder],
+          Box.hcat(Box.top)
+        );
+        return pipe(
+          [topBorder, middleSection, bottomBorder],
+          Box.vcat(Box.left)
+        );
+      };
+      const result = Box.hcat(
+        [
+          Box.text("x").pipe(
+            Box.alignHoriz(Box.left, 5),
+            Box.annotate(Ansi.red),
+            Border
+          ),
+          Box.text("x\ny").pipe(
+            Box.alignHoriz(Box.right, 5),
+            Box.annotate(Ansi.blue),
+            Border
+          ),
+        ],
+        Box.top
+      ).pipe(Box.moveLeft(2), Box.moveRight(2), Border);
+      expect(Box.render(result, { style: "pretty" })).toBe(
+        String.stripMargin(
+          `|┌──────────────────┐
+           |│  ┌─────┐┌─────┐  │
+           |│  │\u001b[31mx    \u001b[0m││\u001b[34m    x\u001b[0m│  │
+           |│  └─────┘│\u001b[34m    y\u001b[0m│  │
+           |│         └─────┘  │
+           |└──────────────────┘
+           |`
+        )
+      );
     });
   });
 });

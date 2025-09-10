@@ -762,7 +762,7 @@ export const align = dual<
         xAlign: ah,
         yAlign: av,
         box: self,
-      } as Content<A>,
+      },
       annotation: self.annotation,
     });
   }
@@ -929,7 +929,7 @@ const renderBox = <A>({ cols, content, rows }: Box<A>): string[] => {
  *
  * @note Haskell: `takeP :: a -> Int -> [a] -> [a]`
  */
-const takeP = dual<
+export const takeP = dual<
   <A>(a: A, n: number) => (self: readonly A[]) => A[],
   <A>(self: readonly A[], a: A, n: number) => A[]
 >(3, (self, a, n) => {
@@ -954,7 +954,7 @@ const takeP = dual<
  *
  * @note Haskell: `takePA :: Alignment -> a -> Int -> [a] -> [a]`
  */
-const takePA = dual<
+export const takePA = dual<
   <A>(alignment: Alignment, a: A, n: number) => (xs: readonly A[]) => A[],
   <A>(self: readonly A[], alignment: Alignment, a: A, n: number) => A[]
 >(4, <A>(self: readonly A[], alignment: Alignment, a: A, n: number) => {
@@ -996,7 +996,8 @@ const takePA = dual<
  *
  * @note Haskell: `blanks :: Int -> String`
  */
-const blanks = (n: number): string => pipe(" ", String.repeat(Math.max(0, n)));
+export const blanks = (n: number): string =>
+  pipe(" ", String.repeat(Math.max(0, n)));
 
 /**
  * Renders a box with a specific number of rows.

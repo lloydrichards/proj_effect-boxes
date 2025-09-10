@@ -157,12 +157,6 @@ describe("Ansi Annotation Integration", () => {
   // ============================================================================
 
   describe("Complex Layout Integration", () => {
-    it("placeholder forped complex layout tests", () => {
-      // All complex layout tests are currentlyped due to missing recursive annotation processing
-      // See TODO comments below for the tests that need to be implemented when annotation processing is fixed
-      expect(true).toBe(true);
-    });
-
     it("should handle the specification example layout correctly", () => {
       // From spec: Create complex layout with mixed styling
       const redBox = Box.text("red").pipe(Box.annotate(Ansi.red));
@@ -224,11 +218,9 @@ describe("Ansi Annotation Integration", () => {
         Box.annotate(Ansi.underlined)
       );
 
-      const verticalLayout = Box.vsep(
-        [headerBox as any, contentBox as any, footerBox as any],
-        1,
-        Box.left
-      );
+      const verticalLayout = Box.punctuateV<
+        Ansi.CombinedAnsiStyle | Ansi.AnsiStyleType
+      >([headerBox, contentBox, footerBox], Box.left, Box.text("---"));
 
       const rendered = Box.render(verticalLayout, { style: "pretty" });
 

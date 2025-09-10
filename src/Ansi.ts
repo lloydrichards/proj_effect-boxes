@@ -1,20 +1,21 @@
-import { Array, Match, pipe } from "effect";
+import { Array, Match, Option, pipe } from "effect";
 import { dual } from "effect/Function";
 import type { Annotation } from "./Annotation";
 import { createAnnotation } from "./Annotation";
 import {
   type Alignment,
   type Box,
+  blanks,
   type Content,
   merge,
   resizeBox,
+  takeP,
+  takePA,
 } from "./Box";
 
 /**
  * ANSI text attribute definitions
  *
- * Represents text formatting attributes like bold, underline, etc.
- * Standard ANSI codes: bold=1, underline=4, reset=0
  */
 export interface AnsiAttribute {
   readonly name: string;
@@ -31,14 +32,25 @@ export type AnsiStyleType = {
 
 /**
  * Combined ANSI style representation
- *
- * Represents multiple ANSI styles merged into a single object with
- * conflict resolution and escape sequence generation.
  */
 export interface CombinedAnsiStyle {
   readonly styles: readonly AnsiStyleType[];
   readonly escapeSequence: string;
 }
+
+/**
+ * Creates a conflict resolution key for ANSI style types
+ */
+const getStyleConflictKey = (style: AnsiStyleType): string => {
+  switch (style._tag) {
+    case "ForegroundColor":
+      return "ForegroundColor";
+    case "BackgroundColor":
+      return "BackgroundColor";
+    case "TextAttribute":
+      return `TextAttribute:${style.attribute.name}`;
+  }
+};
 
 /**
  * Creates a CombinedAnsiStyle from multiple style inputs
@@ -48,57 +60,24 @@ export interface CombinedAnsiStyle {
 const createCombinedAnsiStyle = (
   ...styles: AnsiStyleType[]
 ): CombinedAnsiStyle => {
-  // Handle conflict resolution - last wins for same style types
-  const resolvedStyles: AnsiStyleType[] = [];
-  const seen = new Set<string>();
-
-  // Process styles in reverse order to implement last-wins
-  for (let i = styles.length - 1; i >= 0; i--) {
-    const style = styles[i];
-    if (style) {
-      // Create more specific keys for conflict detection
-      let key: string;
-      switch (style._tag) {
-        case "ForegroundColor":
-          key = "ForegroundColor"; // All foreground colors conflict with each other
-          break;
-        case "BackgroundColor":
-          key = "BackgroundColor"; // All background colors conflict with each other
-          break;
-        case "TextAttribute":
-          key = `TextAttribute:${style.attribute.name}`; // Only same attributes conflict
-          break;
+  const resolvedStyles = pipe(
+    styles,
+    Array.reverse,
+    Array.reduce(new Map<string, AnsiStyleType>(), (styleMap, style) => {
+      if (!styleMap.has(getStyleConflictKey(style))) {
+        styleMap.set(getStyleConflictKey(style), style);
       }
-
-      if (!seen.has(key)) {
-        resolvedStyles.unshift(style); // Add to beginning to maintain original order
-        seen.add(key);
-      }
-    }
-  }
-
-  // Generate escape sequence
-  const codes: number[] = [];
-  for (const style of resolvedStyles) {
-    switch (style._tag) {
-      case "ForegroundColor":
-        codes.push(style.attribute.code);
-        break;
-      case "BackgroundColor":
-        codes.push(style.attribute.code);
-        break;
-      case "TextAttribute":
-        codes.push(style.attribute.code);
-        break;
-    }
-  }
-
-  const escapeSequence = codes.length > 0 ? `\x1b[${codes.join(";")}m` : "";
-
-  return Object.freeze({
-    styles: Object.freeze(resolvedStyles),
-    escapeSequence,
-  });
+      return styleMap;
+    }),
+    (styleMap) => Array.fromIterable(styleMap.values()),
+    Array.reverse
+  );
+  const escapeSequence = pipe(
+    resolvedStyles,
+    Array.map((style: AnsiStyleType): number => style.attribute.code),
+    (codes) => (codes.length > 0 ? `\x1b[${codes.join(";")}m` : "")
+  );
+  return { styles: resolvedStyles, escapeSequence };
 };
 
 /**
@@ -222,9 +201,7 @@ export const reset = createAnnotation<AnsiStyleType>({
 /**
  * Combines multiple ANSI style annotations into a single CombinedAnsiStyle annotation
  * Supports both variadic arguments and array input
- *
  * @param annotations - Multiple AnsiAnnotation arguments or single array
- * @returns Annotation<CombinedAnsiStyle> with conflict resolution applied
  */
 export function combine(
   ...annotations: AnsiAnnotation[]
@@ -238,19 +215,7 @@ export function combine(
 
 /**
  * Converts a CombinedAnsiStyle to its ANSI escape sequence string
- *
  * @param style - The CombinedAnsiStyle to convert
- * @returns The ANSI escape sequence string (e.g., "\x1b[31;1m")
- *
- * @example
- * ```typescript
- * const combined = combine(
- *   { _tag: "ForegroundColor", color: red },
- *   { _tag: "TextAttribute", attribute: bold }
- * );
- *
- * const sequence = toEscapeSequence(combined); // "\x1b[31;1m"
- * ```
  */
 export const toEscapeSequence = (style: CombinedAnsiStyle): string => {
   return style.escapeSequence;
@@ -311,18 +276,22 @@ const getAnsiEscapeSequence = (data: unknown): string | null => {
 };
 
 /**
- * Applies ANSI styling to content lines
+ * Applies ANSI styling to content lines using a functional approach with Effect's Option and pipe
+ * @param lines - The array of strings to style
+ * @param escapeSequence - The ANSI escape sequence to apply
  */
-const applyAnsiStyling = (
-  lines: string[],
-  escapeSequence: string
-): string[] => {
-  if (escapeSequence === "" || lines.length === 0) {
-    return lines;
-  }
-  const resetCode = "\x1b[0m";
-  return lines.map((line) => `${escapeSequence}${line}${resetCode}`);
-};
+const applyAnsiStyling = (lines: string[], escapeSequence: string): string[] =>
+  pipe(
+    Option.fromNullable(escapeSequence),
+    Option.filter((seq) => seq !== ""),
+    Option.match({
+      onNone: () => lines,
+      onSome: (sequence) =>
+        Array.map(lines, (line) =>
+          line.startsWith(sequence) ? line : `${sequence}${line}\x1b[0m`
+        ),
+    })
+  );
 
 /**
  * Calculates the visible (printable) length of a string, ignoring ANSI escape sequences
@@ -332,6 +301,20 @@ const getVisibleLength = (str: string): number => {
   const ansiRegex = new RegExp(`${escapeChar}\\[[0-9;]*m`, "g");
   return str.replace(ansiRegex, "").length;
 };
+
+/**
+ * Finds the end of an ANSI escape sequence starting from a given position
+ */
+const findAnsiSequenceEnd = (
+  chars: readonly string[],
+  startIndex: number
+): number =>
+  pipe(
+    Array.drop(chars, startIndex + 2),
+    Array.findFirstIndex((char: string) => char === "m"),
+    Option.map((endPos: number) => startIndex + 2 + endPos + 1),
+    Option.getOrElse(() => chars.length)
+  );
 
 /**
  * Truncates a string to a visible length while preserving ANSI escape sequences
@@ -344,32 +327,34 @@ const truncatePreservingAnsi = (
     return str;
   }
 
-  let result = "";
-  let visibleCount = 0;
-
-  for (let i = 0; i < str.length; i++) {
-    if (str[i] === "\x1b" && str[i + 1] === "[") {
-      let j = i + 2;
-      while (j < str.length && str[j] !== "m") {
-        j++;
+  return pipe(
+    str.split(""),
+    Array.reduce(
+      { result: "", visibleCount: 0, skipNext: 0 },
+      ({ result, skipNext, visibleCount }, cur, index) => {
+        if (skipNext > 0) {
+          return { result, visibleCount, skipNext: skipNext - 1 };
+        }
+        if (visibleCount >= maxVisibleLength) {
+          return { result, visibleCount, skipNext };
+        }
+        if (cur === "\x1b" && str.split("")[index + 1] === "[") {
+          const sequenceEnd = findAnsiSequenceEnd(str.split(""), index);
+          return {
+            visibleCount,
+            result: result + str.split("").slice(index, sequenceEnd).join(""),
+            skipNext: sequenceEnd - index - 1,
+          };
+        }
+        return {
+          skipNext,
+          result: result + cur,
+          visibleCount: visibleCount + 1,
+        };
       }
-      if (j < str.length) {
-        j++;
-        result += str.substring(i, j);
-        i = j - 1;
-        continue;
-      }
-    }
-
-    if (visibleCount >= maxVisibleLength) {
-      break;
-    }
-
-    result += str[i];
-    visibleCount++;
-  }
-
-  return result;
+    ),
+    (d) => d.result
+  );
 };
 
 /**
@@ -378,15 +363,19 @@ const truncatePreservingAnsi = (
 const padPreservingAnsi = (
   str: string,
   targetVisibleLength: number,
-  padChar = " "
+  alignment: Alignment = "AlignFirst"
 ): string => {
   const currentVisibleLength = getVisibleLength(str);
   if (currentVisibleLength >= targetVisibleLength) {
     return truncatePreservingAnsi(str, targetVisibleLength);
   }
 
-  const padding = padChar.repeat(targetVisibleLength - currentVisibleLength);
-  return str + padding;
+  return takePA(
+    str.split(""),
+    alignment,
+    " ",
+    str.split("").length + targetVisibleLength - currentVisibleLength
+  ).join("");
 };
 
 /**
@@ -394,21 +383,35 @@ const padPreservingAnsi = (
  */
 const resizeBoxAnsiAware =
   (r: number, c: number) =>
-  (self: string[]): string[] => {
-    const processedLines = self.map((line) => padPreservingAnsi(line, c, " "));
-
-    // Handle row count
-    if (processedLines.length >= r) {
-      return processedLines.slice(0, r);
-    }
-
-    // Add empty lines if needed
-    const blanks = " ".repeat(c);
-    const emptyLines = pipe(
-      Array.makeBy(r - processedLines.length, () => blanks)
+  (self: string[]): string[] =>
+    takeP(
+      self.map((line) => padPreservingAnsi(line, c)),
+      blanks(c),
+      r
     );
-    return [...processedLines, ...emptyLines];
-  };
+
+export const resizeBoxAnsiAwareAligned = dual<
+  (
+    r: number,
+    c: number,
+    ha: Alignment,
+    va: Alignment
+  ) => (self: string[]) => string[],
+  (
+    self: string[],
+    r: number,
+    c: number,
+    ha: Alignment,
+    va: Alignment
+  ) => string[]
+>(5, (self, r, c, ha, va) =>
+  takePA(
+    self.map((line) => padPreservingAnsi(line, c, ha)),
+    va,
+    blanks(c),
+    r
+  )
+);
 
 /**
  * Converts a box into an array of text lines for display with ANSI annotation support.
@@ -448,20 +451,10 @@ export const renderAnnotatedBox = <A>({
           )
         ),
         Match.tag("SubBox", ({ box, xAlign, yAlign }) =>
-          pipe(box, renderAnnotatedBox, (lines) =>
-            ((
-              self: string[],
-              r: number,
-              c: number,
-              _ha: Alignment,
-              _va: Alignment
-            ): string[] => resizeBoxAnsiAware(r, c)(self))(
-              lines,
-              rows,
-              cols,
-              xAlign,
-              yAlign
-            )
+          pipe(
+            box,
+            renderAnnotatedBox,
+            resizeBoxAnsiAwareAligned(rows, cols, xAlign, yAlign)
           )
         ),
         Match.exhaustive
