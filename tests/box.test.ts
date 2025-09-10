@@ -2,8 +2,8 @@ import { String } from "effect";
 import * as Equal from "effect/Equal";
 import * as Hash from "effect/Hash";
 import { describe, expect, it } from "vitest";
-import * as Box from "../src/Box";
 import * as Annotation from "../src/Annotation";
+import * as Box from "../src/Box";
 
 describe("Box", () => {
   it("text trims trailing spaces per line", () => {
@@ -998,7 +998,7 @@ describe("Annotation Functions", () => {
 
       const reAnnotated = Box.reAnnotate(
         annotated,
-        (data: string) => data + "-modified"
+        (data: string) => `${data}-modified`
       );
 
       expect(reAnnotated.annotation?.data).toBe("original-modified");
@@ -1020,12 +1020,11 @@ describe("Annotation Functions", () => {
       expect(resultBoxes[1]?.annotation?.data).toBe("B");
       expect(resultBoxes[2]?.annotation?.data).toBe("C");
 
-      // All boxes should have same structure
-      resultBoxes.forEach((resultBox) => {
+      for (const resultBox of resultBoxes) {
         expect(Box.render(resultBox)).toBe(Box.render(box));
         expect(resultBox.rows).toBe(box.rows);
         expect(resultBox.cols).toBe(box.cols);
-      });
+      }
     });
 
     it("supports dual signature with alter function first", () => {
@@ -1045,7 +1044,7 @@ describe("Annotation Functions", () => {
 
     it("throws error when trying to alter annotations on box without annotation", () => {
       const box = Box.text("no annotation");
-      const alter = (data: string) => [data, data + "2"];
+      const alter = (data: string) => [data, `${data}2`];
 
       expect(() => Box.alterAnnotations(box, alter)).toThrow(
         "Cannot alter annotations on a box without annotation"
@@ -1112,9 +1111,9 @@ describe("Annotation Functions", () => {
       expect(resultsFromAlias).toHaveLength(3);
 
       resultsFromAlias.forEach((aliasBox, index) => {
-        const originalBox = resultsFromOriginal[index];
+        const originalBox = resultsFromOriginal[index] || Box.nullBox;
         expect(aliasBox.annotation?.data).toBe(originalBox?.annotation?.data);
-        expect(Box.render(aliasBox)).toBe(Box.render(originalBox!));
+        expect(Box.render(aliasBox)).toBe(Box.render(originalBox));
       });
 
       // Verify the actual results
