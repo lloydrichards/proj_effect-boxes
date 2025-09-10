@@ -28,19 +28,21 @@ const ProgressBar = (progress: number, total: number, width: number) => {
 
   const filledBar = Box.text("█".repeat(filledLength));
   const emptyBar = Box.text("░".repeat(emptyLength));
-  return pipe(filledBar, Box.hAppend(emptyBar));
+  return pipe(filledBar, Box.hAppend<Ansi.AnsiStyleType>(emptyBar));
 };
 
-const Padding = (width: number) => (self: Box.Box) =>
-  pipe(
-    self,
-    Box.moveUp(width),
-    Box.moveDown(width),
-    Box.moveLeft(width),
-    Box.moveRight(width)
-  );
+const Padding =
+  <A>(width: number) =>
+  (self: Box.Box<A>) =>
+    pipe(
+      self,
+      Box.moveUp(width),
+      Box.moveDown(width),
+      Box.moveLeft(width),
+      Box.moveRight(width)
+    );
 
-const Border = (self: Box.Box) => {
+const Border = <A>(self: Box.Box<A>) => {
   const middleBorder = pipe(
     Array.makeBy(self.rows, () => Box.char("│")),
     Box.vcat(Box.left)
@@ -99,7 +101,8 @@ const main = Effect.gen(function* () {
             ProgressBar(counter, COMPLETE, 69).pipe(Border),
             Box.text(`${((counter / COMPLETE) * 100).toFixed(0)}%`).pipe(
               Box.alignHoriz(Box.right, 5),
-              Border
+              Border,
+              Box.annotate(Ansi.green)
             ),
           ],
           Box.hcat(Box.center1),
