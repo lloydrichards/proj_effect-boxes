@@ -25,7 +25,8 @@
       },
       "suspicious": {
         "noUnsafeDeclarationMerging": "off",
-        "noShadowRestrictedNames": "off"
+        "noShadowRestrictedNames": "off",
+        "noSkippedTests": "warn"
       }
     }
   }

@@ -8,6 +8,7 @@ import {
   Schedule,
   Stream,
 } from "effect";
+import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 
 const StatusBar = (status: string, counter: number, time: string) =>
@@ -116,7 +117,17 @@ const main = Effect.gen(function* () {
       );
 
       if (counter < COMPLETE) {
-        yield* Console.log("\nPress Ctrl+C to stop...");
+        yield* Box.printBox(
+          Box.punctuateH(
+            [
+              Box.text("Press"),
+              Box.text("Ctrl+C").pipe(Box.annotate(Ansi.blue)),
+              Box.text("to stop..."),
+            ],
+            Box.left,
+            Box.text(" ")
+          )
+        );
       }
     })
   );

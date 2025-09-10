@@ -4,6 +4,7 @@ import { dual } from "effect/Function";
 import * as Hash from "effect/Hash";
 import { type Pipeable, pipeArguments } from "effect/Pipeable";
 import type { Annotation } from "./Annotation";
+import { renderAnnotatedBox } from "./Ansi";
 
 export const BoxTypeId: unique symbol = Symbol.for("@effect/Box");
 
@@ -753,21 +754,6 @@ export const align = dual<
     r: number,
     c: number
   ): Box<A> => {
-    const boxProps: {
-      rows: number;
-      cols: number;
-      content: Content<A>;
-      annotation?: Annotation<A>;
-    } = {
-      rows: self.rows,
-      cols: self.cols,
-      content: self.content,
-    };
-
-    if (self.annotation) {
-      boxProps.annotation = self.annotation;
-    }
-
     return make({
       rows: r,
       cols: c,
@@ -775,8 +761,9 @@ export const align = dual<
         _tag: "SubBox",
         xAlign: ah,
         yAlign: av,
-        box: make(boxProps),
+        box: self,
       } as Content<A>,
+      annotation: self.annotation,
     });
   }
 );
@@ -856,10 +843,10 @@ export interface RenderConfig {
 }
 
 /**
- * Default render configuration that enables annotation rendering with pretty style.
+ * Default render configuration for backwards compatibility (plain mode).
  */
 export const defaultRenderConfig: RenderConfig = {
-  style: "pretty",
+  style: "plain",
   preserveWhitespace: false,
 };
 
@@ -877,7 +864,7 @@ export const plainTextRenderConfig: RenderConfig = {
  *
  * @note Haskell: `merge = foldr (zipWith (++)) (repeat [])`
  */
-const merge = (renderedBoxes: string[][]): string[] => {
+export const merge = (renderedBoxes: string[][]): string[] => {
   if (renderedBoxes.length === 0) {
     return [];
   }
@@ -901,14 +888,14 @@ const merge = (renderedBoxes: string[][]): string[] => {
  *
  * @note Haskell: `renderBox :: Box -> [String]`
  */
-const renderBox = ({ cols, content, rows }: Box): string[] => {
+const renderBox = <A>({ cols, content, rows }: Box<A>): string[] => {
   if (rows === 0 || cols === 0) {
     return [];
   }
 
   return pipe(
     content,
-    Match.type<Content>().pipe(
+    Match.type<Content<A>>().pipe(
       Match.tag("Blank", () => resizeBox([""], rows, cols)),
       Match.tag("Text", ({ text }) => resizeBox([text], rows, cols)),
       Match.tag("Row", ({ boxes }) =>
@@ -1019,8 +1006,8 @@ const blanks = (n: number): string => pipe(" ", String.repeat(Math.max(0, n)));
  * @note Haskell: `renderBoxWithRows :: Int -> Box -> [String]`
  */
 const renderBoxWithRows = dual<
-  (r: number) => (self: Box) => string[],
-  (self: Box, r: number) => string[]
+  <A>(r: number) => (self: Box<A>) => string[],
+  <A>(self: Box<A>, r: number) => string[]
 >(2, (self, r) => renderBox({ ...self, rows: r }));
 
 /**
@@ -1031,8 +1018,8 @@ const renderBoxWithRows = dual<
  * @note Haskell: `renderBoxWithCols :: Int -> Box -> [String]`
  */
 const renderBoxWithCols = dual<
-  (c: number) => (self: Box) => string[],
-  (self: Box, c: number) => string[]
+  <A>(c: number) => (self: Box<A>) => string[],
+  <A>(self: Box<A>, c: number) => string[]
 >(2, (self, c) => renderBox({ ...self, cols: c }));
 
 /**
@@ -1043,7 +1030,7 @@ const renderBoxWithCols = dual<
  *
  * @note Haskell: `resizeBox :: Int -> Int -> [String] -> [String]`
  */
-const resizeBox = dual<
+export const resizeBox = dual<
   (r: number, c: number) => (self: string[]) => string[],
   (self: string[], r: number, c: number) => string[]
 >(3, (self, r, c) =>
@@ -1064,7 +1051,7 @@ const resizeBox = dual<
  *
  * @note Haskell: `resizeBoxAligned :: Int -> Int -> Alignment -> Alignment -> [String] -> [String]`
  */
-const resizeBoxAligned = dual<
+export const resizeBoxAligned = dual<
   (
     r: number,
     c: number,
@@ -1088,34 +1075,6 @@ const resizeBoxAligned = dual<
 );
 
 /**
- * Converts a box to a string with custom render configuration.
- * @param self - The box to render
- * @param config - Render configuration options
- */
-export const renderWithConfig = dual<
-  (config: RenderConfig) => <A>(self: Box<A>) => string,
-  <A>(self: Box<A>, config: RenderConfig) => string
->(2, <A>(self: Box<A>, config: RenderConfig): string => {
-  const rendered = renderBox(self as Box<never>);
-
-  if (config.preserveWhitespace) {
-    return pipe(
-      rendered,
-      Array.join("\n"),
-      (d) => d + (rendered.length > 0 ? "\n" : "")
-    );
-  }
-
-  // Plain style or no annotation
-  return pipe(
-    rendered,
-    Array.map(String.trimEnd),
-    Array.join("\n"),
-    (d) => d + (rendered.length > 0 ? "\n" : "")
-  );
-});
-
-/**
  * Converts a box to a string suitable for display, removing trailing whitespace.
  * Supports optional RenderConfig to control styling behavior.
  * @param self - The box to render
@@ -1123,8 +1082,21 @@ export const renderWithConfig = dual<
  *
  * @note Haskell: `render :: Box -> String`
  */
-export const render = <A>(self: Box<A>, config?: RenderConfig): string =>
-  renderWithConfig(self, config || defaultRenderConfig);
+export const render = <A>(self: Box<A>, config?: RenderConfig) => {
+  const { preserveWhitespace, style } = config ?? defaultRenderConfig;
+  const rendered = renderBox(self);
+
+  return pipe(
+    Match.value(style ?? "pretty").pipe(
+      Match.when("plain", () => renderBox(self)),
+      Match.when("pretty", () => renderAnnotatedBox(self)),
+      Match.exhaustive
+    ),
+    (a) => (preserveWhitespace ? a : a.map(String.trimEnd)),
+    Array.join("\n"),
+    (d) => d + (rendered.length > 0 ? "\n" : "")
+  );
+};
 
 /**
  * Converts a box to a string while preserving all whitespace including trailing spaces.
@@ -1159,7 +1131,7 @@ export const renderWith = dual<
  */
 export const printBox = <A>(b: Box<A>) =>
   Effect.gen(function* () {
-    yield* Console.log(render(b));
+    yield* Console.log(render(b, { style: "pretty" }));
   });
 
 /*
