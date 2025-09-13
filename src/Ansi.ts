@@ -25,10 +25,26 @@ export interface AnsiAttribute {
 /**
  * Discriminated union for all ANSI styling options
  */
-export type AnsiStyleType = {
+export type SimpleAnsiStyle = {
   readonly _tag: "ForegroundColor" | "BackgroundColor" | "TextAttribute";
   readonly attribute: AnsiAttribute;
 };
+
+export type ExtAnsiStyle =
+  | {
+      readonly _tag: "ExtForegroundColor";
+      readonly mode: "Index" | "RGB";
+      readonly values: readonly number[];
+      readonly attribute: AnsiAttribute;
+    }
+  | {
+      readonly _tag: "ExtBackgroundColor";
+      readonly mode: "Index" | "RGB";
+      readonly values: readonly number[];
+      readonly attribute: AnsiAttribute;
+    };
+
+export type AnsiStyleType = SimpleAnsiStyle | ExtAnsiStyle;
 
 /**
  * Combined ANSI style representation
@@ -44,9 +60,11 @@ export interface CombinedAnsiStyle {
 const getStyleConflictKey = (style: AnsiStyleType): string => {
   switch (style._tag) {
     case "ForegroundColor":
-      return "ForegroundColor";
+    case "ExtForegroundColor":
+      return "Foreground";
     case "BackgroundColor":
-      return "BackgroundColor";
+    case "ExtBackgroundColor":
+      return "Background";
     case "TextAttribute":
       return `TextAttribute:${style.attribute.name}`;
   }
@@ -72,11 +90,34 @@ const createCombinedAnsiStyle = (
     (styleMap) => Array.fromIterable(styleMap.values()),
     Array.reverse
   );
-  const escapeSequence = pipe(
-    resolvedStyles,
-    Array.map((style: AnsiStyleType): number => style.attribute.code),
-    (codes) => (codes.length > 0 ? `\x1b[${codes.join(";")}m` : "")
-  );
+  const extFgToCodes = (mode: "Index" | "RGB", values: readonly number[]): number[] =>
+    mode === "Index"
+      ? [38, 5, values[0] ?? 0]
+      : [38, 2, values[0] ?? 0, values[1] ?? 0, values[2] ?? 0];
+
+  const extBgToCodes = (mode: "Index" | "RGB", values: readonly number[]): number[] =>
+    mode === "Index"
+      ? [48, 5, values[0] ?? 0]
+      : [48, 2, values[0] ?? 0, values[1] ?? 0, values[2] ?? 0];
+
+  const styleToCodes = (style: AnsiStyleType): number[] => {
+    if (
+      style._tag === "ForegroundColor" ||
+      style._tag === "BackgroundColor" ||
+      style._tag === "TextAttribute"
+    ) {
+      return [style.attribute.code];
+    }
+    if (style._tag === "ExtForegroundColor") {
+      return extFgToCodes(style.mode, style.values);
+    }
+    // ExtBackgroundColor
+    const bg = style as Extract<AnsiStyleType, { _tag: "ExtBackgroundColor" }>;
+    return extBgToCodes(bg.mode, bg.values);
+  };
+
+  const codes: number[] = resolvedStyles.flatMap(styleToCodes);
+  const escapeSequence = codes.length > 0 ? `\x1b[${codes.join(";")}m` : "";
   return { styles: resolvedStyles, escapeSequence };
 };
 
@@ -170,6 +211,89 @@ export const bgWhite = createAnnotation<AnsiStyleType>({
   attribute: { name: "white", code: 47 },
 });
 
+/**
+ * Bright 16-color palette (aixterm): Foreground 90–97, Background 100–107
+ */
+export const blackBright = createAnnotation<AnsiStyleType>({
+  _tag: "ForegroundColor",
+  attribute: { name: "blackBright", code: 90 },
+});
+export const redBright = createAnnotation<AnsiStyleType>({
+  _tag: "ForegroundColor",
+  attribute: { name: "redBright", code: 91 },
+});
+export const greenBright = createAnnotation<AnsiStyleType>({
+  _tag: "ForegroundColor",
+  attribute: { name: "greenBright", code: 92 },
+});
+export const yellowBright = createAnnotation<AnsiStyleType>({
+  _tag: "ForegroundColor",
+  attribute: { name: "yellowBright", code: 93 },
+});
+export const blueBright = createAnnotation<AnsiStyleType>({
+  _tag: "ForegroundColor",
+  attribute: { name: "blueBright", code: 94 },
+});
+export const magentaBright = createAnnotation<AnsiStyleType>({
+  _tag: "ForegroundColor",
+  attribute: { name: "magentaBright", code: 95 },
+});
+export const cyanBright = createAnnotation<AnsiStyleType>({
+  _tag: "ForegroundColor",
+  attribute: { name: "cyanBright", code: 96 },
+});
+export const whiteBright = createAnnotation<AnsiStyleType>({
+  _tag: "ForegroundColor",
+  attribute: { name: "whiteBright", code: 97 },
+});
+
+export const bgBlackBright = createAnnotation<AnsiStyleType>({
+  _tag: "BackgroundColor",
+  attribute: { name: "bgBlackBright", code: 100 },
+});
+export const bgRedBright = createAnnotation<AnsiStyleType>({
+  _tag: "BackgroundColor",
+  attribute: { name: "bgRedBright", code: 101 },
+});
+export const bgGreenBright = createAnnotation<AnsiStyleType>({
+  _tag: "BackgroundColor",
+  attribute: { name: "bgGreenBright", code: 102 },
+});
+export const bgYellowBright = createAnnotation<AnsiStyleType>({
+  _tag: "BackgroundColor",
+  attribute: { name: "bgYellowBright", code: 103 },
+});
+export const bgBlueBright = createAnnotation<AnsiStyleType>({
+  _tag: "BackgroundColor",
+  attribute: { name: "bgBlueBright", code: 104 },
+});
+export const bgMagentaBright = createAnnotation<AnsiStyleType>({
+  _tag: "BackgroundColor",
+  attribute: { name: "bgMagentaBright", code: 105 },
+});
+export const bgCyanBright = createAnnotation<AnsiStyleType>({
+  _tag: "BackgroundColor",
+  attribute: { name: "bgCyanBright", code: 106 },
+});
+export const bgWhiteBright = createAnnotation<AnsiStyleType>({
+  _tag: "BackgroundColor",
+  attribute: { name: "bgWhiteBright", code: 107 },
+});
+
+/**
+ * Defaults (reset colors only, not attributes)
+ */
+const defaultColorAnnotation = createAnnotation<AnsiStyleType>({
+  _tag: "ForegroundColor",
+  attribute: { name: "default", code: 39 },
+});
+export { defaultColorAnnotation as default };
+
+export const bgDefault = createAnnotation<AnsiStyleType>({
+  _tag: "BackgroundColor",
+  attribute: { name: "bgDefault", code: 49 },
+});
+
 /*
  *  --------------------------------------------------------------------------------
  *  --  Standard ANSI text attributes  ---------------------------------------------
@@ -183,14 +307,94 @@ export const bold = createAnnotation<AnsiStyleType>({
   _tag: "TextAttribute",
   attribute: { name: "bold", code: 1 },
 });
+export const dim = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "dim", code: 2 },
+});
+export const italic = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "italic", code: 3 },
+});
 export const underlined = createAnnotation<AnsiStyleType>({
   _tag: "TextAttribute",
   attribute: { name: "underlined", code: 4 },
+});
+export const blink = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "blink", code: 5 },
+});
+export const inverse = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "inverse", code: 7 },
+});
+export const hidden = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "hidden", code: 8 },
+});
+export const strikethrough = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "strikethrough", code: 9 },
+});
+export const overline = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "overline", code: 53 },
 });
 export const reset = createAnnotation<AnsiStyleType>({
   _tag: "TextAttribute",
   attribute: { name: "reset", code: 0 },
 });
+
+/*
+ *  --------------------------------------------------------------------------------
+ *  --  Extended Color Builders ----------------------------------------------------
+ *  --------------------------------------------------------------------------------
+ */
+
+const mod256 = (n: number): number => ((n % 256) + 256) % 256;
+
+/**
+ * 256-color foreground by index (0–255); wraps using modulo 256
+ */
+export const color256 = (index: number): AnsiAnnotation =>
+  createAnnotation<AnsiStyleType>({
+    _tag: "ExtForegroundColor",
+    mode: "Index",
+    values: [mod256(index)],
+    attribute: { name: "color256", code: 38 },
+  });
+
+/**
+ * 256-color background by index (0–255); wraps using modulo 256
+ */
+export const bgColor256 = (index: number): AnsiAnnotation =>
+  createAnnotation<AnsiStyleType>({
+    _tag: "ExtBackgroundColor",
+    mode: "Index",
+    values: [mod256(index)],
+    attribute: { name: "bgColor256", code: 48 },
+  });
+
+/**
+ * Truecolor (24-bit RGB) foreground; channels wrap using modulo 256
+ */
+export const rgb = (r: number, g: number, b: number): AnsiAnnotation =>
+  createAnnotation<AnsiStyleType>({
+    _tag: "ExtForegroundColor",
+    mode: "RGB",
+    values: [mod256(r), mod256(g), mod256(b)],
+    attribute: { name: "rgb", code: 38 },
+  });
+
+/**
+ * Truecolor (24-bit RGB) background; channels wrap using modulo 256
+ */
+export const bgRgb = (r: number, g: number, b: number): AnsiAnnotation =>
+  createAnnotation<AnsiStyleType>({
+    _tag: "ExtBackgroundColor",
+    mode: "RGB",
+    values: [mod256(r), mod256(g), mod256(b)],
+    attribute: { name: "bgRgb", code: 48 },
+  });
 
 /*
  *  --------------------------------------------------------------------------------
@@ -235,13 +439,18 @@ const isAnsiStyleType = (data: unknown): data is AnsiStyleType => {
     return false;
   }
 
-  const obj = data as Record<string, unknown>;
-  return (
-    "_tag" in obj &&
-    "attribute" in obj &&
-    typeof obj._tag === "string" &&
-    ["ForegroundColor", "BackgroundColor", "TextAttribute"].includes(obj._tag)
-  );
+  const obj = data as { _tag?: unknown; attribute?: unknown; mode?: unknown; values?: unknown };
+  if (typeof obj._tag !== "string") {
+    return false;
+  }
+  const tag = obj._tag;
+  if (tag === "ForegroundColor" || tag === "BackgroundColor" || tag === "TextAttribute") {
+    return typeof obj.attribute === "object" && obj.attribute !== null;
+  }
+  if (tag === "ExtForegroundColor" || tag === "ExtBackgroundColor") {
+    return (obj.mode === "Index" || obj.mode === "RGB") && Array.isArray(obj.values);
+  }
+  return false;
 };
 
 /**
