@@ -184,9 +184,37 @@ export const bold = createAnnotation<AnsiStyleType>({
   _tag: "TextAttribute",
   attribute: { name: "bold", code: 1 },
 });
+export const dim = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "dim", code: 2 },
+});
+export const italic = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "italic", code: 3 },
+});
 export const underlined = createAnnotation<AnsiStyleType>({
   _tag: "TextAttribute",
   attribute: { name: "underlined", code: 4 },
+});
+export const blink = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "blink", code: 5 },
+});
+export const inverse = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "inverse", code: 7 },
+});
+export const hidden = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "hidden", code: 8 },
+});
+export const strikethrough = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "strikethrough", code: 9 },
+});
+export const overline = createAnnotation<AnsiStyleType>({
+  _tag: "TextAttribute",
+  attribute: { name: "overline", code: 53 },
 });
 export const reset = createAnnotation<AnsiStyleType>({
   _tag: "TextAttribute",

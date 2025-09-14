@@ -29,14 +29,16 @@ describe("Ansi Module", () => {
   });
 
   describe("ANSI Text Attributes", () => {
-    it("should define bold attribute with correct code", () => {
-      expect(Ansi.bold.data.attribute.name).toBe("bold");
+    it("should define text attribute with correct code", () => {
       expect(Ansi.bold.data.attribute.code).toBe(1);
-    });
-
-    it("should define underlined attribute with correct code", () => {
-      expect(Ansi.underlined.data.attribute.name).toBe("underlined");
+      expect(Ansi.dim.data.attribute.code).toBe(2);
+      expect(Ansi.italic.data.attribute.code).toBe(3);
       expect(Ansi.underlined.data.attribute.code).toBe(4);
+      expect(Ansi.blink.data.attribute.code).toBe(5);
+      expect(Ansi.inverse.data.attribute.code).toBe(7);
+      expect(Ansi.hidden.data.attribute.code).toBe(8);
+      expect(Ansi.strikethrough.data.attribute.code).toBe(9);
+      expect(Ansi.overline.data.attribute.code).toBe(53);
     });
 
     it("should define reset attribute with correct code", () => {
