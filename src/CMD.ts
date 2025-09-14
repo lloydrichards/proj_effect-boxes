@@ -1,6 +1,6 @@
 import { Array, Option, pipe } from "effect";
 import { createAnnotation } from "./Annotation";
-import { annotate, type Box, nullBox } from "./Box";
+import { annotate, type Box, emptyBox } from "./Box";
 
 /**
  * ANSI escape sequence constants
@@ -25,7 +25,7 @@ const clamp = (n: number): number => Math.max(0, Math.floor(n));
  * Creates a CMD-annotated null box with the specified command
  */
 const createCmdBox = (cmd: CmdType): Box<CmdType> =>
-  nullBox.pipe(annotate(createAnnotation(cmd)));
+  emptyBox().pipe(annotate(createAnnotation(cmd)));
 
 /*
  *  --------------------------------------------------------------------------------

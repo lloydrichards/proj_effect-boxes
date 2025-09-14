@@ -208,7 +208,7 @@ export const nullBox: Box<never> = make({
  *
  * @note Haskell: `empty :: Int -> Int -> Box`
  */
-export const emptyBox = (rows: number, cols: number): Box<never> =>
+export const emptyBox = (rows = 0, cols = 0): Box<never> =>
   make({
     rows,
     cols,
@@ -840,6 +840,7 @@ export const moveRight = dual<
 export interface RenderConfig {
   readonly style?: "pretty" | "plain";
   readonly preserveWhitespace?: boolean;
+  readonly partial?: boolean;
 }
 
 /**
@@ -848,14 +849,7 @@ export interface RenderConfig {
 export const defaultRenderConfig: RenderConfig = {
   style: "plain",
   preserveWhitespace: false,
-};
-
-/**
- * Render configuration for plain text output (no annotations).
- */
-export const plainTextRenderConfig: RenderConfig = {
-  style: "plain",
-  preserveWhitespace: false,
+  partial: false,
 };
 
 /**
@@ -1062,7 +1056,7 @@ export const render = <A>(self: Box<A>, config?: RenderConfig) => {
     ),
     (a) => (preserveWhitespace ? a : a.map(String.trimEnd)),
     Array.join("\n"),
-    (d) => d + (rendered.length > 0 ? "\n" : "")
+    (d) => (config?.partial ? d : d + (rendered.length > 0 ? "\n" : ""))
   );
 };
 
