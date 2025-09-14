@@ -13,6 +13,7 @@ import {
   takePA,
 } from "./Box";
 
+const ESC = "\x1b";
 /**
  * ANSI text attribute definitions
  *
@@ -75,7 +76,7 @@ const createCombinedAnsiStyle = (
   const escapeSequence = pipe(
     resolvedStyles,
     Array.map((style: AnsiStyleType): number => style.attribute.code),
-    (codes) => (codes.length > 0 ? `\x1b[${codes.join(";")}m` : "")
+    (codes) => (codes.length > 0 ? `${ESC}[${codes.join(";")}m` : "")
   );
   return { styles: resolvedStyles, escapeSequence };
 };
@@ -286,10 +287,23 @@ const applyAnsiStyling = (lines: string[], escapeSequence: string): string[] =>
     Option.filter((seq) => seq !== ""),
     Option.match({
       onNone: () => lines,
-      onSome: (sequence) =>
-        Array.map(lines, (line) =>
-          line.startsWith(sequence) ? line : `${sequence}${line}\x1b[0m`
-        ),
+      onSome: (sequence) => {
+        return Array.map(lines, (line) => {
+          if (line.startsWith(sequence)) {
+            return line;
+          }
+
+          if (line.includes(`${ESC}[0m`)) {
+            const restoredLine = line.replace(
+              /\x1b\[0m/g,
+              `${ESC}[0m${sequence}`
+            );
+            return `${sequence}${restoredLine}${ESC}[0m`;
+          }
+
+          return `${sequence}${line}${ESC}[0m`;
+        });
+      },
     })
   );
 
@@ -297,8 +311,7 @@ const applyAnsiStyling = (lines: string[], escapeSequence: string): string[] =>
  * Calculates the visible (printable) length of a string, ignoring ANSI escape sequences
  */
 const getVisibleLength = (str: string): number => {
-  const escapeChar = String.fromCharCode(27); // \x1b
-  const ansiRegex = new RegExp(`${escapeChar}\\[[0-9;]*m`, "g");
+  const ansiRegex = new RegExp(`${ESC}\\[[0-9;]*m`, "g");
   return str.replace(ansiRegex, "").length;
 };
 
@@ -338,7 +351,7 @@ const truncatePreservingAnsi = (
         if (visibleCount >= maxVisibleLength) {
           return { result, visibleCount, skipNext };
         }
-        if (cur === "\x1b" && str.split("")[index + 1] === "[") {
+        if (cur === "${ESC}" && str.split("")[index + 1] === "[") {
           const sequenceEnd = findAnsiSequenceEnd(str.split(""), index);
           return {
             visibleCount,

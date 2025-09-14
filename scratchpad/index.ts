@@ -101,6 +101,7 @@ const main = Effect.gen(function* () {
             ProgressBar(counter, COMPLETE, 69).pipe(Border),
             Box.text(`${((counter / COMPLETE) * 100).toFixed(0)}%`).pipe(
               Box.alignHoriz(Box.right, 5),
+              Box.annotate(Ansi.blue),
               Border,
               Box.annotate(Ansi.green)
             ),
