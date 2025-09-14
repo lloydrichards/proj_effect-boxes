@@ -93,7 +93,7 @@ const main = Effect.gen(function* () {
   yield* display(getCmdString(Cmd.clearScreen()));
   yield* display(getCmdString(Cmd.cursorHide()));
 
-  const COMPLETE = 200;
+  const COMPLETE = 1000;
   const PROGRESS_BAR_WIDTH = 69;
 
   const counterRef = yield* Ref.make(0);
@@ -135,7 +135,7 @@ const main = Effect.gen(function* () {
       return { counter, timestamp: now };
     })
   ).pipe(
-    Stream.schedule(Schedule.spaced("50 milli")),
+    Stream.schedule(Schedule.spaced("10 milli")),
     Stream.takeUntil(({ counter }) => counter >= COMPLETE)
   );
 
