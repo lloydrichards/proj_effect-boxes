@@ -1,14 +1,14 @@
 import { Effect, pipe, Ref, Schedule, Stream, Array } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
-import * as CMD from "../src/CMD";
+import * as Cmd from "../src/Cmd";
 
 const display = (msg: string) => Effect.sync(() => process.stdout.write(msg));
 
 /**
  * Helper to extract command string from CMD box
  */
-const getCmdString = (cmdBox: Box.Box<CMD.CmdType>): string => {
+const getCmdString = (cmdBox: Box.Box<Cmd.CmdType>): string => {
   return cmdBox.annotation?.data.command ?? "";
 };
 
@@ -82,8 +82,8 @@ const Border = <A>(self: Box.Box<A>) => {
  */
 const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
-  yield* display(getCmdString(CMD.clearScreen()));
-  yield* display(getCmdString(CMD.cursorHide()));
+  yield* display(getCmdString(Cmd.clearScreen()));
+  yield* display(getCmdString(Cmd.cursorHide()));
 
   // Define UI dimensions and layout
   const PROGRESS_BAR_WIDTH = 40;
@@ -165,7 +165,7 @@ const main = Effect.gen(function* () {
       if (counter <= COMPLETE) {
         // Step 1: Position cursor at the exact location for the new character
         yield* display(
-          getCmdString(CMD.cursorTo(progressBarStartCol, progressBarRow))
+          getCmdString(Cmd.cursorTo(progressBarStartCol, progressBarRow))
         );
 
         // Step 2: Render only the single new character with styling
@@ -178,7 +178,7 @@ const main = Effect.gen(function* () {
       }
 
       // PARTIAL UPDATE #2: Percentage - overwrite just the percentage value
-      yield* display(getCmdString(CMD.cursorTo(percentageCol, percentageRow)));
+      yield* display(getCmdString(Cmd.cursorTo(percentageCol, percentageRow)));
       const percentageText = `${percentage.toString().padStart(3)}%`;
       const styledPercentage = Box.text(percentageText).pipe(
         Box.annotate(percentage === 100 ? Ansi.green : Ansi.white)
@@ -186,7 +186,7 @@ const main = Effect.gen(function* () {
       yield* display(Box.render(styledPercentage, { style: "pretty" }));
 
       // PARTIAL UPDATE #3: Counter - update just the counter number
-      yield* display(getCmdString(CMD.cursorTo(counterCol, counterRow)));
+      yield* display(getCmdString(Cmd.cursorTo(counterCol, counterRow)));
       const counterText = counter.toString().padStart(2);
       const styledCounter = Box.text(counterText).pipe(
         Box.annotate(Ansi.yellow)
@@ -196,15 +196,15 @@ const main = Effect.gen(function* () {
       // PARTIAL UPDATE #4: Spinner - animate a single character
       const spinChars = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧"];
       const spinChar = spinChars[counter % spinChars.length] ?? "⠋";
-      yield* display(getCmdString(CMD.cursorTo(0, counterRow)));
+      yield* display(getCmdString(Cmd.cursorTo(0, counterRow)));
       const styledSpinner = Box.text(spinChar).pipe(Box.annotate(Ansi.blue));
       yield* display(Box.render(styledSpinner, { style: "pretty" }));
     })
   );
 
   // Final completion message
-  yield* display(getCmdString(CMD.cursorTo(0, counterRow + 2)));
-  yield* display(getCmdString(CMD.cursorShow()));
+  yield* display(getCmdString(Cmd.cursorTo(0, counterRow + 2)));
+  yield* display(getCmdString(Cmd.cursorShow()));
 
   const completionBox = Box.text("✅ Task completed successfully!").pipe(
     Box.annotate(Ansi.green)

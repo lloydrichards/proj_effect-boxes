@@ -10,14 +10,14 @@ import {
 } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
-import * as CMD from "../src/CMD";
+import * as Cmd from "../src/Cmd";
 
 const display = (msg: string) => Effect.sync(() => process.stdout.write(msg));
 
 /**
  * Helper to extract command string from CMD box
  */
-const getCmdString = (cmdBox: Box.Box<CMD.CmdType>): string => {
+const getCmdString = (cmdBox: Box.Box<Cmd.CmdType>): string => {
   return cmdBox.annotation?.data.command ?? "";
 };
 
@@ -90,8 +90,8 @@ const formatTime = (timestamp: number): string => {
 
 const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
-  yield* display(getCmdString(CMD.clearScreen()));
-  yield* display(getCmdString(CMD.cursorHide()));
+  yield* display(getCmdString(Cmd.clearScreen()));
+  yield* display(getCmdString(Cmd.cursorHide()));
 
   const COMPLETE = 200;
   const PROGRESS_BAR_WIDTH = 69;
@@ -163,7 +163,7 @@ const main = Effect.gen(function* () {
 
       // PARTIAL UPDATE #1: Progress bar - update the entire progress bar
       yield* display(
-        getCmdString(CMD.cursorTo(progressBarStartCol, progressBarRow))
+        getCmdString(Cmd.cursorTo(progressBarStartCol, progressBarRow))
       );
       yield* display(
         Box.render(ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH), {
@@ -173,7 +173,7 @@ const main = Effect.gen(function* () {
       );
 
       // PARTIAL UPDATE #2: Percentage - overwrite just the percentage value
-      yield* display(getCmdString(CMD.cursorTo(percentageCol, progressBarRow)));
+      yield* display(getCmdString(Cmd.cursorTo(percentageCol, progressBarRow)));
       const percentageText = `${percentage.toString().padStart(3)}%`;
       const styledPercentage = Box.text(percentageText).pipe(
         Box.annotate(percentage === 100 ? Ansi.green : Ansi.blue)
@@ -182,7 +182,7 @@ const main = Effect.gen(function* () {
 
       // PARTIAL UPDATE #3: Status bar - update the entire status line
       yield* display(
-        getCmdString(CMD.cursorTo(statusBarStartCol, statusBarRow))
+        getCmdString(Cmd.cursorTo(statusBarStartCol, statusBarRow))
       );
       const statusBarContent = StatusBar(status, counter, timeStr).pipe(
         Box.alignHoriz(Box.center1, 80)
@@ -198,7 +198,7 @@ const main = Effect.gen(function* () {
 
   // Final completion message and cleanup
   yield* display(
-    getCmdString(CMD.cursorTo(progressBarStartCol, progressBarRow))
+    getCmdString(Cmd.cursorTo(progressBarStartCol, progressBarRow))
   );
   yield* display(
     Box.render(ProgressBar(COMPLETE, COMPLETE, PROGRESS_BAR_WIDTH), {
@@ -206,8 +206,8 @@ const main = Effect.gen(function* () {
       partial: true,
     })
   );
-  yield* display(getCmdString(CMD.cursorTo(0, 14)));
-  yield* display(getCmdString(CMD.cursorShow()));
+  yield* display(getCmdString(Cmd.cursorTo(0, 14)));
+  yield* display(getCmdString(Cmd.cursorShow()));
   yield* Console.log("✅ Task completed successfully!");
 });
 

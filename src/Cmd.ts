@@ -22,7 +22,7 @@ export type CmdType = {
 const clamp = (n: number): number => Math.max(0, Math.floor(n));
 
 /**
- * Creates a CMD-annotated null box with the specified command
+ * Creates a Cmd-annotated null box with the specified command
  */
 const createCmdBox = (cmd: CmdType): Box<CmdType> =>
   emptyBox().pipe(annotate(createAnnotation(cmd)));

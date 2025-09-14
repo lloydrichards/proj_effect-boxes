@@ -12,7 +12,7 @@ import {
   takeP,
   takePA,
 } from "./Box";
-import { isCmdType } from "./CMD";
+import { isCmdType } from "./Cmd";
 
 const ESC = "\x1b";
 const CSI = `${ESC}[`;
