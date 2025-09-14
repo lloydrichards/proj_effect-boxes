@@ -89,6 +89,44 @@ describe("Ansi Module", () => {
     });
   });
 
+  describe("Nested Style Handling", () => {
+    it("should handle multiple levels of nesting correctly", () => {
+      const childBox = Box.text("Red Child").pipe(Box.annotate(Ansi.red));
+      const parentBox = Box.hcat(
+        [Box.text("Blue Parent ["), childBox, Box.text("]")],
+        Box.top
+      ).pipe(Box.annotate(Ansi.blue));
+
+      const rendered = Box.render(parentBox, { style: "pretty" });
+      const expected = [
+        "\u001b[34mBlue Parent [",
+        "\u001b[31mRed Child\u001b[0m",
+        "\u001b[34m]\u001b[0m",
+        "\n",
+      ].join("");
+
+      expect(rendered).toBe(expected);
+    });
+
+    it("should maintain parent styles in complex box layouts", () => {
+      const styledChild = Box.text("Red").pipe(Box.annotate(Ansi.red));
+      const layout = Box.hcat(
+        [Box.text("A"), styledChild, Box.text("B")],
+        Box.top
+      ).pipe(Box.annotate(Ansi.blue));
+
+      const rendered = Box.render(layout, { style: "pretty" });
+      const expected = [
+        "\u001b[34mA",
+        "\u001b[31mRed\u001b[0m",
+        "\u001b[34mB\u001b[0m",
+        "\n",
+      ].join("");
+
+      expect(rendered).toBe(expected);
+    });
+  });
+
   // ============================================================================
   // Escape Sequence Generation (FR-005)
   // ============================================================================
