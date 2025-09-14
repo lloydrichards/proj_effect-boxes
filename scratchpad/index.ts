@@ -26,7 +26,13 @@ const ProgressBar = (progress: number, total: number, width: number) => {
   const filledLength = Math.round(ratio * width);
   const emptyLength = width - filledLength;
 
-  const filledBar = Box.text("█".repeat(filledLength));
+  const r = Math.round(255 * (1 - ratio));
+  const g = Math.round(255 * ratio);
+  const progressColor = Ansi.colorRGB(r, g, 0);
+
+  const filledBar = Box.text("█".repeat(filledLength)).pipe(
+    Box.annotate(progressColor)
+  );
   const emptyBar = Box.text("░".repeat(emptyLength));
   return pipe(filledBar, Box.hAppend<Ansi.AnsiStyleType>(emptyBar));
 };

@@ -14,13 +14,7 @@ describe("Ansi Annotation Integration", () => {
       const rendered = Box.render(styledBox, { style: "pretty" });
 
       expect(rendered).toBe("\x1b[31mcontent\x1b[0m\n");
-      expect(styledBox.annotation?.data).toEqual({
-        _tag: "ForegroundColor",
-        attribute: {
-          name: "red",
-          code: 31,
-        },
-      });
+      expect(styledBox.annotation).toEqual(Ansi.red);
     });
 
     it("should support combining annotations using Ansi.combine", () => {

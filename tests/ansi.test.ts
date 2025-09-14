@@ -6,44 +6,44 @@ import * as Box from "../src/Box";
 describe("Ansi Module", () => {
   describe("ANSI Color Definitions", () => {
     it("should define 8 primary colors with correct foreground codes", () => {
-      expect(Ansi.black.data.attribute.code).toBe(30);
-      expect(Ansi.red.data.attribute.code).toBe(31);
-      expect(Ansi.green.data.attribute.code).toBe(32);
-      expect(Ansi.yellow.data.attribute.code).toBe(33);
-      expect(Ansi.blue.data.attribute.code).toBe(34);
-      expect(Ansi.magenta.data.attribute.code).toBe(35);
-      expect(Ansi.cyan.data.attribute.code).toBe(36);
-      expect(Ansi.white.data.attribute.code).toBe(37);
+      expect(Ansi.black.data.attribute.codes).toEqual([30]);
+      expect(Ansi.red.data.attribute.codes).toEqual([31]);
+      expect(Ansi.green.data.attribute.codes).toEqual([32]);
+      expect(Ansi.yellow.data.attribute.codes).toEqual([33]);
+      expect(Ansi.blue.data.attribute.codes).toEqual([34]);
+      expect(Ansi.magenta.data.attribute.codes).toEqual([35]);
+      expect(Ansi.cyan.data.attribute.codes).toEqual([36]);
+      expect(Ansi.white.data.attribute.codes).toEqual([37]);
     });
 
     it("should define 8 primary colors with correct background codes", () => {
-      expect(Ansi.bgBlack.data.attribute.code).toBe(40);
-      expect(Ansi.bgRed.data.attribute.code).toBe(41);
-      expect(Ansi.bgGreen.data.attribute.code).toBe(42);
-      expect(Ansi.bgYellow.data.attribute.code).toBe(43);
-      expect(Ansi.bgBlue.data.attribute.code).toBe(44);
-      expect(Ansi.bgMagenta.data.attribute.code).toBe(45);
-      expect(Ansi.bgCyan.data.attribute.code).toBe(46);
-      expect(Ansi.bgWhite.data.attribute.code).toBe(47);
+      expect(Ansi.bgBlack.data.attribute.codes).toEqual([40]);
+      expect(Ansi.bgRed.data.attribute.codes).toEqual([41]);
+      expect(Ansi.bgGreen.data.attribute.codes).toEqual([42]);
+      expect(Ansi.bgYellow.data.attribute.codes).toEqual([43]);
+      expect(Ansi.bgBlue.data.attribute.codes).toEqual([44]);
+      expect(Ansi.bgMagenta.data.attribute.codes).toEqual([45]);
+      expect(Ansi.bgCyan.data.attribute.codes).toEqual([46]);
+      expect(Ansi.bgWhite.data.attribute.codes).toEqual([47]);
     });
   });
 
   describe("ANSI Text Attributes", () => {
     it("should define text attribute with correct code", () => {
-      expect(Ansi.bold.data.attribute.code).toBe(1);
-      expect(Ansi.dim.data.attribute.code).toBe(2);
-      expect(Ansi.italic.data.attribute.code).toBe(3);
-      expect(Ansi.underlined.data.attribute.code).toBe(4);
-      expect(Ansi.blink.data.attribute.code).toBe(5);
-      expect(Ansi.inverse.data.attribute.code).toBe(7);
-      expect(Ansi.hidden.data.attribute.code).toBe(8);
-      expect(Ansi.strikethrough.data.attribute.code).toBe(9);
-      expect(Ansi.overline.data.attribute.code).toBe(53);
+      expect(Ansi.bold.data.attribute.codes).toEqual([1]);
+      expect(Ansi.dim.data.attribute.codes).toEqual([2]);
+      expect(Ansi.italic.data.attribute.codes).toEqual([3]);
+      expect(Ansi.underlined.data.attribute.codes).toEqual([4]);
+      expect(Ansi.blink.data.attribute.codes).toEqual([5]);
+      expect(Ansi.inverse.data.attribute.codes).toEqual([7]);
+      expect(Ansi.hidden.data.attribute.codes).toEqual([8]);
+      expect(Ansi.strikethrough.data.attribute.codes).toEqual([9]);
+      expect(Ansi.overline.data.attribute.codes).toEqual([53]);
     });
 
     it("should define reset attribute with correct code", () => {
-      expect(Ansi.reset.data.attribute.name).toBe("reset");
-      expect(Ansi.reset.data.attribute.code).toBe(0);
+      expect(Ansi.reset.data.attribute.name).toEqual("reset");
+      expect(Ansi.reset.data.attribute.codes).toEqual([0]);
     });
   });
 
@@ -280,6 +280,44 @@ describe("Ansi Module", () => {
            |`
         )
       );
+    });
+  });
+
+  describe("256 and RGB Colors", () => {
+    it("should generate correct escape sequence for color256", () => {
+      const color = Ansi.color256(100);
+      const combined = Ansi.combine(color);
+      expect(combined.data.escapeSequence).toBe("\x1b[38;5;100m");
+    });
+
+    it("should generate correct escape sequence for bgColor256", () => {
+      const color = Ansi.bgColor256(150);
+      const combined = Ansi.combine(color);
+      expect(combined.data.escapeSequence).toBe("\x1b[48;5;150m");
+    });
+
+    it("should generate correct escape sequence for colorRGB", () => {
+      const color = Ansi.colorRGB(10, 20, 30);
+      const combined = Ansi.combine(color);
+      expect(combined.data.escapeSequence).toBe("\x1b[38;2;10;20;30m");
+    });
+
+    it("should generate correct escape sequence for bgColorRGB", () => {
+      const color = Ansi.bgColorRGB(40, 50, 60);
+      const combined = Ansi.combine(color);
+      expect(combined.data.escapeSequence).toBe("\x1b[48;2;40;50;60m");
+    });
+
+    it("should clamp color values for color256", () => {
+      const color = Ansi.color256(300);
+      const combined = Ansi.combine(color);
+      expect(combined.data.escapeSequence).toBe("\x1b[38;5;45m");
+    });
+
+    it("should clamp color values for colorRGB", () => {
+      const color = Ansi.colorRGB(300, -10, 255);
+      const combined = Ansi.combine(color);
+      expect(combined.data.escapeSequence).toBe("\x1b[38;2;45;245;0m");
     });
   });
 });
