@@ -769,6 +769,19 @@ export const align = dual<
 );
 
 /**
+ * Aligns a box to the left. This is a convenience function that ensures
+ * left alignment without changing the box dimensions.
+ * @param self - The box to align left
+ *
+ * @example
+ * ```typescript
+ * const leftAligned = Box.text("Hello\nWorld").pipe(Box.alignLeft)
+ * ```
+ */
+export const alignLeft = <A>(self: Box<A>): Box<A> =>
+  alignHoriz(self, left, self.cols);
+
+/**
  * Moves a box up by adding empty rows below it.
  * @param self - The box to move
  * @param n - Number of rows to add below

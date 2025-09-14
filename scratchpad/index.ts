@@ -90,8 +90,8 @@ const formatTime = (timestamp: number): string => {
 
 const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
-  yield* display(getCmdString(Cmd.clearScreen()));
-  yield* display(getCmdString(Cmd.cursorHide()));
+  yield* display(getCmdString(Cmd.clearScreen));
+  yield* display(getCmdString(Cmd.cursorHide));
 
   const COMPLETE = 1000;
   const PROGRESS_BAR_WIDTH = 69;
@@ -207,7 +207,7 @@ const main = Effect.gen(function* () {
     })
   );
   yield* display(getCmdString(Cmd.cursorTo(0, 14)));
-  yield* display(getCmdString(Cmd.cursorShow()));
+  yield* display(getCmdString(Cmd.cursorShow));
   yield* Console.log("✅ Task completed successfully!");
 });
 

@@ -82,8 +82,8 @@ const Border = <A>(self: Box.Box<A>) => {
  */
 const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
-  yield* display(getCmdString(Cmd.clearScreen()));
-  yield* display(getCmdString(Cmd.cursorHide()));
+  yield* display(getCmdString(Cmd.clearScreen));
+  yield* display(getCmdString(Cmd.cursorHide));
 
   // Define UI dimensions and layout
   const PROGRESS_BAR_WIDTH = 40;
@@ -204,7 +204,7 @@ const main = Effect.gen(function* () {
 
   // Final completion message
   yield* display(getCmdString(Cmd.cursorTo(0, counterRow + 2)));
-  yield* display(getCmdString(Cmd.cursorShow()));
+  yield* display(getCmdString(Cmd.cursorShow));
 
   const completionBox = Box.text("✅ Task completed successfully!").pipe(
     Box.annotate(Ansi.green)
