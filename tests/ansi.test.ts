@@ -1,5 +1,5 @@
+import { Array, pipe, String } from "effect";
 import { describe, expect, it } from "vitest";
-import { pipe, String, Array } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 
