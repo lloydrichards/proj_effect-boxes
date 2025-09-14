@@ -15,6 +15,7 @@ import {
 
 const ESC = "\x1b";
 const CSI = `${ESC}[`;
+const RESET = `${CSI}0m`;
 
 /**
  * ANSI text attribute definitions
@@ -376,23 +377,22 @@ const applyAnsiStyling = (lines: string[], escapeSequence: string): string[] =>
     Option.filter((seq) => seq !== ""),
     Option.match({
       onNone: () => lines,
-      onSome: (sequence) => {
-        return Array.map(lines, (line) => {
+      onSome: (sequence) =>
+        Array.map(lines, (line) => {
           if (line.startsWith(sequence)) {
             return line;
           }
 
-          if (line.includes(`${CSI}0m`)) {
-            const restoredLine = line.replace(
-              /\x1b\[0m/g,
-              `${CSI}0m${sequence}`
-            );
-            return `${sequence}${restoredLine}${CSI}0m`;
+          if (line.includes(RESET)) {
+            const injected = line.split(RESET).join(`${RESET}${sequence}`);
+            const withPrefix = `${sequence}${injected}`;
+            return withPrefix.endsWith(RESET)
+              ? withPrefix
+              : `${withPrefix}${RESET}`;
           }
 
-          return `${sequence}${line}${CSI}0m`;
-        });
-      },
+          return `${sequence}${line}${RESET}`;
+        }),
     })
   );
 
@@ -440,7 +440,7 @@ const truncatePreservingAnsi = (
         if (visibleCount >= maxVisibleLength) {
           return { result, visibleCount, skipNext };
         }
-        if (cur === "${ESC}" && str.split("")[index + 1] === "[") {
+        if (cur === `${ESC}` && str.split("")[index + 1] === "[") {
           const sequenceEnd = findAnsiSequenceEnd(str.split(""), index);
           return {
             visibleCount,
@@ -531,40 +531,33 @@ export const renderAnnotatedBox = <A>({
     return [];
   }
 
-  const renderContent = (): string[] => {
-    return pipe(
-      content,
-      Match.type<Content<A>>().pipe(
-        Match.tag("Blank", () => resizeBox([""], rows, cols)),
-        Match.tag("Text", ({ text }) => resizeBox([text], rows, cols)),
-        Match.tag("Row", ({ boxes }) =>
-          pipe(
-            boxes,
-            Array.map(renderAnnotatedBoxWithRows(rows)),
-            merge,
-            resizeBoxAnsiAware(rows, cols)
-          )
-        ),
-        Match.tag("Col", ({ boxes }) =>
-          pipe(
-            boxes,
-            Array.flatMap(renderAnnotatedBoxWithCols(cols)),
-            resizeBoxAnsiAware(rows, cols)
-          )
-        ),
-        Match.tag("SubBox", ({ box, xAlign, yAlign }) =>
-          pipe(
-            box,
-            renderAnnotatedBox,
-            resizeBoxAnsiAwareAligned(rows, cols, xAlign, yAlign)
-          )
-        ),
-        Match.exhaustive
-      )
-    );
-  };
-
-  const contentLines = renderContent();
+  const contentLines = pipe(
+    content,
+    Match.type<Content<A>>().pipe(
+      Match.tag("Blank", () => resizeBox([""], rows, cols)),
+      Match.tag("Text", ({ text }) => resizeBox([text], rows, cols)),
+      Match.tag("Row", ({ boxes }) =>
+        pipe(
+          Array.map(boxes, renderAnnotatedBox),
+          merge,
+          resizeBoxAnsiAware(rows, cols)
+        )
+      ),
+      Match.tag("Col", ({ boxes }) =>
+        pipe(
+          Array.flatMap(boxes, renderAnnotatedBox),
+          resizeBoxAnsiAware(rows, cols)
+        )
+      ),
+      Match.tag("SubBox", ({ box, xAlign, yAlign }) =>
+        pipe(
+          renderAnnotatedBox(box),
+          resizeBoxAnsiAwareAligned(rows, cols, xAlign, yAlign)
+        )
+      ),
+      Match.exhaustive
+    )
+  );
 
   if (annotation) {
     const escapeSequence = getAnsiEscapeSequence(annotation.data);
@@ -575,19 +568,3 @@ export const renderAnnotatedBox = <A>({
 
   return contentLines;
 };
-
-/**
- * Renders a box with a specific number of rows (with ANSI styling).
- */
-const renderAnnotatedBoxWithRows = dual<
-  <A>(r: number) => (self: Box<A>) => string[],
-  <A>(self: Box<A>, r: number) => string[]
->(2, (self, r) => renderAnnotatedBox({ ...self, rows: r }));
-
-/**
- * Renders a box with a specific number of columns (with ANSI styling).
- */
-const renderAnnotatedBoxWithCols = dual<
-  <A>(c: number) => (self: Box<A>) => string[],
-  <A>(self: Box<A>, c: number) => string[]
->(2, (self, c) => renderAnnotatedBox({ ...self, cols: c }));

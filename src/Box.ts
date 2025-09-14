@@ -899,22 +899,13 @@ const renderBox = <A>({ cols, content, rows }: Box<A>): string[] => {
       Match.tag("Blank", () => resizeBox([""], rows, cols)),
       Match.tag("Text", ({ text }) => resizeBox([text], rows, cols)),
       Match.tag("Row", ({ boxes }) =>
-        pipe(
-          boxes,
-          Array.map(renderBoxWithRows(rows)),
-          merge,
-          resizeBox(rows, cols)
-        )
+        pipe(Array.map(boxes, renderBox), merge, resizeBox(rows, cols))
       ),
       Match.tag("Col", ({ boxes }) =>
-        pipe(
-          boxes,
-          Array.flatMap(renderBoxWithCols(cols)),
-          resizeBox(rows, cols)
-        )
+        pipe(Array.flatMap(boxes, renderBox), resizeBox(rows, cols))
       ),
       Match.tag("SubBox", ({ box, xAlign, yAlign }) =>
-        pipe(box, renderBox, resizeBoxAligned(rows, cols, xAlign, yAlign))
+        pipe(renderBox(box), resizeBoxAligned(rows, cols, xAlign, yAlign))
       ),
       Match.exhaustive
     )
@@ -998,30 +989,6 @@ export const takePA = dual<
  */
 export const blanks = (n: number): string =>
   pipe(" ", String.repeat(Math.max(0, n)));
-
-/**
- * Renders a box with a specific number of rows.
- * @param self - The box to render
- * @param r - Target number of rows
- *
- * @note Haskell: `renderBoxWithRows :: Int -> Box -> [String]`
- */
-const renderBoxWithRows = dual<
-  <A>(r: number) => (self: Box<A>) => string[],
-  <A>(self: Box<A>, r: number) => string[]
->(2, (self, r) => renderBox({ ...self, rows: r }));
-
-/**
- * Renders a box with a specific number of columns.
- * @param self - The box to render
- * @param c - Target number of columns
- *
- * @note Haskell: `renderBoxWithCols :: Int -> Box -> [String]`
- */
-const renderBoxWithCols = dual<
-  <A>(c: number) => (self: Box<A>) => string[],
-  <A>(self: Box<A>, c: number) => string[]
->(2, (self, c) => renderBox({ ...self, cols: c }));
 
 /**
  * Adjusts the size of rendered text lines to specific dimensions.
