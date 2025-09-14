@@ -12,6 +12,7 @@ import {
   takeP,
   takePA,
 } from "./Box";
+import { isCmdType } from "./CMD";
 
 const ESC = "\x1b";
 const CSI = `${ESC}[`;
@@ -362,6 +363,10 @@ const getAnsiEscapeSequence = (data: unknown): string | null => {
   }
   if (isCombinedAnsiStyle(data)) {
     return data.escapeSequence;
+  }
+  // Support for CMD module integration
+  if (isCmdType(data)) {
+    return data.command;
   }
   return null;
 };
