@@ -12,7 +12,7 @@ import {
   takeP,
   takePA,
 } from "./Box";
-import { isCmdType } from "./Cmd";
+import { isCmdType } from "./utils";
 
 const ESC = "\x1b";
 const CSI = `${ESC}[`;
@@ -405,7 +405,11 @@ const applyAnsiStyling = (lines: string[], escapeSequence: string): string[] =>
  * Calculates the visible (printable) length of a string, ignoring ANSI escape sequences
  */
 const getVisibleLength = (str: string): number => {
-  const ansiRegex = new RegExp(`${CSI}[0-9;]*m`, "g");
+  // Match various ANSI escape sequences:
+  // - CSI sequences: \u001B[...m (SGR codes for colors/styles)
+  // - CSI sequences: \u001B[...H, \u001B[...A, etc. (cursor movement)
+  // - DEC sequences: \u001B7, \u001B8 (save/restore cursor)
+  const ansiRegex = new RegExp(`${ESC}\\[[0-9;]*[a-zA-Z]|${ESC}[78]`, "g");
   return str.replace(ansiRegex, "").length;
 };
 
@@ -415,13 +419,24 @@ const getVisibleLength = (str: string): number => {
 const findAnsiSequenceEnd = (
   chars: readonly string[],
   startIndex: number
-): number =>
-  pipe(
-    Array.drop(chars, startIndex + 2),
-    Array.findFirstIndex((char: string) => char === "m"),
-    Option.map((endPos: number) => startIndex + 2 + endPos + 1),
-    Option.getOrElse(() => chars.length)
-  );
+): number => {
+  // Handle DEC sequences (ESC 7, ESC 8, etc.) - only 2 characters
+  if (chars[startIndex + 1] && /[78]/.test(chars[startIndex + 1]!)) {
+    return startIndex + 2;
+  }
+
+  // Handle CSI sequences (ESC [ ... letter)
+  if (chars[startIndex + 1] === "[") {
+    return pipe(
+      Array.drop(chars, startIndex + 2),
+      Array.findFirstIndex((char: string) => /[a-zA-Z]/.test(char)),
+      Option.map((endPos: number) => startIndex + 2 + endPos + 1),
+      Option.getOrElse(() => chars.length)
+    );
+  }
+
+  return chars.length;
+};
 
 /**
  * Truncates a string to a visible length while preserving ANSI escape sequences
@@ -532,6 +547,11 @@ export const renderAnnotatedBox = <A>({
   rows,
   annotation,
 }: Box<A>): string[] => {
+  // Special case: null boxes with CMD annotations should render their escape sequences
+  if ((rows === 0 || cols === 0) && annotation && isCmdType(annotation.data)) {
+    return [getAnsiEscapeSequence(annotation.data) || ""];
+  }
+
   if (rows === 0 || cols === 0) {
     return [];
   }
@@ -567,6 +587,11 @@ export const renderAnnotatedBox = <A>({
   if (annotation) {
     const escapeSequence = getAnsiEscapeSequence(annotation.data);
     if (escapeSequence) {
+      // Special handling for CMD annotations - they should output just the escape sequence
+      if (isCmdType(annotation.data)) {
+        return [escapeSequence];
+      }
+      // Regular ANSI styling for other annotations
       return applyAnsiStyling(contentLines, escapeSequence);
     }
   }

@@ -41,21 +41,14 @@
 
 import { Array, Option, pipe } from "effect";
 import { createAnnotation } from "./Annotation";
-import { annotate, type Box, emptyBox } from "./Box";
-
+import { annotate, type Box, nullBox } from "./Box";
+import type { CmdType } from "./utils";
+export { isCmdType, type CmdType } from "./utils";
 /**
  * ANSI escape sequence constants
  */
 const ESC = "\x1b";
 const CSI = `${ESC}[`;
-
-/**
- * ANSI command types - discriminated union for all cursor/screen control commands
- */
-export type CmdType = {
-  readonly _tag: "Cursor" | "Screen" | "Visibility" | "Utility";
-  readonly command: string;
-};
 
 /**
  * Clamps a number to ensure it's non-negative
@@ -66,7 +59,7 @@ const clamp = (n: number): number => Math.max(0, Math.floor(n));
  * Creates a Cmd-annotated null box with the specified command
  */
 const createCmdBox = (cmd: CmdType): Box<CmdType> =>
-  emptyBox().pipe(annotate(createAnnotation(cmd)));
+  annotate(nullBox, createAnnotation(cmd));
 
 /*
  *  --------------------------------------------------------------------------------
@@ -320,27 +313,3 @@ export const bell: Box<CmdType> = createCmdBox({
   _tag: "Utility",
   command: "\x07",
 });
-
-/*
- *  --------------------------------------------------------------------------------
- *  --  Type Guards and Utilities  -------------------------------------------------
- *  --------------------------------------------------------------------------------
- */
-
-/**
- * Type guard to check if annotation data is a CMD type
- */
-export const isCmdType = (data: unknown): data is CmdType => {
-  if (typeof data !== "object" || data === null) {
-    return false;
-  }
-
-  const obj = data as Record<string, unknown>;
-  return (
-    "_tag" in obj &&
-    typeof obj._tag === "string" &&
-    "command" in obj &&
-    typeof obj.command === "string" &&
-    ["Cursor", "Screen", "Visibility", "Utility"].includes(obj._tag)
-  );
-};

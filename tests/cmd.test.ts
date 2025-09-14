@@ -370,15 +370,13 @@ describe("CMD Module", () => {
       const lines = Ansi.renderAnnotatedBox(cmdBox);
 
       // CMD boxes are null boxes (0 rows, 0 cols), so they return empty array
-      expect(lines).toEqual([]);
+      expect(lines).toEqual(["\u001b[3A"]);
     });
 
     it("should integrate CMD annotations with text content", () => {
-      const textBox = Box.text("Hello World");
-      const cmdAnnotation = Annotation.createAnnotation(
-        getCmdData(Cmd.cursorUp(2))
+      const cmdAnnotatedBox = Box.text("Hello World").pipe(
+        Box.combine<Cmd.CmdType>(Cmd.cursorUp(2))
       );
-      const cmdAnnotatedBox = pipe(textBox, Box.annotate(cmdAnnotation));
 
       const lines = Ansi.renderAnnotatedBox(cmdAnnotatedBox);
 
@@ -389,13 +387,10 @@ describe("CMD Module", () => {
     });
 
     it("should handle complex CMD-annotated layouts", () => {
-      const content = Box.text("Test Content");
-      const cmdAnnotation = Annotation.createAnnotation(
-        getCmdData(Cmd.clearScreen)
+      const content = Box.text("Test Content").pipe(
+        Box.combine(Cmd.clearScreen)
       );
-      const cmdAnnotatedBox = pipe(content, Box.annotate(cmdAnnotation));
-
-      const lines = Ansi.renderAnnotatedBox(cmdAnnotatedBox);
+      const lines = Ansi.renderAnnotatedBox(content);
 
       expect(lines).toHaveLength(1);
       expect(lines[0]).toContain("Test Content");
@@ -403,14 +398,12 @@ describe("CMD Module", () => {
     });
 
     it("should work with Box render function using pretty style", () => {
-      const textBox = Box.text("Sample");
-      const cmdAnnotation = Annotation.createAnnotation(
-        getCmdData(Cmd.cursorMove(5, -2))
+      const textBox = Box.text("Sample").pipe(
+        Box.combine(Cmd.cursorMove(5, -2))
       );
-      const cmdAnnotatedBox = pipe(textBox, Box.annotate(cmdAnnotation));
 
       // Use pretty style to handle annotations
-      const rendered = Box.render(cmdAnnotatedBox, { style: "pretty" });
+      const rendered = Box.render(textBox, { style: "pretty" });
 
       expect(rendered).toContain("Sample");
       expect(rendered).toContain("\x1b[2A\x1b[5C");
@@ -515,65 +508,6 @@ describe("CMD Module", () => {
         expect(rendered).toContain("Hello");
         expect(rendered).toContain("\x1b7"); // save position
         expect(rendered).toContain("\x1b8"); // restore position
-      });
-    });
-  });
-
-  describe("Type Guards and Utilities", () => {
-    describe("isCmdType", () => {
-      it("should return true for valid CmdType", () => {
-        const cmd = Cmd.cursorUp();
-        const cmdData = getCmdData(cmd);
-        expect(Cmd.isCmdType(cmdData)).toBe(true);
-      });
-
-      it("should return false for null", () => {
-        expect(Cmd.isCmdType(null)).toBe(false);
-      });
-
-      it("should return false for undefined", () => {
-        expect(Cmd.isCmdType(undefined)).toBe(false);
-      });
-
-      it("should return false for strings", () => {
-        expect(Cmd.isCmdType("test")).toBe(false);
-      });
-
-      it("should return false for objects without required properties", () => {
-        expect(Cmd.isCmdType({})).toBe(false);
-        expect(Cmd.isCmdType({ _tag: "Test" })).toBe(false);
-        expect(Cmd.isCmdType({ command: "test" })).toBe(false);
-      });
-
-      it("should return false for objects with invalid _tag", () => {
-        expect(Cmd.isCmdType({ _tag: "Invalid", command: "test" })).toBe(false);
-      });
-
-      it("should return true for all valid _tag values", () => {
-        expect(Cmd.isCmdType({ _tag: "Cursor", command: "test" })).toBe(true);
-        expect(Cmd.isCmdType({ _tag: "Screen", command: "test" })).toBe(true);
-        expect(Cmd.isCmdType({ _tag: "Visibility", command: "test" })).toBe(
-          true
-        );
-        expect(Cmd.isCmdType({ _tag: "Utility", command: "test" })).toBe(true);
-      });
-    });
-
-    describe("getCmdEscapeSequence", () => {
-      it("should return escape sequence for valid CmdType", () => {
-        const cmd = Cmd.cursorUp(5);
-        const cmdData = getCmdData(cmd);
-        expect(cmdData.command).toBe("\x1b[5A");
-      });
-    });
-
-    describe("toEscapeSequence", () => {
-      it("should extract command from CmdType", () => {
-        const cmdData: Cmd.CmdType = {
-          _tag: "Cursor",
-          command: "\x1b[5A",
-        };
-        expect(cmdData.command).toBe("\x1b[5A");
       });
     });
   });
