@@ -1,4 +1,4 @@
-import { Effect, pipe, Ref, Schedule, Stream, Array } from "effect";
+import { Array, Effect, pipe, Ref, Schedule, Stream } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 import * as Cmd from "../src/Cmd";

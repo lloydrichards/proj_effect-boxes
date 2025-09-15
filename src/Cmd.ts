@@ -43,7 +43,9 @@ import { Array, Option, pipe } from "effect";
 import { createAnnotation } from "./Annotation";
 import { annotate, type Box, nullBox } from "./Box";
 import type { CmdType } from "./utils";
-export { isCmdType, type CmdType } from "./utils";
+
+export { type CmdType, isCmdType } from "./utils";
+
 /**
  * ANSI escape sequence constants
  */

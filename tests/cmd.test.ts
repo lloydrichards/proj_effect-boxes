@@ -1,6 +1,5 @@
 import { pipe } from "effect";
 import { describe, expect, it } from "vitest";
-import * as Annotation from "../src/Annotation";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 import * as Cmd from "../src/Cmd";

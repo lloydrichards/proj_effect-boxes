@@ -413,6 +413,8 @@ const getVisibleLength = (str: string): number => {
   return str.replace(ansiRegex, "").length;
 };
 
+const DEC_SEQUENCE = /[78]/;
+const ESC_END = /[a-zA-Z]/;
 /**
  * Finds the end of an ANSI escape sequence starting from a given position
  */
@@ -421,7 +423,7 @@ const findAnsiSequenceEnd = (
   startIndex: number
 ): number => {
   // Handle DEC sequences (ESC 7, ESC 8, etc.) - only 2 characters
-  if (chars[startIndex + 1] && /[78]/.test(chars[startIndex + 1]!)) {
+  if (chars[startIndex + 1] && DEC_SEQUENCE.test(chars[startIndex + 1] || "")) {
     return startIndex + 2;
   }
 
@@ -429,7 +431,7 @@ const findAnsiSequenceEnd = (
   if (chars[startIndex + 1] === "[") {
     return pipe(
       Array.drop(chars, startIndex + 2),
-      Array.findFirstIndex((char: string) => /[a-zA-Z]/.test(char)),
+      Array.findFirstIndex((char: string) => ESC_END.test(char)),
       Option.map((endPos: number) => startIndex + 2 + endPos + 1),
       Option.getOrElse(() => chars.length)
     );
