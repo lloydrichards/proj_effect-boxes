@@ -85,10 +85,7 @@ export const white = makeForegroundColor("white", "37");
 export const fgDefault = makeForegroundColor("default", "39");
 const clampColor = (n: number): number => Math.min(255, Math.max(0, n));
 export const color256 = (n: number): AnsiAnnotation =>
-  makeForegroundColor(
-    `color256(${clampColor(n) + 1})`,
-    `38;5;${clampColor(n)}`
-  );
+  makeForegroundColor(`color256(${clampColor(n)})`, `38;5;${clampColor(n)}`);
 export const colorRGB = (r: number, g: number, b: number): AnsiAnnotation =>
   makeForegroundColor(
     `rgb(${clampColor(r)},${clampColor(g)},${clampColor(b)})`,

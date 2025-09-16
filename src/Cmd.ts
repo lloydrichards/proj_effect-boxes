@@ -43,16 +43,16 @@ export const cursorDown = (lines = 1): Box<AnsiStyle> =>
   createCmdBox("cursorDown", `${CSI}${clamp(lines)}B`);
 
 /**
- * Moves the cursor left by the specified number of columns (default: 1).
- */
-export const cursorForward = (columns = 1): Box<AnsiStyle> =>
-  createCmdBox("cursorForward", `${CSI}${clamp(columns)}D`);
-
-/**
  * Moves the cursor right by the specified number of columns (default: 1).
  */
+export const cursorForward = (columns = 1): Box<AnsiStyle> =>
+  createCmdBox("cursorForward", `${CSI}${clamp(columns)}C`);
+
+/**
+ * Moves the cursor left by the specified number of columns (default: 1).
+ */
 export const cursorBackward = (columns = 1): Box<AnsiStyle> =>
-  createCmdBox("cursorBackward", `${CSI}${clamp(columns)}C`);
+  createCmdBox("cursorBackward", `${CSI}${clamp(columns)}D`);
 
 /**
  * Moves the cursor to the specified position (0-based coordinates).
