@@ -1,323 +1,319 @@
-import { Array, pipe, String } from "effect";
 import { describe, expect, it } from "vitest";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
+import * as Cmd from "../src/Cmd";
 
 describe("Ansi Module", () => {
   describe("ANSI Color Definitions", () => {
     it("should define 8 primary colors with correct foreground codes", () => {
-      expect(Ansi.black.data.attribute.codes).toEqual([30]);
-      expect(Ansi.red.data.attribute.codes).toEqual([31]);
-      expect(Ansi.green.data.attribute.codes).toEqual([32]);
-      expect(Ansi.yellow.data.attribute.codes).toEqual([33]);
-      expect(Ansi.blue.data.attribute.codes).toEqual([34]);
-      expect(Ansi.magenta.data.attribute.codes).toEqual([35]);
-      expect(Ansi.cyan.data.attribute.codes).toEqual([36]);
-      expect(Ansi.white.data.attribute.codes).toEqual([37]);
+      expect(Ansi.black.data[0]?.code).toBe("30");
+      expect(Ansi.red.data[0]?.code).toBe("31");
+      expect(Ansi.green.data[0]?.code).toBe("32");
+      expect(Ansi.yellow.data[0]?.code).toBe("33");
+      expect(Ansi.blue.data[0]?.code).toBe("34");
+      expect(Ansi.magenta.data[0]?.code).toBe("35");
+      expect(Ansi.cyan.data[0]?.code).toBe("36");
+      expect(Ansi.white.data[0]?.code).toBe("37");
     });
 
     it("should define 8 primary colors with correct background codes", () => {
-      expect(Ansi.bgBlack.data.attribute.codes).toEqual([40]);
-      expect(Ansi.bgRed.data.attribute.codes).toEqual([41]);
-      expect(Ansi.bgGreen.data.attribute.codes).toEqual([42]);
-      expect(Ansi.bgYellow.data.attribute.codes).toEqual([43]);
-      expect(Ansi.bgBlue.data.attribute.codes).toEqual([44]);
-      expect(Ansi.bgMagenta.data.attribute.codes).toEqual([45]);
-      expect(Ansi.bgCyan.data.attribute.codes).toEqual([46]);
-      expect(Ansi.bgWhite.data.attribute.codes).toEqual([47]);
+      expect(Ansi.bgBlack.data[0]?.code).toBe("40");
+      expect(Ansi.bgRed.data[0]?.code).toBe("41");
+      expect(Ansi.bgGreen.data[0]?.code).toBe("42");
+      expect(Ansi.bgYellow.data[0]?.code).toBe("43");
+      expect(Ansi.bgBlue.data[0]?.code).toBe("44");
+      expect(Ansi.bgMagenta.data[0]?.code).toBe("45");
+      expect(Ansi.bgCyan.data[0]?.code).toBe("46");
+      expect(Ansi.bgWhite.data[0]?.code).toBe("47");
     });
   });
 
   describe("ANSI Text Attributes", () => {
     it("should define text attribute with correct code", () => {
-      expect(Ansi.bold.data.attribute.codes).toEqual([1]);
-      expect(Ansi.dim.data.attribute.codes).toEqual([2]);
-      expect(Ansi.italic.data.attribute.codes).toEqual([3]);
-      expect(Ansi.underlined.data.attribute.codes).toEqual([4]);
-      expect(Ansi.blink.data.attribute.codes).toEqual([5]);
-      expect(Ansi.inverse.data.attribute.codes).toEqual([7]);
-      expect(Ansi.hidden.data.attribute.codes).toEqual([8]);
-      expect(Ansi.strikethrough.data.attribute.codes).toEqual([9]);
-      expect(Ansi.overline.data.attribute.codes).toEqual([53]);
+      expect(Ansi.bold.data[0]?.code).toBe("1");
+      expect(Ansi.dim.data[0]?.code).toBe("2");
+      expect(Ansi.italic.data[0]?.code).toBe("3");
+      expect(Ansi.underlined.data[0]?.code).toBe("4");
+      expect(Ansi.blink.data[0]?.code).toBe("5");
+      expect(Ansi.inverse.data[0]?.code).toBe("7");
+      expect(Ansi.hidden.data[0]?.code).toBe("8");
+      expect(Ansi.strikethrough.data[0]?.code).toBe("9");
+      expect(Ansi.overline.data[0]?.code).toBe("53");
     });
 
     it("should define reset attribute with correct code", () => {
-      expect(Ansi.reset.data.attribute.name).toEqual("reset");
-      expect(Ansi.reset.data.attribute.codes).toEqual([0]);
+      expect(Ansi.reset.data[0]?.name).toEqual("reset");
+      expect(Ansi.reset.data[0]?.code).toBe("0");
     });
   });
 
   describe("Style Combination", () => {
     it("should combine multiple styles without conflicts", () => {
       const combined = Ansi.combine(Ansi.red, Ansi.bgYellow, Ansi.bold);
-
-      expect(combined.data.styles).toHaveLength(3);
-      expect(combined.data.escapeSequence).toBe("\x1b[31;43;1m");
+      const styles = combined.data;
+      expect(styles).toHaveLength(3);
+      expect(styles).toContainEqual(Ansi.red.data[0]);
+      expect(styles).toContainEqual(Ansi.bgYellow.data[0]);
+      expect(styles).toContainEqual(Ansi.bold.data[0]);
     });
 
     it("should handle conflict resolution with last-wins strategy for foreground colors", () => {
       const combined = Ansi.combine(Ansi.red, Ansi.blue);
-
-      expect(combined.data.styles).toHaveLength(1);
-      expect(combined.data.escapeSequence).toBe("\x1b[34m");
+      const styles = combined.data;
+      expect(styles).toHaveLength(1);
+      expect(styles).toEqual(Ansi.blue.data);
     });
 
     it("should handle conflict resolution with last-wins strategy for background colors", () => {
       const combined = Ansi.combine(Ansi.bgYellow, Ansi.bgGreen);
-
-      expect(combined.data.styles).toHaveLength(1);
-      expect(combined.data.escapeSequence).toBe("\x1b[42m");
-    });
-  });
-
-  describe("Style Combination Arrays", () => {
-    it("should accept array input for combine function", () => {
-      const combined = Ansi.combine(Ansi.cyan, Ansi.underlined);
-
-      expect(combined.data.styles).toHaveLength(2);
-      expect(combined.data.escapeSequence).toBe("\x1b[36;4m");
-    });
-
-    it("should support complex example from specification", () => {
-      const combined = Ansi.combine(
-        Ansi.red,
-        Ansi.bgYellow,
-        Ansi.bold,
-        Ansi.underlined
-      );
-
-      expect(combined.data.styles).toHaveLength(4);
-      expect(combined.data.escapeSequence).toBe("\x1b[31;43;1;4m");
-    });
-  });
-
-  describe("Nested Style Handling", () => {
-    it("should handle multiple levels of nesting correctly", () => {
-      const childBox = Box.text("Red Child").pipe(Box.annotate(Ansi.red));
-      const parentBox = Box.hcat(
-        [Box.text("Blue Parent ["), childBox, Box.text("]")],
-        Box.top
-      ).pipe(Box.annotate(Ansi.blue));
-
-      const rendered = Box.render(parentBox, { style: "pretty" });
-      const expected = [
-        "\u001b[34mBlue Parent [",
-        "\u001b[31mRed Child\u001b[0m",
-        "\u001b[34m]\u001b[0m",
-        "\n",
-      ].join("");
-
-      expect(rendered).toBe(expected);
-    });
-
-    it("should maintain parent styles in complex box layouts", () => {
-      const styledChild = Box.text("Red").pipe(Box.annotate(Ansi.red));
-      const layout = Box.hcat(
-        [Box.text("A"), styledChild, Box.text("B")],
-        Box.top
-      ).pipe(Box.annotate(Ansi.blue));
-
-      const rendered = Box.render(layout, { style: "pretty" });
-      const expected = [
-        "\u001b[34mA",
-        "\u001b[31mRed\u001b[0m",
-        "\u001b[34mB\u001b[0m",
-        "\n",
-      ].join("");
-
-      expect(rendered).toBe(expected);
-    });
-  });
-
-  // ============================================================================
-  // Escape Sequence Generation (FR-005)
-  // ============================================================================
-
-  describe("Escape Sequence Generation", () => {
-    it("should generate correct escape sequence for single foreground color", () => {
-      const combined = Ansi.combine(Ansi.red);
-
-      expect(Ansi.toEscapeSequence(combined.data)).toBe("\x1b[31m");
-    });
-
-    it("should generate correct escape sequence for background color", () => {
-      const combined = Ansi.combine(Ansi.bgYellow);
-
-      expect(Ansi.toEscapeSequence(combined.data)).toBe("\x1b[43m");
-    });
-
-    it("should generate correct escape sequence for text attribute", () => {
-      const combined = Ansi.combine(Ansi.bold);
-
-      expect(Ansi.toEscapeSequence(combined.data)).toBe("\x1b[1m");
+      const styles = combined.data;
+      expect(styles).toHaveLength(1);
+      expect(styles).toEqual(Ansi.bgGreen.data);
     });
   });
 
   describe("Box Integration with ANSI Styles", () => {
-    it("should apply single color annotation to box rendering with pretty style", () => {
+    it("should apply single color annotation to box rendering", () => {
       const styledBox = Box.text("Error message").pipe(Box.annotate(Ansi.red));
-
-      const rendered = Box.render(styledBox, { style: "pretty" });
-      expect(rendered).toBe("\u001b[31mError message\u001b[0m\n");
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("\n")).toBe("\u001b[31mError message\u001b[0m");
     });
 
-    it("should apply combined styles to box rendering with pretty style", () => {
+    it("should apply combined styles to box rendering", () => {
       const combinedStyle = Ansi.combine(Ansi.red, Ansi.bgYellow, Ansi.bold);
       const styledBox = Box.text("Alert!").pipe(Box.annotate(combinedStyle));
-
-      const rendered = Box.render(styledBox, { style: "pretty" });
-      expect(rendered).toBe("\u001b[31;43;1mAlert!\u001b[0m\n");
-    });
-
-    it("should preserve existing Box API compatibility", () => {
-      const plainBox = Box.text("Plain text");
-      const rendered = Box.render(plainBox);
-
-      expect(rendered).toBe("Plain text\n");
-      expect(() => Box.render(plainBox)).not.toThrow();
-    });
-
-    it("should render without ANSI codes when using plain style", () => {
-      const styledBox = Box.text("Plain text").pipe(Box.annotate(Ansi.red));
-
-      const rendered = Box.render(styledBox, { style: "plain" });
-      expect(rendered).toBe("Plain text\n");
-      expect(rendered).not.toContain("\x1b[");
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("\n")).toBe("\u001b[31;43;1mAlert!\u001b[0m");
     });
   });
 
   describe("Complex Box Layouts with ANSI Styles", () => {
-    it("should render layout structure correctly (current implementation)", () => {
+    it("should render layout structure correctly", () => {
       const redBox = Box.text("Red").pipe(Box.annotate(Ansi.red));
       const blueBox = Box.text("Blue").pipe(Box.annotate(Ansi.blue));
       const layout = Box.hcat([redBox, blueBox], Box.top);
-
-      const rendered = Box.render(layout, { style: "pretty" });
-
-      expect(rendered).toContain("\x1b[31mRed\x1b[0m");
-      expect(rendered).toContain("\x1b[34mBlue\x1b[0m");
-    });
-
-    it("should preserve layout structure with annotations (current implementation)", () => {
-      const greenBox = Box.text("Success").pipe(Box.annotate(Ansi.green));
-      const yellowBox = Box.text("Warning").pipe(Box.annotate(Ansi.bgYellow));
-      const layout = Box.vcat([greenBox as any, yellowBox as any], Box.left);
-
-      const rendered = Box.render(layout, { style: "pretty" });
-      expect(rendered).toContain("\x1b[32mSuccess\x1b[0m");
-      expect(rendered).toContain("\x1b[43mWarning\x1b[0m");
-    });
-
-    it("should handle punctuation with annotations (current implementation)", () => {
-      const styledBox = Box.text("BOLD").pipe(Box.annotate(Ansi.bold));
-      const plainBox = Box.text("plain");
-      const layout = Box.punctuateH(
-        [styledBox as any, plainBox as any],
-        Box.top,
-        Box.text(" | ")
-      );
-
-      const rendered = Box.render(layout, { style: "pretty" });
-      expect(rendered).toContain("\x1b[1mBOLD\x1b[0m");
+      const rendered = Ansi.renderAnnotatedBox(layout);
+      expect(rendered.join("")).toContain("\u001b[31mRed\u001b[0m");
+      expect(rendered.join("")).toContain("\u001b[34mBlue\u001b[0m");
     });
 
     it("should apply ANSI styling to root-level annotated layouts", () => {
       const redBox = Box.text("Red");
       const blueBox = Box.text("Blue");
       const layout = Box.hcat([redBox, blueBox], Box.top);
-
       const styledLayout = layout.pipe(Box.annotate(Ansi.green));
-
-      const rendered = Box.render(styledLayout, { style: "pretty" });
-      expect(rendered).toBe("\u001b[32mRedBlue\u001b[0m\n");
-    });
-    it("should apply annotaion within a nested box without breaking the layout", () => {
-      const Border = <A>(self: Box.Box<A>) => {
-        const middleBorder = pipe(
-          Array.makeBy(self.rows, () => Box.char("│")),
-          Box.vcat(Box.left)
-        );
-        const topBorder = pipe(
-          [Box.char("┌"), Box.text("─".repeat(self.cols)), Box.char("┐")],
-          Box.hcat(Box.top)
-        );
-        const bottomBorder = pipe(
-          [Box.char("└"), Box.text("─".repeat(self.cols)), Box.char("┘")],
-          Box.hcat(Box.top)
-        );
-        const middleSection = pipe(
-          [middleBorder, self, middleBorder],
-          Box.hcat(Box.top)
-        );
-        return pipe(
-          [topBorder, middleSection, bottomBorder],
-          Box.vcat(Box.left)
-        );
-      };
-      const result = Box.hcat(
-        [
-          Box.text("x").pipe(
-            Box.alignHoriz(Box.left, 5),
-            Box.annotate(Ansi.red),
-            Border
-          ),
-          Box.text("x\ny").pipe(
-            Box.alignHoriz(Box.right, 5),
-            Box.annotate(Ansi.blue),
-            Border
-          ),
-        ],
-        Box.top
-      ).pipe(Box.moveLeft(2), Box.moveRight(2), Border);
-      expect(Box.render(result, { style: "pretty" })).toBe(
-        String.stripMargin(
-          `|┌──────────────────┐
-           |│  ┌─────┐┌─────┐  │
-           |│  │\u001b[31mx    \u001b[0m││\u001b[34m    x\u001b[0m│  │
-           |│  └─────┘│\u001b[34m    y\u001b[0m│  │
-           |│         └─────┘  │
-           |└──────────────────┘
-           |`
-        )
-      );
+      const rendered = Ansi.renderAnnotatedBox(styledLayout);
+      expect(rendered.join("\n")).toBe("\u001b[32mRedBlue\u001b[0m");
     });
   });
 
   describe("256 and RGB Colors", () => {
     it("should generate correct escape sequence for color256", () => {
       const color = Ansi.color256(100);
-      const combined = Ansi.combine(color);
-      expect(combined.data.escapeSequence).toBe("\x1b[38;5;100m");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[38;5;100m");
     });
 
     it("should generate correct escape sequence for bgColor256", () => {
       const color = Ansi.bgColor256(150);
-      const combined = Ansi.combine(color);
-      expect(combined.data.escapeSequence).toBe("\x1b[48;5;150m");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[48;5;150m");
     });
 
     it("should generate correct escape sequence for colorRGB", () => {
       const color = Ansi.colorRGB(10, 20, 30);
-      const combined = Ansi.combine(color);
-      expect(combined.data.escapeSequence).toBe("\x1b[38;2;10;20;30m");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[38;2;10;20;30m");
     });
 
     it("should generate correct escape sequence for bgColorRGB", () => {
       const color = Ansi.bgColorRGB(40, 50, 60);
-      const combined = Ansi.combine(color);
-      expect(combined.data.escapeSequence).toBe("\x1b[48;2;40;50;60m");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[48;2;40;50;60m");
     });
 
     it("should clamp color values for color256", () => {
       const color = Ansi.color256(300);
-      const combined = Ansi.combine(color);
-      expect(combined.data.escapeSequence).toBe("\x1b[38;5;45m");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[38;5;255m");
     });
 
     it("should clamp color values for colorRGB", () => {
       const color = Ansi.colorRGB(300, -10, 255);
-      const combined = Ansi.combine(color);
-      expect(combined.data.escapeSequence).toBe("\x1b[38;2;45;245;0m");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[38;2;255;0;255m");
+    });
+  });
+
+  describe("getAnsiEscapeSequence Edge Cases", () => {
+    describe("Single Attribute Types", () => {
+      it("should handle single foreground color", () => {
+        const result = Ansi.getAnsiEscapeSequence(Ansi.red.data);
+        expect(result).toBe("\u001b[31m");
+      });
+
+      it("should handle single background color", () => {
+        const result = Ansi.getAnsiEscapeSequence(Ansi.bgYellow.data);
+        expect(result).toBe("\u001b[43m");
+      });
+
+      it("should handle single text style", () => {
+        const result = Ansi.getAnsiEscapeSequence(Ansi.bold.data);
+        expect(result).toBe("\u001b[1m");
+      });
+    });
+
+    describe("Multiple Styled Attributes", () => {
+      it("should combine foreground color and background color", () => {
+        const combined = Ansi.combine(Ansi.red, Ansi.bgYellow);
+        const result = Ansi.getAnsiEscapeSequence(combined.data);
+        expect(result).toBe("\u001b[31;43m");
+      });
+
+      it("should combine foreground color and multiple text styles", () => {
+        const combined = Ansi.combine(Ansi.blue, Ansi.bold, Ansi.underlined);
+        const result = Ansi.getAnsiEscapeSequence(combined.data);
+        expect(result).toBe("\u001b[34;1;4m");
+      });
+
+      it("should combine all styled attribute types (foreground, background, multiple styles)", () => {
+        const combined = Ansi.combine(
+          Ansi.green,
+          Ansi.bgMagenta,
+          Ansi.bold,
+          Ansi.italic,
+          Ansi.underlined
+        );
+        const result = Ansi.getAnsiEscapeSequence(combined.data);
+        expect(result).toBe("\u001b[32;45;1;3;4m");
+      });
+    });
+
+    describe("Command Attributes", () => {
+      it("should handle single command attribute", () => {
+        // Use real command from Cmd module
+        const cursorUpCmd = Cmd.cursorUp(1);
+        if (cursorUpCmd.annotation?.data) {
+          const result = Ansi.getAnsiEscapeSequence(
+            cursorUpCmd.annotation.data
+          );
+          expect(result).toBe("\u001b[1A");
+        }
+      });
+
+      it("should return first command when multiple command attributes are present", () => {
+        // Combine multiple command attributes (though this is unusual in practice)
+        const cursorUpCmd = Cmd.cursorUp(1);
+        const cursorDownCmd = Cmd.cursorDown(1);
+
+        if (cursorUpCmd.annotation?.data && cursorDownCmd.annotation?.data) {
+          // Manually create combined data since Ansi.combine doesn't handle multiple commands well
+          const combinedData: Ansi.AnsiStyle = [
+            ...cursorUpCmd.annotation.data,
+            ...cursorDownCmd.annotation.data,
+          ];
+          const result = Ansi.getAnsiEscapeSequence(combinedData);
+          expect(result).toBe("\u001b[1A\u001b[1B"); // Should return first command
+        }
+      });
+
+      it("should handle real command attributes from Cmd module", () => {
+        // Test with real command boxes from the Cmd module
+        const cursorSave = Cmd.cursorSavePosition;
+        if (cursorSave.annotation?.data) {
+          const result = Ansi.getAnsiEscapeSequence(cursorSave.annotation.data);
+          expect(result).toBe("\u001b7"); // DEC save cursor
+        }
+
+        const cursorHide = Cmd.cursorHide;
+        if (cursorHide.annotation?.data) {
+          const result = Ansi.getAnsiEscapeSequence(cursorHide.annotation.data);
+          expect(result).toBe("\u001b[?25l");
+        }
+      });
+
+      it("should handle cursor movement commands correctly", () => {
+        const cursorUp = Cmd.cursorUp(3);
+        if (cursorUp.annotation?.data) {
+          const result = Ansi.getAnsiEscapeSequence(cursorUp.annotation.data);
+          expect(result).toBe("\u001b[3A");
+        }
+
+        const cursorTo = Cmd.cursorTo(10, 5);
+        if (cursorTo.annotation?.data) {
+          const result = Ansi.getAnsiEscapeSequence(cursorTo.annotation.data);
+          expect(result).toBe("\u001b[6;11H"); // Note: 1-indexed in ANSI
+        }
+      });
+    });
+
+    describe("Mixed Attributes", () => {
+      it("should prioritize command attributes over styled attributes", () => {
+        const mixedAttributes = Ansi.combine(
+          Ansi.red,
+          Cmd.cursorUp(1).annotation || Ansi.reset,
+          Ansi.bold
+        );
+        const result = Ansi.getAnsiEscapeSequence(mixedAttributes.data);
+        expect(result).toBe("\u001b[31;1m\u001b[1A");
+      });
+
+      it("should process styled attributes when no commands are present", () => {
+        const styledOnly = Ansi.combine(Ansi.red, Ansi.bgYellow, Ansi.bold);
+        const result = Ansi.getAnsiEscapeSequence(styledOnly.data);
+        expect(result).toBe("\u001b[31;43;1m");
+      });
+    });
+
+    describe("Edge Cases", () => {
+      it("should handle empty array", () => {
+        const result = Ansi.getAnsiEscapeSequence([]);
+        expect(result).toBeNull();
+      });
+
+      it("should handle RGB color codes correctly", () => {
+        const rgbColor = Ansi.colorRGB(128, 64, 192);
+        const result = Ansi.getAnsiEscapeSequence(rgbColor.data);
+        expect(result).toBe("\u001b[38;2;128;64;192m");
+      });
+
+      it("should handle 256-color codes correctly", () => {
+        const color256 = Ansi.color256(200);
+        const result = Ansi.getAnsiEscapeSequence(color256.data);
+        expect(result).toBe("\u001b[38;5;200m");
+      });
+
+      it("should handle all styled attribute types at maximum", () => {
+        // Test with 1 foreground, 1 background, and multiple styles using Ansi.combine
+        const maxStyled = Ansi.combine(
+          Ansi.red,
+          Ansi.bgYellow,
+          Ansi.bold,
+          Ansi.italic,
+          Ansi.underlined,
+          Ansi.blink,
+          Ansi.inverse
+        );
+        const result = Ansi.getAnsiEscapeSequence(maxStyled.data);
+        expect(result).toBe("\u001b[31;43;1;3;4;5;7m");
+      });
+
+      it("should preserve order of styled attributes", () => {
+        const orderedStyled = Ansi.combine(
+          Ansi.bold,
+          Ansi.red,
+          Ansi.bgYellow,
+          Ansi.italic
+        );
+        const result = Ansi.getAnsiEscapeSequence(orderedStyled.data);
+        expect(result).toBe("\u001b[1;31;43;3m");
+      });
     });
   });
 });

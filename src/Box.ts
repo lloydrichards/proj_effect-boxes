@@ -208,7 +208,7 @@ export const nullBox: Box<never> = make({
  *
  * @note Haskell: `empty :: Int -> Int -> Box`
  */
-export const emptyBox = (rows: number, cols: number): Box<never> =>
+export const emptyBox = (rows = 0, cols = 0): Box<never> =>
   make({
     rows,
     cols,
@@ -769,6 +769,19 @@ export const align = dual<
 );
 
 /**
+ * Aligns a box to the left. This is a convenience function that ensures
+ * left alignment without changing the box dimensions.
+ * @param self - The box to align left
+ *
+ * @example
+ * ```typescript
+ * const leftAligned = Box.text("Hello\nWorld").pipe(Box.alignLeft)
+ * ```
+ */
+export const alignLeft = <A>(self: Box<A>): Box<A> =>
+  alignHoriz(self, left, self.cols);
+
+/**
  * Moves a box up by adding empty rows below it.
  * @param self - The box to move
  * @param n - Number of rows to add below
@@ -840,6 +853,7 @@ export const moveRight = dual<
 export interface RenderConfig {
   readonly style?: "pretty" | "plain";
   readonly preserveWhitespace?: boolean;
+  readonly partial?: boolean;
 }
 
 /**
@@ -848,14 +862,7 @@ export interface RenderConfig {
 export const defaultRenderConfig: RenderConfig = {
   style: "plain",
   preserveWhitespace: false,
-};
-
-/**
- * Render configuration for plain text output (no annotations).
- */
-export const plainTextRenderConfig: RenderConfig = {
-  style: "plain",
-  preserveWhitespace: false,
+  partial: false,
 };
 
 /**
@@ -1050,7 +1057,10 @@ export const resizeBoxAligned = dual<
  *
  * @note Haskell: `render :: Box -> String`
  */
-export const render = <A>(self: Box<A>, config?: RenderConfig) => {
+export const render = dual<
+  (config?: RenderConfig) => <A>(self: Box<A>) => string,
+  <A>(self: Box<A>, config?: RenderConfig) => string
+>(2, (self, config) => {
   const { preserveWhitespace, style } = config ?? defaultRenderConfig;
   const rendered = renderBox(self);
 
@@ -1062,9 +1072,9 @@ export const render = <A>(self: Box<A>, config?: RenderConfig) => {
     ),
     (a) => (preserveWhitespace ? a : a.map(String.trimEnd)),
     Array.join("\n"),
-    (d) => d + (rendered.length > 0 ? "\n" : "")
+    (d) => (config?.partial ? d : d + (rendered.length > 0 ? "\n" : ""))
   );
-};
+});
 
 /**
  * Converts a box to a string while preserving all whitespace including trailing spaces.
