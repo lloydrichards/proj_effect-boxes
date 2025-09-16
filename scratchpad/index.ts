@@ -1,13 +1,4 @@
-import {
-  Array,
-  Clock,
-  Console,
-  Effect,
-  pipe,
-  Ref,
-  Schedule,
-  Stream,
-} from "effect";
+import { Array, Clock, Effect, pipe, Ref, Schedule, Stream } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 import * as Cmd from "../src/Cmd";
@@ -154,64 +145,56 @@ const main = Effect.gen(function* () {
       const timeStr = formatTime(timestamp);
       const status = counter >= COMPLETE ? "completed" : "running";
 
-      // PARTIAL UPDATE #1: Progress bar - update the entire progress bar
       yield* display(
-        Box.render(Cmd.cursorTo(progressBarStartCol, progressBarRow), {
-          style: "pretty",
-        })
-      );
-      yield* display(
-        Box.render(ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH), {
-          style: "pretty",
-          partial: true,
-        })
-      );
+        pipe(
+          // PARTIAL UPDATE #1: Progress bar - update the entire progress bar
+          Cmd.cursorTo(progressBarStartCol, progressBarRow),
+          Box.combine(ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH)),
 
-      // PARTIAL UPDATE #2: Percentage - overwrite just the percentage value
-      yield* display(
-        Box.render(Cmd.cursorTo(percentageCol, progressBarRow), {
-          style: "pretty",
-        })
-      );
-      const percentageText = `${percentage.toString().padStart(3)}%`;
-      const styledPercentage = Box.text(percentageText).pipe(
-        Box.annotate(percentage === 100 ? Ansi.green : Ansi.blue)
-      );
-      yield* display(Box.render(styledPercentage, { style: "pretty" }));
+          // PARTIAL UPDATE #2: Percentage - overwrite just the percentage value
+          Box.combine(Cmd.cursorTo(percentageCol, progressBarRow)),
+          Box.combine(
+            Box.text(`${percentage.toString().padStart(3)}%`).pipe(
+              Box.annotate(
+                Ansi.combine(
+                  percentage === 100 ? Ansi.green : Ansi.blue,
+                  Ansi.bold
+                )
+              )
+            )
+          ),
+          // PARTIAL UPDATE #3: Status bar - update the entire status line
+          Box.combine(Cmd.cursorTo(statusBarStartCol, statusBarRow)),
+          Box.combine<Ansi.AnsiStyle>(
+            StatusBar(status, counter, timeStr).pipe(
+              Box.alignHoriz(Box.center1, 79)
+            )
+          ),
 
-      // PARTIAL UPDATE #3: Status bar - update the entire status line
-      yield* display(
-        Box.render(Cmd.cursorTo(statusBarStartCol, statusBarRow), {
-          style: "pretty",
-        })
-      );
-      const statusBarContent = StatusBar(status, counter, timeStr).pipe(
-        Box.alignHoriz(Box.center1, 80)
-      );
-      yield* display(
-        Box.render(statusBarContent, {
-          style: "pretty",
-          partial: true,
-        })
+          // Render all the combined commands and text updates
+          Box.combine(Cmd.cursorDown()),
+          Box.render({
+            style: "pretty",
+            partial: true,
+          })
+        )
       );
     })
   );
 
-  // Final completion message and cleanup
+  // Final completion message
   yield* display(
-    Box.render(Cmd.cursorTo(progressBarStartCol, progressBarRow), {
-      style: "pretty",
-    })
+    pipe(
+      Cmd.cursorShow,
+      Box.combine(
+        Box.text("✅ Task completed successfully!\n").pipe(
+          Box.annotate(Ansi.green),
+          Box.alignVert(Box.bottom, 5)
+        )
+      ),
+      Box.render({ style: "pretty" })
+    )
   );
-  yield* display(
-    Box.render(ProgressBar(COMPLETE, COMPLETE, PROGRESS_BAR_WIDTH), {
-      style: "pretty",
-      partial: true,
-    })
-  );
-  yield* display(Box.render(Cmd.cursorTo(0, 14), { style: "pretty" }));
-  yield* display(Box.render(Cmd.cursorShow, { style: "pretty" }));
-  yield* Console.log("✅ Task completed successfully!");
 });
 
 Effect.runPromise(main);

@@ -154,69 +154,63 @@ const main = Effect.gen(function* () {
       const progress = Math.min(counter, COMPLETE);
       const percentage = Math.round((progress / COMPLETE) * 100);
 
-      // PARTIAL UPDATE #1: Progress bar - add one character at a time
       if (counter <= COMPLETE) {
-        // Step 1: Position cursor at the exact location for the new character
         yield* display(
-          Ansi.renderAnnotatedBox(
-            Cmd.cursorTo(progressBarStartCol, progressBarRow)
-          ).join("")
-        );
+          pipe(
+            // PARTIAL UPDATE #1: Progress bar - add one character at a time
+            Cmd.cursorTo(progressBarStartCol, progressBarRow),
+            Box.combine(ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH)),
 
-        // Step 2: Render only the single new character with styling
-        yield* display(
-          Box.render(ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH), {
-            style: "pretty",
-            partial: true,
-          })
+            // PARTIAL UPDATE #2: Percentage - overwrite just the percentage value
+            Box.combine(Cmd.cursorTo(percentageCol, percentageRow)),
+            Box.combine(
+              Box.text(`${percentage.toString().padStart(3)}%`).pipe(
+                Box.annotate(percentage === 100 ? Ansi.green : Ansi.white)
+              )
+            ),
+
+            // PARTIAL UPDATE #3: Counter - update just the counter number
+            Box.combine(Cmd.cursorTo(counterCol, counterRow)),
+            Box.combine(
+              Box.text(counter.toString().padStart(2)).pipe(
+                Box.annotate(Ansi.yellow)
+              )
+            ),
+
+            // PARTIAL UPDATE #4: Spinner - animate a single character
+            Box.combine(Cmd.cursorTo(counterCol + 3, counterRow)),
+            Box.combine(
+              Box.text(
+                ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧"][counter % 8] ?? "⠋"
+              ).pipe(Box.annotate(Ansi.blue))
+            ),
+
+            // Render all the combined commands and text updates
+            Box.render({
+              style: "pretty",
+              partial: true,
+            })
+          )
         );
+      } else {
+        yield* Effect.sleep("500 milli");
       }
-
-      // PARTIAL UPDATE #2: Percentage - overwrite just the percentage value
-      yield* display(
-        Ansi.renderAnnotatedBox(
-          Cmd.cursorTo(percentageCol, percentageRow)
-        ).join("")
-      );
-      const percentageText = `${percentage.toString().padStart(3)}%`;
-      const styledPercentage = Box.text(percentageText).pipe(
-        Box.annotate(percentage === 100 ? Ansi.green : Ansi.white)
-      );
-      yield* display(Box.render(styledPercentage));
-
-      // PARTIAL UPDATE #3: Counter - update just the counter number
-      yield* display(
-        Ansi.renderAnnotatedBox(Cmd.cursorTo(counterCol, counterRow)).join("")
-      );
-      const counterText = counter.toString().padStart(2);
-      const styledCounter = Box.text(counterText).pipe(
-        Box.annotate(Ansi.yellow)
-      );
-      yield* display(Box.render(styledCounter));
-
-      // PARTIAL UPDATE #4: Spinner - animate a single character
-      const spinChars = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧"];
-      const spinChar = spinChars[counter % spinChars.length] ?? "⠋";
-      yield* display(
-        Ansi.renderAnnotatedBox(Cmd.cursorTo(counterCol + 3, counterRow)).join(
-          ""
-        )
-      );
-      const styledSpinner = Box.text(spinChar).pipe(Box.annotate(Ansi.blue));
-      yield* display(Box.render(styledSpinner));
     })
   );
 
   // Final completion message
   yield* display(
-    Ansi.renderAnnotatedBox(Cmd.cursorTo(0, counterRow + 2)).join("")
+    pipe(
+      Cmd.cursorShow,
+      Box.combine(
+        Box.text("✅ Task completed successfully!\n").pipe(
+          Box.annotate(Ansi.green),
+          Box.alignVert(Box.bottom, 4)
+        )
+      ),
+      Box.render({ style: "pretty" })
+    )
   );
-  yield* display(Ansi.renderAnnotatedBox(Cmd.cursorShow).join(""));
-
-  const completionBox = Box.text("✅ Task completed successfully!").pipe(
-    Box.annotate(Ansi.green)
-  );
-  yield* Box.printBox(completionBox);
 });
 
 Effect.runPromise(main as Effect.Effect<void, unknown, never>);

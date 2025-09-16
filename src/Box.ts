@@ -1057,7 +1057,10 @@ export const resizeBoxAligned = dual<
  *
  * @note Haskell: `render :: Box -> String`
  */
-export const render = <A>(self: Box<A>, config?: RenderConfig) => {
+export const render = dual<
+  (config?: RenderConfig) => <A>(self: Box<A>) => string,
+  <A>(self: Box<A>, config?: RenderConfig) => string
+>(2, (self, config) => {
   const { preserveWhitespace, style } = config ?? defaultRenderConfig;
   const rendered = renderBox(self);
 
@@ -1071,7 +1074,7 @@ export const render = <A>(self: Box<A>, config?: RenderConfig) => {
     Array.join("\n"),
     (d) => (config?.partial ? d : d + (rendered.length > 0 ? "\n" : ""))
   );
-};
+});
 
 /**
  * Converts a box to a string while preserving all whitespace including trailing spaces.

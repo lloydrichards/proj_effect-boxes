@@ -13,6 +13,7 @@ import {
   takePA,
 } from "./Box";
 
+// ANSI escape sequence constants
 const ESC = "\x1b";
 const CSI = `${ESC}[`;
 const RESET = `${CSI}0m`;
@@ -30,19 +31,126 @@ export type AnsiAttribute = {
   readonly code: string;
 };
 
+/**
+ * Array of ANSI attributes representing combined styles
+ */
 export type AnsiStyle = readonly AnsiAttribute[];
+
 /**
  * ANSI annotation type that wraps ANSI styles in the Annotation system
  */
 export type AnsiAnnotation = Annotation<AnsiStyle>;
 
-/**
- * Gets a conflict key for an ANSI style to resolve duplicates.
- * Foreground and background colors conflict with each other.
- * Text attributes are unique.
- *
- * @param style - The ANSI style to get a key for.
- */
+const makeForegroundColor = (name: string, code: string): AnsiAnnotation =>
+  createAnnotation<AnsiStyle>([
+    {
+      _tag: "ForegroundColor",
+      name,
+      code,
+    },
+  ]);
+
+const makeBackgroundColor = (name: string, code: string): AnsiAnnotation =>
+  createAnnotation<AnsiStyle>([
+    {
+      _tag: "BackgroundColor",
+      name,
+      code,
+    },
+  ]);
+
+const makeTextAttribute = (name: string, code: string): AnsiAnnotation =>
+  createAnnotation<AnsiStyle>([
+    {
+      _tag: "TextAttribute",
+      name,
+      code,
+    },
+  ]);
+
+// --------------------------------------------------------------------------------
+// --  ANSI Color Constants  ------------------------------------------------------
+// --------------------------------------------------------------------------------
+
+// Standard ANSI colors - basic 8-color palette
+// Each color has both foreground and background codes
+export const black = makeForegroundColor("black", "30");
+export const red = makeForegroundColor("red", "31");
+export const green = makeForegroundColor("green", "32");
+export const yellow = makeForegroundColor("yellow", "33");
+export const blue = makeForegroundColor("blue", "34");
+export const magenta = makeForegroundColor("magenta", "35");
+export const cyan = makeForegroundColor("cyan", "36");
+export const white = makeForegroundColor("white", "37");
+export const fgDefault = makeForegroundColor("default", "39");
+const clampColor = (n: number): number => Math.min(255, Math.max(0, n));
+export const color256 = (n: number): AnsiAnnotation =>
+  makeForegroundColor(
+    `color256(${clampColor(n) + 1})`,
+    `38;5;${clampColor(n)}`
+  );
+export const colorRGB = (r: number, g: number, b: number): AnsiAnnotation =>
+  makeForegroundColor(
+    `rgb(${clampColor(r)},${clampColor(g)},${clampColor(b)})`,
+    `38;2;${clampColor(r)};${clampColor(g)};${clampColor(b)}`
+  );
+
+//
+// Background color constants - aliases to the main color constants
+// Provided for API convenience and consistency with other ANSI libraries
+//
+export const bgBlack = makeBackgroundColor("black", "40");
+export const bgRed = makeBackgroundColor("red", "41");
+export const bgGreen = makeBackgroundColor("green", "42");
+export const bgYellow = makeBackgroundColor("yellow", "43");
+export const bgBlue = makeBackgroundColor("blue", "44");
+export const bgMagenta = makeBackgroundColor("magenta", "45");
+export const bgCyan = makeBackgroundColor("cyan", "46");
+export const bgWhite = makeBackgroundColor("white", "47");
+export const bgDefault = makeBackgroundColor("default", "49");
+export const bgColor256 = (n: number): AnsiAnnotation =>
+  makeBackgroundColor(`color256(${clampColor(n)})`, `48;5;${clampColor(n)}`);
+export const bgColorRGB = (r: number, g: number, b: number): AnsiAnnotation =>
+  makeBackgroundColor(
+    `rgb(${clampColor(r)},${clampColor(g)},${clampColor(b)})`,
+    `48;2;${clampColor(r)};${clampColor(g)};${clampColor(b)}`
+  );
+
+//
+// --------------------------------------------------------------------------------
+// --  Standard ANSI text attributes  ---------------------------------------------
+// --------------------------------------------------------------------------------
+//
+
+//
+// Standard ANSI text formatting attributes
+//
+export const bold = makeTextAttribute("bold", "1");
+
+export const dim = makeTextAttribute("dim", "2");
+
+export const italic = makeTextAttribute("italic", "3");
+
+export const underlined = makeTextAttribute("underlined", "4");
+
+export const blink = makeTextAttribute("blink", "5");
+
+export const inverse = makeTextAttribute("inverse", "7");
+
+export const hidden = makeTextAttribute("hidden", "8");
+
+export const strikethrough = makeTextAttribute("strikethrough", "9");
+
+export const overline = makeTextAttribute("overline", "53");
+
+export const reset = makeTextAttribute("reset", "0");
+
+//
+// --------------------------------------------------------------------------------
+// --  Combine  -------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+//
+
 const getStyleConflictKey = (style: AnsiAttribute): string => {
   switch (style._tag) {
     case "ForegroundColor":
@@ -52,276 +160,6 @@ const getStyleConflictKey = (style: AnsiAttribute): string => {
       return style.name; // Other attributes are unique by name
   }
 };
-
-/*
- *  --------------------------------------------------------------------------------
- *  --  ANSI Color Constants  ------------------------------------------------------
- *  --------------------------------------------------------------------------------
- */
-
-/**
- * Standard ANSI colors - basic 8-color palette
- * Each color has both foreground and background codes
- */
-export const black = createAnnotation<AnsiStyle>([
-  {
-    _tag: "ForegroundColor",
-    name: "black",
-    code: "30",
-  },
-]);
-export const red = createAnnotation<AnsiStyle>([
-  {
-    _tag: "ForegroundColor",
-    name: "red",
-    code: "31",
-  },
-]);
-export const green = createAnnotation<AnsiStyle>([
-  {
-    _tag: "ForegroundColor",
-    name: "green",
-    code: "32",
-  },
-]);
-export const yellow = createAnnotation<AnsiStyle>([
-  {
-    _tag: "ForegroundColor",
-    name: "yellow",
-    code: "33",
-  },
-]);
-export const blue = createAnnotation<AnsiStyle>([
-  {
-    _tag: "ForegroundColor",
-    name: "blue",
-    code: "34",
-  },
-]);
-export const magenta = createAnnotation<AnsiStyle>([
-  {
-    _tag: "ForegroundColor",
-    name: "magenta",
-    code: "35",
-  },
-]);
-export const cyan = createAnnotation<AnsiStyle>([
-  {
-    _tag: "ForegroundColor",
-    name: "cyan",
-    code: "36",
-  },
-]);
-export const white = createAnnotation<AnsiStyle>([
-  {
-    _tag: "ForegroundColor",
-    name: "white",
-    code: "37",
-  },
-]);
-export const defaultColor = createAnnotation<AnsiStyle>([
-  {
-    _tag: "ForegroundColor",
-    name: "default",
-    code: "39",
-  },
-]);
-const clampColor = (n: number): number => Math.min(255, Math.max(0, n));
-
-export const color256 = (n: number): AnsiAnnotation => {
-  return createAnnotation<AnsiStyle>([
-    {
-      _tag: "ForegroundColor",
-
-      name: `color256(${clampColor(n) + 1})`,
-      code: `38;5;${clampColor(n)}`,
-    },
-  ]);
-};
-
-export const colorRGB = (r: number, g: number, b: number): AnsiAnnotation =>
-  createAnnotation<AnsiStyle>([
-    {
-      _tag: "ForegroundColor",
-
-      name: `rgb(${clampColor(r)},${clampColor(g)},${clampColor(b)})`,
-      code: `38;2;${clampColor(r)};${clampColor(g)};${clampColor(b)}`,
-    },
-  ]);
-
-/**
- * Background color constants - aliases to the main color constants
- * Provided for API convenience and consistency with other ANSI libraries
- */
-export const bgBlack = createAnnotation<AnsiStyle>([
-  {
-    _tag: "BackgroundColor",
-    name: "black",
-    code: "40",
-  },
-]);
-export const bgRed = createAnnotation<AnsiStyle>([
-  {
-    _tag: "BackgroundColor",
-    name: "red",
-    code: "41",
-  },
-]);
-export const bgGreen = createAnnotation<AnsiStyle>([
-  {
-    _tag: "BackgroundColor",
-    name: "green",
-    code: "42",
-  },
-]);
-export const bgYellow = createAnnotation<AnsiStyle>([
-  {
-    _tag: "BackgroundColor",
-    name: "yellow",
-    code: "43",
-  },
-]);
-export const bgBlue = createAnnotation<AnsiStyle>([
-  {
-    _tag: "BackgroundColor",
-    name: "blue",
-    code: "44",
-  },
-]);
-export const bgMagenta = createAnnotation<AnsiStyle>([
-  {
-    _tag: "BackgroundColor",
-    name: "magenta",
-    code: "45",
-  },
-]);
-export const bgCyan = createAnnotation<AnsiStyle>([
-  {
-    _tag: "BackgroundColor",
-    name: "cyan",
-    code: "46",
-  },
-]);
-export const bgWhite = createAnnotation<AnsiStyle>([
-  {
-    _tag: "BackgroundColor",
-    name: "white",
-    code: "47",
-  },
-]);
-export const bgDefault = createAnnotation<AnsiStyle>([
-  {
-    _tag: "BackgroundColor",
-    name: "default",
-    code: "49",
-  },
-]);
-
-export const bgColor256 = (n: number): AnsiAnnotation =>
-  createAnnotation<AnsiStyle>([
-    {
-      _tag: "BackgroundColor",
-
-      name: `color256(${n})`,
-      code: `48;5;${clampColor(n)}`,
-    },
-  ]);
-
-export const bgColorRGB = (r: number, g: number, b: number): AnsiAnnotation =>
-  createAnnotation<AnsiStyle>([
-    {
-      _tag: "BackgroundColor",
-
-      name: `rgb(${clampColor(r)},${clampColor(g)},${clampColor(b)})`,
-      code: `48;2;${clampColor(r)};${clampColor(g)};${clampColor(b)}`,
-    },
-  ]);
-
-/*
- *  --------------------------------------------------------------------------------
- *  --  Standard ANSI text attributes  ---------------------------------------------
- *  --------------------------------------------------------------------------------
- */
-
-/**
- * Standard ANSI text formatting attributes
- */
-export const bold = createAnnotation<AnsiStyle>([
-  {
-    _tag: "TextAttribute",
-    name: "bold",
-    code: "1",
-  },
-]);
-export const dim = createAnnotation<AnsiStyle>([
-  {
-    _tag: "TextAttribute",
-    name: "dim",
-    code: "2",
-  },
-]);
-export const italic = createAnnotation<AnsiStyle>([
-  {
-    _tag: "TextAttribute",
-    name: "italic",
-    code: "3",
-  },
-]);
-export const underlined = createAnnotation<AnsiStyle>([
-  {
-    _tag: "TextAttribute",
-    name: "underlined",
-    code: "4",
-  },
-]);
-export const blink = createAnnotation<AnsiStyle>([
-  {
-    _tag: "TextAttribute",
-    name: "blink",
-    code: "5",
-  },
-]);
-export const inverse = createAnnotation<AnsiStyle>([
-  {
-    _tag: "TextAttribute",
-    name: "inverse",
-    code: "7",
-  },
-]);
-export const hidden = createAnnotation<AnsiStyle>([
-  {
-    _tag: "TextAttribute",
-    name: "hidden",
-    code: "8",
-  },
-]);
-export const strikethrough = createAnnotation<AnsiStyle>([
-  {
-    _tag: "TextAttribute",
-    name: "strikethrough",
-    code: "9",
-  },
-]);
-export const overline = createAnnotation<AnsiStyle>([
-  {
-    _tag: "TextAttribute",
-    name: "overline",
-    code: "53",
-  },
-]);
-export const reset = createAnnotation<AnsiStyle>([
-  {
-    _tag: "TextAttribute",
-    name: "reset",
-    code: "0",
-  },
-]);
-
-/*
- *  --------------------------------------------------------------------------------
- *  --  Combine  -------------------------------------------------------------------
- *  --------------------------------------------------------------------------------
- */
 
 /**
  * Combines multiple ANSI style annotations into a single array of AnsiStyleType,
@@ -451,6 +289,7 @@ const getVisibleLength = (str: string): number => {
 
 const DEC_SEQUENCE = /[78]/;
 const ESC_END = /[a-zA-Z]/;
+
 /**
  * Finds the end of an ANSI escape sequence starting from a given position
  */

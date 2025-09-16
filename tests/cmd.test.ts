@@ -45,57 +45,37 @@ describe("CMD Module", () => {
       });
     });
 
-    describe("cursorLeft", () => {
+    describe("cursorForward", () => {
       it("should create box with correct escape sequence for default value", () => {
-        const cmd = Cmd.cursorLeft();
+        const cmd = Cmd.cursorForward();
         expect(cmd.annotation?.data[0]?.code).toBe("\x1b[1D");
       });
 
       it("should create box with correct escape sequence for custom value", () => {
-        const cmd = Cmd.cursorLeft(7);
+        const cmd = Cmd.cursorForward(7);
         expect(cmd.annotation?.data[0]?.code).toBe("\x1b[7D");
       });
 
       it("should clamp negative values to 0", () => {
-        const cmd = Cmd.cursorLeft(-1);
+        const cmd = Cmd.cursorForward(-1);
         expect(cmd.annotation?.data[0]?.code).toBe("\x1b[0D");
       });
     });
 
-    describe("cursorRight", () => {
+    describe("cursorBackward", () => {
       it("should create box with correct escape sequence for default value", () => {
-        const cmd = Cmd.cursorRight();
+        const cmd = Cmd.cursorBackward();
         expect(cmd.annotation?.data[0]?.code).toBe("\x1b[1C");
       });
 
       it("should create box with correct escape sequence for custom value", () => {
-        const cmd = Cmd.cursorRight(4);
+        const cmd = Cmd.cursorBackward(4);
         expect(cmd.annotation?.data[0]?.code).toBe("\x1b[4C");
       });
 
       it("should clamp negative values to 0", () => {
-        const cmd = Cmd.cursorRight(-5);
+        const cmd = Cmd.cursorBackward(-5);
         expect(cmd.annotation?.data[0]?.code).toBe("\x1b[0C");
-      });
-    });
-
-    describe("cursorForward", () => {
-      it("should be an alias for cursorRight", () => {
-        const forward = Cmd.cursorForward(3);
-        const right = Cmd.cursorRight(3);
-        expect(forward.annotation?.data[0]?.code).toBe(
-          right.annotation?.data[0]?.code
-        );
-      });
-    });
-
-    describe("cursorBackward", () => {
-      it("should be an alias for cursorLeft", () => {
-        const backward = Cmd.cursorBackward(2);
-        const left = Cmd.cursorLeft(2);
-        expect(backward.annotation?.data[0]?.code).toBe(
-          left.annotation?.data[0]?.code
-        );
       });
     });
 
