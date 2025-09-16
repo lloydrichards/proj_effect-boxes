@@ -1,15 +1,9 @@
-import {
-  Array,
-  Clock,
-  Console,
-  Effect,
-  pipe,
-  Ref,
-  Schedule,
-  Stream,
-} from "effect";
+import { Array, Clock, Effect, pipe, Ref, Schedule, Stream } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
+import * as Cmd from "../src/Cmd";
+
+const display = (msg: string) => Effect.sync(() => process.stdout.write(msg));
 
 const StatusBar = (status: string, counter: number, time: string) =>
   pipe(
@@ -28,13 +22,14 @@ const ProgressBar = (progress: number, total: number, width: number) => {
 
   const r = Math.round(255 * (1 - ratio));
   const g = Math.round(255 * ratio);
-  const progressColor = Ansi.colorRGB(r, g, 0);
+  const progressColor =
+    progress === total ? Ansi.green : Ansi.colorRGB(r, g, 0);
 
   const filledBar = Box.text("█".repeat(filledLength)).pipe(
     Box.annotate(progressColor)
   );
   const emptyBar = Box.text("░".repeat(emptyLength));
-  return pipe(filledBar, Box.hAppend<Ansi.AnsiStyleType>(emptyBar));
+  return pipe(filledBar, Box.hAppend<Ansi.AnsiStyle>(emptyBar));
 };
 
 const Padding =
@@ -78,11 +73,42 @@ const formatTime = (timestamp: number): string => {
 };
 
 const main = Effect.gen(function* () {
-  yield* Console.log("Starting\n");
+  // Clear screen and hide cursor for cleaner output
+  yield* display(Box.render(Cmd.clearScreen, { style: "pretty" }));
+  yield* display(Box.render(Cmd.cursorHide, { style: "pretty" }));
 
-  const COMPLETE = 64;
+  const COMPLETE = 1000;
+  const PROGRESS_BAR_WIDTH = 69;
 
   const counterRef = yield* Ref.make(0);
+
+  const top = Box.hcat(
+    [
+      ProgressBar(0, COMPLETE, PROGRESS_BAR_WIDTH).pipe(Border),
+      Box.text(`${((0 / COMPLETE) * 100).toFixed(0)}%`).pipe(
+        Box.alignHoriz(Box.right, 5),
+        Box.annotate(Ansi.blue),
+        Border,
+        Box.annotate(Ansi.green)
+      ),
+    ],
+    Box.center1
+  ).pipe(Padding(1), Border);
+
+  const bottom = StatusBar("init", 0, "0").pipe(
+    Box.alignHoriz(Box.center1, 80),
+    Border
+  );
+
+  const footer = Box.punctuateH(
+    [
+      Box.text("Press"),
+      Box.text("Ctrl+C").pipe(Box.annotate(Ansi.blue)),
+      Box.text("to stop..."),
+    ],
+    Box.left,
+    Box.text(" ")
+  );
 
   const tickStream = Stream.repeatEffect(
     Effect.gen(function* () {
@@ -93,56 +119,82 @@ const main = Effect.gen(function* () {
       return { counter, timestamp: now };
     })
   ).pipe(
-    Stream.schedule(Schedule.spaced("200 milli")),
+    Stream.schedule(Schedule.spaced("10 milli")),
     Stream.takeUntil(({ counter }) => counter >= COMPLETE)
   );
 
-  yield* Stream.runForEach(tickStream, ({ counter, timestamp }) =>
-    Effect.gen(function* () {
-      yield* Console.clear;
-
-      yield* Box.printBox(
-        pipe(
-          [
-            ProgressBar(counter, COMPLETE, 69).pipe(Border),
-            Box.text(`${((counter / COMPLETE) * 100).toFixed(0)}%`).pipe(
-              Box.alignHoriz(Box.right, 5),
-              Box.annotate(Ansi.blue),
-              Border,
-              Box.annotate(Ansi.green)
-            ),
-          ],
-          Box.hcat(Box.center1),
-          Padding(1),
-          Border
-        )
-      );
-
-      yield* Box.printBox(
-        StatusBar(
-          counter < COMPLETE ? "Running..." : "Completed!",
-          counter,
-          formatTime(timestamp)
-        ).pipe(Box.alignHoriz(Box.center1, 80), Border)
-      );
-
-      if (counter < COMPLETE) {
-        yield* Box.printBox(
-          Box.punctuateH(
-            [
-              Box.text("Press"),
-              Box.text("Ctrl+C").pipe(Box.annotate(Ansi.blue)),
-              Box.text("to stop..."),
-            ],
-            Box.left,
-            Box.text(" ")
-          )
-        );
-      }
+  // Render the initial layout
+  yield* display(
+    Box.render(Box.punctuateV([top, bottom, footer], Box.top, Box.char(" ")), {
+      style: "pretty",
     })
   );
 
-  yield* Console.log("\n ...Task completed successfully!");
+  // Calculate positions for dynamic updates
+  const progressBarRow = 3; // Row where progress bar characters go (inside first border)
+  const progressBarStartCol = 3; // Column where progress bar starts (after left border + padding)
+  const percentageCol = 6 + PROGRESS_BAR_WIDTH; // Column after progress bar and borders
+  const statusBarRow = 9; // Row where status bar is displayed (inside bottom border)
+  const statusBarStartCol = 2; // Column where status starts (after left border)
+
+  // Process each tick with partial updates
+  yield* Stream.runForEach(tickStream, ({ counter, timestamp }) =>
+    Effect.gen(function* () {
+      const progress = Math.min(counter, COMPLETE);
+      const percentage = Math.round((progress / COMPLETE) * 100);
+      const timeStr = formatTime(timestamp);
+      const status = counter >= COMPLETE ? "completed" : "running";
+
+      yield* display(
+        pipe(
+          // PARTIAL UPDATE #1: Progress bar - update the entire progress bar
+          Cmd.cursorTo(progressBarStartCol, progressBarRow),
+          Box.combine(ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH)),
+
+          // PARTIAL UPDATE #2: Percentage - overwrite just the percentage value
+          Box.combine(Cmd.cursorTo(percentageCol, progressBarRow)),
+          Box.combine(
+            Box.text(`${percentage.toString().padStart(3)}%`).pipe(
+              Box.annotate(
+                Ansi.combine(
+                  percentage === 100 ? Ansi.green : Ansi.blue,
+                  Ansi.bold
+                )
+              )
+            )
+          ),
+          // PARTIAL UPDATE #3: Status bar - update the entire status line
+          Box.combine(Cmd.cursorTo(statusBarStartCol, statusBarRow)),
+          Box.combine<Ansi.AnsiStyle>(
+            StatusBar(status, counter, timeStr).pipe(
+              Box.alignHoriz(Box.center1, 79)
+            )
+          ),
+
+          // Render all the combined commands and text updates
+          Box.combine(Cmd.cursorDown()),
+          Box.render({
+            style: "pretty",
+            partial: true,
+          })
+        )
+      );
+    })
+  );
+
+  // Final completion message
+  yield* display(
+    pipe(
+      Cmd.cursorShow,
+      Box.combine(
+        Box.text("✅ Task completed successfully!\n").pipe(
+          Box.annotate(Ansi.green),
+          Box.alignVert(Box.bottom, 5)
+        )
+      ),
+      Box.render({ style: "pretty" })
+    )
+  );
 });
 
 Effect.runPromise(main);
