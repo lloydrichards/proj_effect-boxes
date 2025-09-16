@@ -5,13 +5,6 @@ import * as Cmd from "../src/Cmd";
 
 const display = (msg: string) => Effect.sync(() => process.stdout.write(msg));
 
-/**
- * Helper to extract command string from CMD box
- */
-const getCmdString = (cmdBox: Box.Box<Cmd.CmdType>): string => {
-  return cmdBox.annotation?.data.command ?? "";
-};
-
 const ProgressBar = (progress: number, total: number, width: number) => {
   const ratio = Math.min(Math.max(progress / total, 0), 1);
   const filledLength = Math.round(ratio * width);
@@ -25,7 +18,7 @@ const ProgressBar = (progress: number, total: number, width: number) => {
     Box.annotate(progressColor)
   );
   const emptyBar = Box.text("░".repeat(emptyLength));
-  return pipe(filledBar, Box.hAppend<Ansi.AnsiStyleType>(emptyBar));
+  return pipe(filledBar, Box.hAppend<Ansi.AnsiStyle>(emptyBar));
 };
 
 const Padding =
@@ -82,8 +75,8 @@ const Border = <A>(self: Box.Box<A>) => {
  */
 const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
-  yield* display(getCmdString(Cmd.clearScreen));
-  yield* display(getCmdString(Cmd.cursorHide));
+  yield* display(Ansi.renderAnnotatedBox(Cmd.clearScreen).join(""));
+  yield* display(Ansi.renderAnnotatedBox(Cmd.cursorHide).join(""));
 
   // Define UI dimensions and layout
   const PROGRESS_BAR_WIDTH = 40;
@@ -141,7 +134,7 @@ const main = Effect.gen(function* () {
   const progressBarStartCol = 3; // Column where '[' ends and bar begins
   const percentageRow = 8; // Row where percentage is displayed
   const percentageCol = 6 + PROGRESS_BAR_WIDTH; // Column after '] '
-  const counterRow = 12; // Row where counter is displayed
+  const counterRow = 13; // Row where counter is displayed
   const counterCol = 9; // Column after 'Counter: '
 
   // Create the animation stream
@@ -165,7 +158,9 @@ const main = Effect.gen(function* () {
       if (counter <= COMPLETE) {
         // Step 1: Position cursor at the exact location for the new character
         yield* display(
-          getCmdString(Cmd.cursorTo(progressBarStartCol, progressBarRow))
+          Ansi.renderAnnotatedBox(
+            Cmd.cursorTo(progressBarStartCol, progressBarRow)
+          ).join("")
         );
 
         // Step 2: Render only the single new character with styling
@@ -178,33 +173,45 @@ const main = Effect.gen(function* () {
       }
 
       // PARTIAL UPDATE #2: Percentage - overwrite just the percentage value
-      yield* display(getCmdString(Cmd.cursorTo(percentageCol, percentageRow)));
+      yield* display(
+        Ansi.renderAnnotatedBox(
+          Cmd.cursorTo(percentageCol, percentageRow)
+        ).join("")
+      );
       const percentageText = `${percentage.toString().padStart(3)}%`;
       const styledPercentage = Box.text(percentageText).pipe(
         Box.annotate(percentage === 100 ? Ansi.green : Ansi.white)
       );
-      yield* display(Box.render(styledPercentage, { style: "pretty" }));
+      yield* display(Box.render(styledPercentage));
 
       // PARTIAL UPDATE #3: Counter - update just the counter number
-      yield* display(getCmdString(Cmd.cursorTo(counterCol, counterRow)));
+      yield* display(
+        Ansi.renderAnnotatedBox(Cmd.cursorTo(counterCol, counterRow)).join("")
+      );
       const counterText = counter.toString().padStart(2);
       const styledCounter = Box.text(counterText).pipe(
         Box.annotate(Ansi.yellow)
       );
-      yield* display(Box.render(styledCounter, { style: "pretty" }));
+      yield* display(Box.render(styledCounter));
 
       // PARTIAL UPDATE #4: Spinner - animate a single character
       const spinChars = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧"];
       const spinChar = spinChars[counter % spinChars.length] ?? "⠋";
-      yield* display(getCmdString(Cmd.cursorTo(0, counterRow)));
+      yield* display(
+        Ansi.renderAnnotatedBox(Cmd.cursorTo(counterCol + 3, counterRow)).join(
+          ""
+        )
+      );
       const styledSpinner = Box.text(spinChar).pipe(Box.annotate(Ansi.blue));
-      yield* display(Box.render(styledSpinner, { style: "pretty" }));
+      yield* display(Box.render(styledSpinner));
     })
   );
 
   // Final completion message
-  yield* display(getCmdString(Cmd.cursorTo(0, counterRow + 2)));
-  yield* display(getCmdString(Cmd.cursorShow));
+  yield* display(
+    Ansi.renderAnnotatedBox(Cmd.cursorTo(0, counterRow + 2)).join("")
+  );
+  yield* display(Ansi.renderAnnotatedBox(Cmd.cursorShow).join(""));
 
   const completionBox = Box.text("✅ Task completed successfully!").pipe(
     Box.annotate(Ansi.green)

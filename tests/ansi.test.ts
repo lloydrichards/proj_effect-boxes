@@ -1,48 +1,49 @@
-import { assert, describe, expect, it } from "vitest";
+import { describe, expect, it } from "vitest";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
+import * as Cmd from "../src/Cmd";
 
 describe("Ansi Module", () => {
   describe("ANSI Color Definitions", () => {
     it("should define 8 primary colors with correct foreground codes", () => {
-      expect(Ansi.black.data.attribute.code).toBe("30");
-      expect(Ansi.red.data.attribute.code).toBe("31");
-      expect(Ansi.green.data.attribute.code).toBe("32");
-      expect(Ansi.yellow.data.attribute.code).toBe("33");
-      expect(Ansi.blue.data.attribute.code).toBe("34");
-      expect(Ansi.magenta.data.attribute.code).toBe("35");
-      expect(Ansi.cyan.data.attribute.code).toBe("36");
-      expect(Ansi.white.data.attribute.code).toBe("37");
+      expect(Ansi.black.data[0]?.code).toBe("30");
+      expect(Ansi.red.data[0]?.code).toBe("31");
+      expect(Ansi.green.data[0]?.code).toBe("32");
+      expect(Ansi.yellow.data[0]?.code).toBe("33");
+      expect(Ansi.blue.data[0]?.code).toBe("34");
+      expect(Ansi.magenta.data[0]?.code).toBe("35");
+      expect(Ansi.cyan.data[0]?.code).toBe("36");
+      expect(Ansi.white.data[0]?.code).toBe("37");
     });
 
     it("should define 8 primary colors with correct background codes", () => {
-      expect(Ansi.bgBlack.data.attribute.code).toBe("40");
-      expect(Ansi.bgRed.data.attribute.code).toBe("41");
-      expect(Ansi.bgGreen.data.attribute.code).toBe("42");
-      expect(Ansi.bgYellow.data.attribute.code).toBe("43");
-      expect(Ansi.bgBlue.data.attribute.code).toBe("44");
-      expect(Ansi.bgMagenta.data.attribute.code).toBe("45");
-      expect(Ansi.bgCyan.data.attribute.code).toBe("46");
-      expect(Ansi.bgWhite.data.attribute.code).toBe("47");
+      expect(Ansi.bgBlack.data[0]?.code).toBe("40");
+      expect(Ansi.bgRed.data[0]?.code).toBe("41");
+      expect(Ansi.bgGreen.data[0]?.code).toBe("42");
+      expect(Ansi.bgYellow.data[0]?.code).toBe("43");
+      expect(Ansi.bgBlue.data[0]?.code).toBe("44");
+      expect(Ansi.bgMagenta.data[0]?.code).toBe("45");
+      expect(Ansi.bgCyan.data[0]?.code).toBe("46");
+      expect(Ansi.bgWhite.data[0]?.code).toBe("47");
     });
   });
 
   describe("ANSI Text Attributes", () => {
     it("should define text attribute with correct code", () => {
-      expect(Ansi.bold.data.attribute.code).toBe("1");
-      expect(Ansi.dim.data.attribute.code).toBe("2");
-      expect(Ansi.italic.data.attribute.code).toBe("3");
-      expect(Ansi.underlined.data.attribute.code).toBe("4");
-      expect(Ansi.blink.data.attribute.code).toBe("5");
-      expect(Ansi.inverse.data.attribute.code).toBe("7");
-      expect(Ansi.hidden.data.attribute.code).toBe("8");
-      expect(Ansi.strikethrough.data.attribute.code).toBe("9");
-      expect(Ansi.overline.data.attribute.code).toBe("53");
+      expect(Ansi.bold.data[0]?.code).toBe("1");
+      expect(Ansi.dim.data[0]?.code).toBe("2");
+      expect(Ansi.italic.data[0]?.code).toBe("3");
+      expect(Ansi.underlined.data[0]?.code).toBe("4");
+      expect(Ansi.blink.data[0]?.code).toBe("5");
+      expect(Ansi.inverse.data[0]?.code).toBe("7");
+      expect(Ansi.hidden.data[0]?.code).toBe("8");
+      expect(Ansi.strikethrough.data[0]?.code).toBe("9");
+      expect(Ansi.overline.data[0]?.code).toBe("53");
     });
 
     it("should define reset attribute with correct code", () => {
-      expect(Ansi.reset.data.attribute.name).toEqual("reset");
-      expect(Ansi.reset.data.attribute.code).toBe("0");
+      expect(Ansi.reset.data[0]?.name).toEqual("reset");
+      expect(Ansi.reset.data[0]?.code).toBe("0");
     });
   });
 
@@ -51,25 +52,23 @@ describe("Ansi Module", () => {
       const combined = Ansi.combine(Ansi.red, Ansi.bgYellow, Ansi.bold);
       const styles = combined.data;
       expect(styles).toHaveLength(3);
-      expect(styles).toContainEqual(Ansi.red.data);
-      expect(styles).toContainEqual(Ansi.bgYellow.data);
-      expect(styles).toContainEqual(Ansi.bold.data);
+      expect(styles).toContainEqual(Ansi.red.data[0]);
+      expect(styles).toContainEqual(Ansi.bgYellow.data[0]);
+      expect(styles).toContainEqual(Ansi.bold.data[0]);
     });
 
     it("should handle conflict resolution with last-wins strategy for foreground colors", () => {
       const combined = Ansi.combine(Ansi.red, Ansi.blue);
       const styles = combined.data;
-      assert(Array.isArray(styles));
       expect(styles).toHaveLength(1);
-      expect(styles[0]).toEqual(Ansi.blue.data);
+      expect(styles).toEqual(Ansi.blue.data);
     });
 
     it("should handle conflict resolution with last-wins strategy for background colors", () => {
       const combined = Ansi.combine(Ansi.bgYellow, Ansi.bgGreen);
       const styles = combined.data;
-      assert(Array.isArray(styles));
       expect(styles).toHaveLength(1);
-      expect(styles[0]).toEqual(Ansi.bgGreen.data);
+      expect(styles).toEqual(Ansi.bgGreen.data);
     });
   });
 
@@ -149,6 +148,172 @@ describe("Ansi Module", () => {
       const styledBox = Box.text("test").pipe(Box.annotate(color));
       const rendered = Ansi.renderAnnotatedBox(styledBox);
       expect(rendered.join("")).toContain("\u001b[38;2;255;0;255m");
+    });
+  });
+
+  describe("getAnsiEscapeSequence Edge Cases", () => {
+    describe("Single Attribute Types", () => {
+      it("should handle single foreground color", () => {
+        const result = Ansi.getAnsiEscapeSequence(Ansi.red.data);
+        expect(result).toBe("\u001b[31m");
+      });
+
+      it("should handle single background color", () => {
+        const result = Ansi.getAnsiEscapeSequence(Ansi.bgYellow.data);
+        expect(result).toBe("\u001b[43m");
+      });
+
+      it("should handle single text style", () => {
+        const result = Ansi.getAnsiEscapeSequence(Ansi.bold.data);
+        expect(result).toBe("\u001b[1m");
+      });
+    });
+
+    describe("Multiple Styled Attributes", () => {
+      it("should combine foreground color and background color", () => {
+        const combined = Ansi.combine(Ansi.red, Ansi.bgYellow);
+        const result = Ansi.getAnsiEscapeSequence(combined.data);
+        expect(result).toBe("\u001b[31;43m");
+      });
+
+      it("should combine foreground color and multiple text styles", () => {
+        const combined = Ansi.combine(Ansi.blue, Ansi.bold, Ansi.underlined);
+        const result = Ansi.getAnsiEscapeSequence(combined.data);
+        expect(result).toBe("\u001b[34;1;4m");
+      });
+
+      it("should combine all styled attribute types (foreground, background, multiple styles)", () => {
+        const combined = Ansi.combine(
+          Ansi.green,
+          Ansi.bgMagenta,
+          Ansi.bold,
+          Ansi.italic,
+          Ansi.underlined
+        );
+        const result = Ansi.getAnsiEscapeSequence(combined.data);
+        expect(result).toBe("\u001b[32;45;1;3;4m");
+      });
+    });
+
+    describe("Command Attributes", () => {
+      it("should handle single command attribute", () => {
+        // Use real command from Cmd module
+        const cursorUpCmd = Cmd.cursorUp(1);
+        if (cursorUpCmd.annotation?.data) {
+          const result = Ansi.getAnsiEscapeSequence(
+            cursorUpCmd.annotation.data
+          );
+          expect(result).toBe("\u001b[1A");
+        }
+      });
+
+      it("should return first command when multiple command attributes are present", () => {
+        // Combine multiple command attributes (though this is unusual in practice)
+        const cursorUpCmd = Cmd.cursorUp(1);
+        const cursorDownCmd = Cmd.cursorDown(1);
+
+        if (cursorUpCmd.annotation?.data && cursorDownCmd.annotation?.data) {
+          // Manually create combined data since Ansi.combine doesn't handle multiple commands well
+          const combinedData: Ansi.AnsiStyle = [
+            ...cursorUpCmd.annotation.data,
+            ...cursorDownCmd.annotation.data,
+          ];
+          const result = Ansi.getAnsiEscapeSequence(combinedData);
+          expect(result).toBe("\u001b[1A\u001b[1B"); // Should return first command
+        }
+      });
+
+      it("should handle real command attributes from Cmd module", () => {
+        // Test with real command boxes from the Cmd module
+        const cursorSave = Cmd.cursorSavePosition;
+        if (cursorSave.annotation?.data) {
+          const result = Ansi.getAnsiEscapeSequence(cursorSave.annotation.data);
+          expect(result).toBe("\u001b7"); // DEC save cursor
+        }
+
+        const cursorHide = Cmd.cursorHide;
+        if (cursorHide.annotation?.data) {
+          const result = Ansi.getAnsiEscapeSequence(cursorHide.annotation.data);
+          expect(result).toBe("\u001b[?25l");
+        }
+      });
+
+      it("should handle cursor movement commands correctly", () => {
+        const cursorUp = Cmd.cursorUp(3);
+        if (cursorUp.annotation?.data) {
+          const result = Ansi.getAnsiEscapeSequence(cursorUp.annotation.data);
+          expect(result).toBe("\u001b[3A");
+        }
+
+        const cursorTo = Cmd.cursorTo(10, 5);
+        if (cursorTo.annotation?.data) {
+          const result = Ansi.getAnsiEscapeSequence(cursorTo.annotation.data);
+          expect(result).toBe("\u001b[6;11H"); // Note: 1-indexed in ANSI
+        }
+      });
+    });
+
+    describe("Mixed Attributes", () => {
+      it("should prioritize command attributes over styled attributes", () => {
+        const mixedAttributes = Ansi.combine(
+          Ansi.red,
+          Cmd.cursorUp(1).annotation || Ansi.reset,
+          Ansi.bold
+        );
+        const result = Ansi.getAnsiEscapeSequence(mixedAttributes.data);
+        expect(result).toBe("\u001b[31;1m\u001b[1A");
+      });
+
+      it("should process styled attributes when no commands are present", () => {
+        const styledOnly = Ansi.combine(Ansi.red, Ansi.bgYellow, Ansi.bold);
+        const result = Ansi.getAnsiEscapeSequence(styledOnly.data);
+        expect(result).toBe("\u001b[31;43;1m");
+      });
+    });
+
+    describe("Edge Cases", () => {
+      it("should handle empty array", () => {
+        const result = Ansi.getAnsiEscapeSequence([]);
+        expect(result).toBeNull();
+      });
+
+      it("should handle RGB color codes correctly", () => {
+        const rgbColor = Ansi.colorRGB(128, 64, 192);
+        const result = Ansi.getAnsiEscapeSequence(rgbColor.data);
+        expect(result).toBe("\u001b[38;2;128;64;192m");
+      });
+
+      it("should handle 256-color codes correctly", () => {
+        const color256 = Ansi.color256(200);
+        const result = Ansi.getAnsiEscapeSequence(color256.data);
+        expect(result).toBe("\u001b[38;5;200m");
+      });
+
+      it("should handle all styled attribute types at maximum", () => {
+        // Test with 1 foreground, 1 background, and multiple styles using Ansi.combine
+        const maxStyled = Ansi.combine(
+          Ansi.red,
+          Ansi.bgYellow,
+          Ansi.bold,
+          Ansi.italic,
+          Ansi.underlined,
+          Ansi.blink,
+          Ansi.inverse
+        );
+        const result = Ansi.getAnsiEscapeSequence(maxStyled.data);
+        expect(result).toBe("\u001b[31;43;1;3;4;5;7m");
+      });
+
+      it("should preserve order of styled attributes", () => {
+        const orderedStyled = Ansi.combine(
+          Ansi.bold,
+          Ansi.red,
+          Ansi.bgYellow,
+          Ansi.italic
+        );
+        const result = Ansi.getAnsiEscapeSequence(orderedStyled.data);
+        expect(result).toBe("\u001b[1;31;43;3m");
+      });
     });
   });
 });

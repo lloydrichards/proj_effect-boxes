@@ -18,30 +18,19 @@ const CSI = `${ESC}[`;
 const RESET = `${CSI}0m`;
 
 /**
- * ANSI text attribute definitions
- *
- */
-export type AnsiAttribute = {
-  readonly name: string;
-  readonly code: string;
-};
-
-/**
  * Discriminated union for all ANSI styling options
  */
-export type AnsiStyleType = {
+export type AnsiAttribute = {
   readonly _tag:
     | "ForegroundColor"
     | "BackgroundColor"
     | "TextAttribute"
     | "CommandAttribute";
-  readonly attribute: {
-    readonly name: string;
-    readonly code: string;
-  };
+  readonly name: string;
+  readonly code: string;
 };
 
-export type AnsiStyle = AnsiStyleType | readonly AnsiStyleType[];
+export type AnsiStyle = readonly AnsiAttribute[];
 /**
  * ANSI annotation type that wraps ANSI styles in the Annotation system
  */
@@ -54,13 +43,13 @@ export type AnsiAnnotation = Annotation<AnsiStyle>;
  *
  * @param style - The ANSI style to get a key for.
  */
-const getStyleConflictKey = (style: AnsiStyleType): string => {
+const getStyleConflictKey = (style: AnsiAttribute): string => {
   switch (style._tag) {
     case "ForegroundColor":
     case "BackgroundColor":
       return style._tag; // Only one of each color type is allowed
     default:
-      return style.attribute.name; // Other attributes are unique by name
+      return style.name; // Other attributes are unique by name
   }
 };
 
@@ -74,121 +63,179 @@ const getStyleConflictKey = (style: AnsiStyleType): string => {
  * Standard ANSI colors - basic 8-color palette
  * Each color has both foreground and background codes
  */
-export const black = createAnnotation<AnsiStyleType>({
-  _tag: "ForegroundColor",
-  attribute: { name: "black", code: "30" },
-});
-export const red = createAnnotation<AnsiStyleType>({
-  _tag: "ForegroundColor",
-  attribute: { name: "red", code: "31" },
-});
-export const green = createAnnotation<AnsiStyleType>({
-  _tag: "ForegroundColor",
-  attribute: { name: "green", code: "32" },
-});
-export const yellow = createAnnotation<AnsiStyleType>({
-  _tag: "ForegroundColor",
-  attribute: { name: "yellow", code: "33" },
-});
-export const blue = createAnnotation<AnsiStyleType>({
-  _tag: "ForegroundColor",
-  attribute: { name: "blue", code: "34" },
-});
-export const magenta = createAnnotation<AnsiStyleType>({
-  _tag: "ForegroundColor",
-  attribute: { name: "magenta", code: "35" },
-});
-export const cyan = createAnnotation<AnsiStyleType>({
-  _tag: "ForegroundColor",
-  attribute: { name: "cyan", code: "36" },
-});
-export const white = createAnnotation<AnsiStyleType>({
-  _tag: "ForegroundColor",
-  attribute: { name: "white", code: "37" },
-});
-export const defaultColor = createAnnotation<AnsiStyleType>({
-  _tag: "ForegroundColor",
-  attribute: { name: "default", code: "39" },
-});
+export const black = createAnnotation<AnsiStyle>([
+  {
+    _tag: "ForegroundColor",
+    name: "black",
+    code: "30",
+  },
+]);
+export const red = createAnnotation<AnsiStyle>([
+  {
+    _tag: "ForegroundColor",
+    name: "red",
+    code: "31",
+  },
+]);
+export const green = createAnnotation<AnsiStyle>([
+  {
+    _tag: "ForegroundColor",
+    name: "green",
+    code: "32",
+  },
+]);
+export const yellow = createAnnotation<AnsiStyle>([
+  {
+    _tag: "ForegroundColor",
+    name: "yellow",
+    code: "33",
+  },
+]);
+export const blue = createAnnotation<AnsiStyle>([
+  {
+    _tag: "ForegroundColor",
+    name: "blue",
+    code: "34",
+  },
+]);
+export const magenta = createAnnotation<AnsiStyle>([
+  {
+    _tag: "ForegroundColor",
+    name: "magenta",
+    code: "35",
+  },
+]);
+export const cyan = createAnnotation<AnsiStyle>([
+  {
+    _tag: "ForegroundColor",
+    name: "cyan",
+    code: "36",
+  },
+]);
+export const white = createAnnotation<AnsiStyle>([
+  {
+    _tag: "ForegroundColor",
+    name: "white",
+    code: "37",
+  },
+]);
+export const defaultColor = createAnnotation<AnsiStyle>([
+  {
+    _tag: "ForegroundColor",
+    name: "default",
+    code: "39",
+  },
+]);
 const clampColor = (n: number): number => Math.min(255, Math.max(0, n));
 
 export const color256 = (n: number): AnsiAnnotation => {
-  return createAnnotation<AnsiStyleType>({
-    _tag: "ForegroundColor",
-    attribute: {
+  return createAnnotation<AnsiStyle>([
+    {
+      _tag: "ForegroundColor",
+
       name: `color256(${clampColor(n) + 1})`,
       code: `38;5;${clampColor(n)}`,
     },
-  });
+  ]);
 };
 
 export const colorRGB = (r: number, g: number, b: number): AnsiAnnotation =>
-  createAnnotation<AnsiStyleType>({
-    _tag: "ForegroundColor",
-    attribute: {
+  createAnnotation<AnsiStyle>([
+    {
+      _tag: "ForegroundColor",
+
       name: `rgb(${clampColor(r)},${clampColor(g)},${clampColor(b)})`,
       code: `38;2;${clampColor(r)};${clampColor(g)};${clampColor(b)}`,
     },
-  });
+  ]);
 
 /**
  * Background color constants - aliases to the main color constants
  * Provided for API convenience and consistency with other ANSI libraries
  */
-export const bgBlack = createAnnotation<AnsiStyleType>({
-  _tag: "BackgroundColor",
-  attribute: { name: "black", code: "40" },
-});
-export const bgRed = createAnnotation<AnsiStyleType>({
-  _tag: "BackgroundColor",
-  attribute: { name: "red", code: "41" },
-});
-export const bgGreen = createAnnotation<AnsiStyleType>({
-  _tag: "BackgroundColor",
-  attribute: { name: "green", code: "42" },
-});
-export const bgYellow = createAnnotation<AnsiStyleType>({
-  _tag: "BackgroundColor",
-  attribute: { name: "yellow", code: "43" },
-});
-export const bgBlue = createAnnotation<AnsiStyleType>({
-  _tag: "BackgroundColor",
-  attribute: { name: "blue", code: "44" },
-});
-export const bgMagenta = createAnnotation<AnsiStyleType>({
-  _tag: "BackgroundColor",
-  attribute: { name: "magenta", code: "45" },
-});
-export const bgCyan = createAnnotation<AnsiStyleType>({
-  _tag: "BackgroundColor",
-  attribute: { name: "cyan", code: "46" },
-});
-export const bgWhite = createAnnotation<AnsiStyleType>({
-  _tag: "BackgroundColor",
-  attribute: { name: "white", code: "47" },
-});
-export const bgDefault = createAnnotation<AnsiStyleType>({
-  _tag: "BackgroundColor",
-  attribute: { name: "default", code: "49" },
-});
+export const bgBlack = createAnnotation<AnsiStyle>([
+  {
+    _tag: "BackgroundColor",
+    name: "black",
+    code: "40",
+  },
+]);
+export const bgRed = createAnnotation<AnsiStyle>([
+  {
+    _tag: "BackgroundColor",
+    name: "red",
+    code: "41",
+  },
+]);
+export const bgGreen = createAnnotation<AnsiStyle>([
+  {
+    _tag: "BackgroundColor",
+    name: "green",
+    code: "42",
+  },
+]);
+export const bgYellow = createAnnotation<AnsiStyle>([
+  {
+    _tag: "BackgroundColor",
+    name: "yellow",
+    code: "43",
+  },
+]);
+export const bgBlue = createAnnotation<AnsiStyle>([
+  {
+    _tag: "BackgroundColor",
+    name: "blue",
+    code: "44",
+  },
+]);
+export const bgMagenta = createAnnotation<AnsiStyle>([
+  {
+    _tag: "BackgroundColor",
+    name: "magenta",
+    code: "45",
+  },
+]);
+export const bgCyan = createAnnotation<AnsiStyle>([
+  {
+    _tag: "BackgroundColor",
+    name: "cyan",
+    code: "46",
+  },
+]);
+export const bgWhite = createAnnotation<AnsiStyle>([
+  {
+    _tag: "BackgroundColor",
+    name: "white",
+    code: "47",
+  },
+]);
+export const bgDefault = createAnnotation<AnsiStyle>([
+  {
+    _tag: "BackgroundColor",
+    name: "default",
+    code: "49",
+  },
+]);
 
 export const bgColor256 = (n: number): AnsiAnnotation =>
-  createAnnotation<AnsiStyleType>({
-    _tag: "BackgroundColor",
-    attribute: {
+  createAnnotation<AnsiStyle>([
+    {
+      _tag: "BackgroundColor",
+
       name: `color256(${n})`,
       code: `48;5;${clampColor(n)}`,
     },
-  });
+  ]);
 
 export const bgColorRGB = (r: number, g: number, b: number): AnsiAnnotation =>
-  createAnnotation<AnsiStyleType>({
-    _tag: "BackgroundColor",
-    attribute: {
+  createAnnotation<AnsiStyle>([
+    {
+      _tag: "BackgroundColor",
+
       name: `rgb(${clampColor(r)},${clampColor(g)},${clampColor(b)})`,
       code: `48;2;${clampColor(r)};${clampColor(g)};${clampColor(b)}`,
     },
-  });
+  ]);
 
 /*
  *  --------------------------------------------------------------------------------
@@ -199,46 +246,76 @@ export const bgColorRGB = (r: number, g: number, b: number): AnsiAnnotation =>
 /**
  * Standard ANSI text formatting attributes
  */
-export const bold = createAnnotation<AnsiStyleType>({
-  _tag: "TextAttribute",
-  attribute: { name: "bold", code: "1" },
-});
-export const dim = createAnnotation<AnsiStyleType>({
-  _tag: "TextAttribute",
-  attribute: { name: "dim", code: "2" },
-});
-export const italic = createAnnotation<AnsiStyleType>({
-  _tag: "TextAttribute",
-  attribute: { name: "italic", code: "3" },
-});
-export const underlined = createAnnotation<AnsiStyleType>({
-  _tag: "TextAttribute",
-  attribute: { name: "underlined", code: "4" },
-});
-export const blink = createAnnotation<AnsiStyleType>({
-  _tag: "TextAttribute",
-  attribute: { name: "blink", code: "5" },
-});
-export const inverse = createAnnotation<AnsiStyleType>({
-  _tag: "TextAttribute",
-  attribute: { name: "inverse", code: "7" },
-});
-export const hidden = createAnnotation<AnsiStyleType>({
-  _tag: "TextAttribute",
-  attribute: { name: "hidden", code: "8" },
-});
-export const strikethrough = createAnnotation<AnsiStyleType>({
-  _tag: "TextAttribute",
-  attribute: { name: "strikethrough", code: "9" },
-});
-export const overline = createAnnotation<AnsiStyleType>({
-  _tag: "TextAttribute",
-  attribute: { name: "overline", code: "53" },
-});
-export const reset = createAnnotation<AnsiStyleType>({
-  _tag: "TextAttribute",
-  attribute: { name: "reset", code: "0" },
-});
+export const bold = createAnnotation<AnsiStyle>([
+  {
+    _tag: "TextAttribute",
+    name: "bold",
+    code: "1",
+  },
+]);
+export const dim = createAnnotation<AnsiStyle>([
+  {
+    _tag: "TextAttribute",
+    name: "dim",
+    code: "2",
+  },
+]);
+export const italic = createAnnotation<AnsiStyle>([
+  {
+    _tag: "TextAttribute",
+    name: "italic",
+    code: "3",
+  },
+]);
+export const underlined = createAnnotation<AnsiStyle>([
+  {
+    _tag: "TextAttribute",
+    name: "underlined",
+    code: "4",
+  },
+]);
+export const blink = createAnnotation<AnsiStyle>([
+  {
+    _tag: "TextAttribute",
+    name: "blink",
+    code: "5",
+  },
+]);
+export const inverse = createAnnotation<AnsiStyle>([
+  {
+    _tag: "TextAttribute",
+    name: "inverse",
+    code: "7",
+  },
+]);
+export const hidden = createAnnotation<AnsiStyle>([
+  {
+    _tag: "TextAttribute",
+    name: "hidden",
+    code: "8",
+  },
+]);
+export const strikethrough = createAnnotation<AnsiStyle>([
+  {
+    _tag: "TextAttribute",
+    name: "strikethrough",
+    code: "9",
+  },
+]);
+export const overline = createAnnotation<AnsiStyle>([
+  {
+    _tag: "TextAttribute",
+    name: "overline",
+    code: "53",
+  },
+]);
+export const reset = createAnnotation<AnsiStyle>([
+  {
+    _tag: "TextAttribute",
+    name: "reset",
+    code: "0",
+  },
+]);
 
 /*
  *  --------------------------------------------------------------------------------
@@ -254,15 +331,11 @@ export const reset = createAnnotation<AnsiStyleType>({
  * @returns A new AnsiAnnotation containing an array of resolved AnsiStyleType.
  */
 export function combine(...annotations: AnsiAnnotation[]): AnsiAnnotation {
-  const styles = pipe(
-    annotations,
-    Array.flatMap((a) => (Array.isArray(a.data) ? a.data : [a.data]))
-  );
-
   const resolvedStyles = pipe(
-    styles as AnsiStyleType[],
+    annotations,
+    Array.flatMap((d) => d.data),
     Array.reverse,
-    Array.reduce(new Map<string, AnsiStyleType>(), (acc, style) => {
+    Array.reduce(new Map<string, AnsiAttribute>(), (acc, style) => {
       const key = getStyleConflictKey(style);
       if (!acc.has(key)) {
         acc.set(key, style);
@@ -283,63 +356,55 @@ export function combine(...annotations: AnsiAnnotation[]): AnsiAnnotation {
  */
 
 /**
- * Type guard to check if annotation data is an ANSI style type
+ * Type guard to check if annotation data is an ANSI style
  */
-const isAnsiStyleType = (data: unknown): data is AnsiStyleType => {
-  if (typeof data !== "object" || data === null) {
-    return false;
-  }
-
-  const obj = data as Record<string, unknown>;
+const isAnsiStyle = (data: unknown): data is AnsiStyle => {
   return (
-    "_tag" in obj &&
-    "attribute" in obj &&
-    typeof obj._tag === "string" &&
-    [
-      "ForegroundColor",
-      "BackgroundColor",
-      "TextAttribute",
-      "CommandAttribute",
-    ].includes(obj._tag)
+    Array.isArray(data) &&
+    data.every(
+      (item) =>
+        typeof item === "object" &&
+        item !== null &&
+        "_tag" in item &&
+        "name" in item &&
+        "code" in item
+    )
+  );
+};
+
+const isCommandAnnotation = (data: unknown): data is AnsiStyle => {
+  return (
+    isAnsiStyle(data) &&
+    data.length === 1 &&
+    data[0]?._tag === "CommandAttribute"
   );
 };
 
 /**
- * Type guard to check if annotation data is a combined ANSI style
- */
-const isCombinedAnsiStyle = (
-  data: unknown
-): data is readonly AnsiStyleType[] => {
-  return Array.isArray(data) && data.every(isAnsiStyleType);
-};
-
-const isCommandAnnotation = (
-  data: unknown
-): data is AnsiStyleType | readonly AnsiStyleType[] => {
-  if (isAnsiStyleType(data)) {
-    return data._tag === "CommandAttribute";
-  }
-  if (isCombinedAnsiStyle(data)) {
-    return data.some((d) => d._tag === "CommandAttribute");
-  }
-  return false;
-};
-
-/**
  * Extracts ANSI escape sequence from annotation data if it's ANSI-related
+ * Styled sequences (colors, text effects) join codes with ';' and end with 'm'
+ * Command sequences (cursor movement, erase) use their specific format
  */
-const getAnsiEscapeSequence = (data: unknown): string | null => {
-  if (isAnsiStyleType(data)) {
-    if (data._tag === "CommandAttribute") {
-      return data.attribute.code;
+export const getAnsiEscapeSequence = (data: AnsiStyle): string | null => {
+  if (data.length === 0) {
+    return null;
+  }
+  return pipe(
+    Array.partition(data, (attr) => attr._tag === "CommandAttribute"),
+    ([styleAttr, cmdAttr]) => {
+      const styleCode =
+        styleAttr.length > 0
+          ? styleAttr.map((style) => style.code).join(";")
+          : null;
+      const cmdCode =
+        cmdAttr.length > 0 ? cmdAttr.map((cmd) => cmd.code).join("") : null;
+
+      return (
+        `${styleCode ? `${CSI}${styleCode}m` : ""}${cmdCode ?? ""}`.trim() ||
+        null
+      );
     }
-    return `${CSI}${data.attribute.code}m`;
-  }
-  if (isCombinedAnsiStyle(data)) {
-    const codes = data.flatMap((style) => style.attribute.code);
-    return codes.length > 0 ? `${CSI}${codes.join(";")}m` : "";
-  }
-  return null;
+  );
 };
 
 /**
@@ -562,7 +627,7 @@ export const renderAnnotatedBox = <A>({
     )
   );
 
-  if (annotation) {
+  if (annotation && isAnsiStyle(annotation.data)) {
     const escapeSequence = getAnsiEscapeSequence(annotation.data);
     if (escapeSequence) {
       return applyAnsiStyling(contentLines, escapeSequence);

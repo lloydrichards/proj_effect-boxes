@@ -14,13 +14,6 @@ import * as Cmd from "../src/Cmd";
 
 const display = (msg: string) => Effect.sync(() => process.stdout.write(msg));
 
-/**
- * Helper to extract command string from CMD box
- */
-const getCmdString = (cmdBox: Box.Box<Cmd.CmdType>): string => {
-  return cmdBox.annotation?.data.command ?? "";
-};
-
 const StatusBar = (status: string, counter: number, time: string) =>
   pipe(
     [
@@ -45,7 +38,7 @@ const ProgressBar = (progress: number, total: number, width: number) => {
     Box.annotate(progressColor)
   );
   const emptyBar = Box.text("░".repeat(emptyLength));
-  return pipe(filledBar, Box.hAppend<Ansi.AnsiStyleType>(emptyBar));
+  return pipe(filledBar, Box.hAppend<Ansi.AnsiStyle>(emptyBar));
 };
 
 const Padding =
@@ -90,8 +83,8 @@ const formatTime = (timestamp: number): string => {
 
 const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
-  yield* display(getCmdString(Cmd.clearScreen));
-  yield* display(getCmdString(Cmd.cursorHide));
+  yield* display(Box.render(Cmd.clearScreen, { style: "pretty" }));
+  yield* display(Box.render(Cmd.cursorHide, { style: "pretty" }));
 
   const COMPLETE = 1000;
   const PROGRESS_BAR_WIDTH = 69;
@@ -163,7 +156,9 @@ const main = Effect.gen(function* () {
 
       // PARTIAL UPDATE #1: Progress bar - update the entire progress bar
       yield* display(
-        getCmdString(Cmd.cursorTo(progressBarStartCol, progressBarRow))
+        Box.render(Cmd.cursorTo(progressBarStartCol, progressBarRow), {
+          style: "pretty",
+        })
       );
       yield* display(
         Box.render(ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH), {
@@ -173,7 +168,11 @@ const main = Effect.gen(function* () {
       );
 
       // PARTIAL UPDATE #2: Percentage - overwrite just the percentage value
-      yield* display(getCmdString(Cmd.cursorTo(percentageCol, progressBarRow)));
+      yield* display(
+        Box.render(Cmd.cursorTo(percentageCol, progressBarRow), {
+          style: "pretty",
+        })
+      );
       const percentageText = `${percentage.toString().padStart(3)}%`;
       const styledPercentage = Box.text(percentageText).pipe(
         Box.annotate(percentage === 100 ? Ansi.green : Ansi.blue)
@@ -182,7 +181,9 @@ const main = Effect.gen(function* () {
 
       // PARTIAL UPDATE #3: Status bar - update the entire status line
       yield* display(
-        getCmdString(Cmd.cursorTo(statusBarStartCol, statusBarRow))
+        Box.render(Cmd.cursorTo(statusBarStartCol, statusBarRow), {
+          style: "pretty",
+        })
       );
       const statusBarContent = StatusBar(status, counter, timeStr).pipe(
         Box.alignHoriz(Box.center1, 80)
@@ -198,7 +199,9 @@ const main = Effect.gen(function* () {
 
   // Final completion message and cleanup
   yield* display(
-    getCmdString(Cmd.cursorTo(progressBarStartCol, progressBarRow))
+    Box.render(Cmd.cursorTo(progressBarStartCol, progressBarRow), {
+      style: "pretty",
+    })
   );
   yield* display(
     Box.render(ProgressBar(COMPLETE, COMPLETE, PROGRESS_BAR_WIDTH), {
@@ -206,8 +209,8 @@ const main = Effect.gen(function* () {
       partial: true,
     })
   );
-  yield* display(getCmdString(Cmd.cursorTo(0, 14)));
-  yield* display(getCmdString(Cmd.cursorShow));
+  yield* display(Box.render(Cmd.cursorTo(0, 14), { style: "pretty" }));
+  yield* display(Box.render(Cmd.cursorShow, { style: "pretty" }));
   yield* Console.log("✅ Task completed successfully!");
 });
 

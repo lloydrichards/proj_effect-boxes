@@ -27,11 +27,13 @@ describe("Ansi Annotation Integration", () => {
       const expectedData = [
         {
           _tag: "ForegroundColor",
-          attribute: { name: "blue", code: "34" },
+          name: "blue",
+          code: "34",
         },
         {
           _tag: "TextAttribute",
-          attribute: { name: "underlined", code: "4" },
+          name: "underlined",
+          code: "4",
         },
       ];
       expect(styledBox.annotation?.data).toEqual(expectedData);
@@ -91,11 +93,9 @@ describe("Ansi Annotation Integration", () => {
       const complexStyle = Ansi.combine(Ansi.cyan, Ansi.bold);
       const styledBox = Box.text("Complex").pipe(Box.annotate(complexStyle));
 
-      const enhanceStyle = (
-        _combined: Ansi.AnsiStyleType | readonly Ansi.AnsiStyleType[]
-      ): readonly Ansi.AnsiStyleType[] =>
+      const enhanceStyle = (_combined: Ansi.AnsiStyle): Ansi.AnsiStyle =>
         Ansi.combine(Ansi.white, Ansi.bgMagenta, Ansi.underlined)
-          .data as readonly Ansi.AnsiStyleType[];
+          .data as Ansi.AnsiStyle;
 
       const enhancedBox = Box.reAnnotate(styledBox, enhanceStyle);
       const rendered = Box.render(enhancedBox, { style: "pretty" });
@@ -222,9 +222,11 @@ describe("Ansi Annotation Integration", () => {
         Box.annotate(Ansi.underlined)
       );
 
-      const verticalLayout = Box.punctuateV<
-        Ansi.AnsiStyleType | readonly Ansi.AnsiStyleType[]
-      >([headerBox, contentBox, footerBox], Box.left, Box.text("---"));
+      const verticalLayout = Box.punctuateV<Ansi.AnsiStyle>(
+        [headerBox, contentBox, footerBox],
+        Box.left,
+        Box.text("---")
+      );
 
       const rendered = Box.render(verticalLayout, { style: "pretty" });
 
