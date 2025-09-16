@@ -48,34 +48,34 @@ describe("CMD Module", () => {
     describe("cursorForward", () => {
       it("should create box with correct escape sequence for default value", () => {
         const cmd = Cmd.cursorForward();
-        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[1D");
+        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[1C");
       });
 
       it("should create box with correct escape sequence for custom value", () => {
         const cmd = Cmd.cursorForward(7);
-        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[7D");
+        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[7C");
       });
 
       it("should clamp negative values to 0", () => {
         const cmd = Cmd.cursorForward(-1);
-        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[0D");
+        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[0C");
       });
     });
 
     describe("cursorBackward", () => {
       it("should create box with correct escape sequence for default value", () => {
         const cmd = Cmd.cursorBackward();
-        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[1C");
+        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[1D");
       });
 
       it("should create box with correct escape sequence for custom value", () => {
         const cmd = Cmd.cursorBackward(4);
-        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[4C");
+        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[4D");
       });
 
       it("should clamp negative values to 0", () => {
         const cmd = Cmd.cursorBackward(-5);
-        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[0C");
+        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[0D");
       });
     });
 
