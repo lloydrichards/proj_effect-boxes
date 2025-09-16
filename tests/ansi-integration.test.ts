@@ -24,7 +24,17 @@ describe("Ansi Annotation Integration", () => {
       const styledBox = Box.text("combined").pipe(Box.annotate(combinedStyle));
       const rendered = Box.render(styledBox, { style: "pretty" });
       expect(rendered).toBe("\x1b[34;4mcombined\x1b[0m\n");
-      expect(styledBox.annotation?.data.escapeSequence).toBe("\x1b[34;4m");
+      const expectedData = [
+        {
+          _tag: "ForegroundColor",
+          attribute: { name: "blue", code: "34" },
+        },
+        {
+          _tag: "TextAttribute",
+          attribute: { name: "underlined", code: "4" },
+        },
+      ];
+      expect(styledBox.annotation?.data).toEqual(expectedData);
     });
 
     it("should maintain composability with existing Box functions", () => {
@@ -81,11 +91,11 @@ describe("Ansi Annotation Integration", () => {
       const complexStyle = Ansi.combine(Ansi.cyan, Ansi.bold);
       const styledBox = Box.text("Complex").pipe(Box.annotate(complexStyle));
 
-      // Transform to add background and change foreground
       const enhanceStyle = (
-        _combined: Ansi.CombinedAnsiStyle
-      ): Ansi.CombinedAnsiStyle =>
-        Ansi.combine(Ansi.white, Ansi.bgMagenta, Ansi.underlined).data;
+        _combined: Ansi.AnsiStyleType | readonly Ansi.AnsiStyleType[]
+      ): readonly Ansi.AnsiStyleType[] =>
+        Ansi.combine(Ansi.white, Ansi.bgMagenta, Ansi.underlined)
+          .data as readonly Ansi.AnsiStyleType[];
 
       const enhancedBox = Box.reAnnotate(styledBox, enhanceStyle);
       const rendered = Box.render(enhancedBox, { style: "pretty" });
@@ -213,7 +223,7 @@ describe("Ansi Annotation Integration", () => {
       );
 
       const verticalLayout = Box.punctuateV<
-        Ansi.CombinedAnsiStyle | Ansi.AnsiStyleType
+        Ansi.AnsiStyleType | readonly Ansi.AnsiStyleType[]
       >([headerBox, contentBox, footerBox], Box.left, Box.text("---"));
 
       const rendered = Box.render(verticalLayout, { style: "pretty" });
