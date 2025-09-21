@@ -1122,4 +1122,43 @@ describe("Annotation Functions", () => {
       expect(resultsFromAlias[2]?.annotation?.data).toBe(30);
     });
   });
+
+  describe("Edge Cases", () => {
+    it("should render single char emojis correctly", () => {
+      const emojiBox = Box.align(
+        Box.text("😁"),
+        Box.center1,
+        Box.center1,
+        3,
+        3
+      );
+
+      expect(Box.renderWith(emojiBox, ".")).toBe(
+        String.stripMargin(
+          `|...
+           |.😁.
+           |...
+           |`
+        )
+      );
+    });
+    it("should render multi-char emojis correctly", () => {
+      const emojiBox = Box.align(
+        Box.text("👩‍💻"),
+        Box.center1,
+        Box.center1,
+        3,
+        4
+      );
+
+      expect(Box.renderWith(emojiBox, ".")).toBe(
+        String.stripMargin(
+          `|....
+           |.👩‍💻.
+           |....
+           |`
+        )
+      );
+    });
+  });
 });
