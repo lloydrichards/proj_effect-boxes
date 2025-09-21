@@ -22,7 +22,7 @@
     "@types/bun": "^1.2.22",
     "@vitest/coverage-v8": "3.2.4",
     "typescript": "^5.9.2",
-    "ultracite": "5.3.9",
+    "ultracite": "5.4.4",
     "vitest": "^3.2.4"
   }
 }

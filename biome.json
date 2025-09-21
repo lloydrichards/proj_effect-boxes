@@ -9,13 +9,20 @@
       "nursery": {
         "noShadow": "off",
         "useMaxParams": "off",
-        "useConsistentTypeDefinitions": "off"
+        "useConsistentTypeDefinitions": "off",
+        "useConsistentArrowReturn": "warn"
       },
       "complexity": {
         "noArguments": "off"
       },
       "style": {
         "useDefaultSwitchClause": "off",
+        "useNamingConvention": {
+          "level": "warn",
+          "options": {
+            "strictCase": false
+          }
+        },
         "noMagicNumbers": "off",
         "useFilenamingConvention": "off"
       },

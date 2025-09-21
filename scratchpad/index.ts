@@ -8,9 +8,9 @@ const display = (msg: string) => Effect.sync(() => process.stdout.write(msg));
 const StatusBar = (status: string, counter: number, time: string) =>
   pipe(
     [
-      Box.text(`Status: ${status}`),
-      Box.text(`Counter: ${counter}`),
-      Box.text(`Time: ${time}`),
+      Box.text(`⚙️ Status: ${status}`),
+      Box.text(`🧮 Counter: ${counter}`),
+      Box.text(`⏰ Time: ${time}`),
     ],
     Box.punctuateH(Box.left, Box.text("  |  "))
   );
