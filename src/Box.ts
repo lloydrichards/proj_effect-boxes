@@ -5,6 +5,9 @@ import * as Hash from "effect/Hash";
 import { type Pipeable, pipeArguments } from "effect/Pipeable";
 import type { Annotation } from "./Annotation";
 import { renderAnnotatedBox } from "./Ansi";
+import * as Width from "./Width";
+
+const segmenter = new Intl.Segmenter();
 
 export const BoxTypeId: unique symbol = Symbol.for("@effect/Box");
 
@@ -237,8 +240,8 @@ export const char = (c: string): Box<never> =>
 const unsafeLine = (t: string): Box<never> =>
   make({
     rows: 1,
-    cols: t.length,
-    content: { _tag: "Text", text: t },
+    cols: Width.ofString(t),
+    content: { _tag: "Text", text: t.replace(/\u200d/g, "") },
   });
 
 /**
@@ -639,26 +642,24 @@ const getLines = ({ content: { fullLines, lastLine } }: Para): string[] => {
  *
  * @note Haskell: `addWordP :: Para -> Word -> Para`
  */
-const addWordP = (para: Para, word: string): Para => {
-  return {
-    width: para.width,
-    content: wordFits(para, word)
-      ? {
-          fullLines: para.content.fullLines,
-          lastLine: [word, ...para.content.lastLine] as readonly string[],
-        }
-      : {
-          fullLines:
-            para.content.lastLine.length === 0
-              ? para.content.fullLines
-              : ([
-                  para.content.lastLine,
-                  ...para.content.fullLines,
-                ] as readonly (readonly string[])[]),
-          lastLine: [word] as readonly string[],
-        },
-  };
-};
+const addWordP = (para: Para, word: string): Para => ({
+  width: para.width,
+  content: wordFits(para, word)
+    ? {
+        fullLines: para.content.fullLines,
+        lastLine: [word, ...para.content.lastLine] as readonly string[],
+      }
+    : {
+        fullLines:
+          para.content.lastLine.length === 0
+            ? para.content.fullLines
+            : ([
+                para.content.lastLine,
+                ...para.content.fullLines,
+              ] as readonly (readonly string[])[]),
+        lastLine: [word] as readonly string[],
+      },
+});
 
 /**
  * Checks if a word fits on the current line of a paragraph.
@@ -753,8 +754,8 @@ export const align = dual<
     av: Alignment,
     r: number,
     c: number
-  ): Box<A> => {
-    return make({
+  ): Box<A> =>
+    make({
       rows: r,
       cols: c,
       content: {
@@ -764,8 +765,7 @@ export const align = dual<
         box: self,
       },
       annotation: self.annotation,
-    });
-  }
+    })
 );
 
 /**
@@ -1005,16 +1005,27 @@ export const blanks = (n: number): string =>
  *
  * @note Haskell: `resizeBox :: Int -> Int -> [String] -> [String]`
  */
-export const resizeBox = dual<
+const resizeBox = dual<
   (r: number, c: number) => (self: string[]) => string[],
   (self: string[], r: number, c: number) => string[]
->(3, (self, r, c) =>
-  takeP(
-    self.map((line) => takeP([...line], " ", c)).map((chars) => chars.join("")),
+>(3, (self, r, c) => {
+  // Grapheme segmenter for proper Unicode cluster handling
+  return takeP(
+    self.map((line) => {
+      // Remove zero-width joiners to separate multi-character emojis
+      const processedLine = line;
+      // Use grapheme segmentation instead of character spreading to preserve emojis
+      const segments = segmenter.segment(processedLine);
+      const graphemes: string[] = [];
+      for (const { segment } of segments) {
+        graphemes.push(segment);
+      }
+      return takeP(graphemes, " ", c).join("");
+    }),
     blanks(c),
     r
-  )
-);
+  );
+});
 
 /**
  * Adjusts the size of rendered text lines with alignment options.
@@ -1026,28 +1037,21 @@ export const resizeBox = dual<
  *
  * @note Haskell: `resizeBoxAligned :: Int -> Int -> Alignment -> Alignment -> [String] -> [String]`
  */
-export const resizeBoxAligned = dual<
-  (
-    r: number,
-    c: number,
-    ha: Alignment,
-    va: Alignment
-  ) => (self: string[]) => string[],
-  (
-    self: string[],
-    r: number,
-    c: number,
-    ha: Alignment,
-    va: Alignment
-  ) => string[]
->(5, (self, r, c, ha, va) =>
-  takePA(
-    self.map((line) => takePA([...line], ha, " ", c).join("")),
-    va,
-    blanks(c),
-    r
-  )
-);
+const resizeBoxAligned =
+  (r: number, c: number, ha: Alignment, va: Alignment) => (self: string[]) =>
+    takePA(
+      self.map((line) =>
+        takePA(
+          Array.fromIterable(segmenter.segment(line)).map((d) => d.segment),
+          ha,
+          " ",
+          c
+        ).join("")
+      ),
+      va,
+      blanks(c),
+      r
+    );
 
 /**
  * Converts a box to a string suitable for display, removing trailing whitespace.

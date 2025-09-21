@@ -1148,14 +1148,14 @@ describe("Annotation Functions", () => {
         Box.center1,
         Box.center1,
         3,
-        4
+        3
       );
 
       expect(Box.renderWith(emojiBox, ".")).toBe(
         String.stripMargin(
-          `|....
-           |.👩‍💻.
-           |....
+          `|...
+           |.👩💻
+           |...
            |`
         )
       );

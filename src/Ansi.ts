@@ -8,10 +8,12 @@ import {
   blanks,
   type Content,
   merge,
-  resizeBox,
   takeP,
   takePA,
 } from "./Box";
+import * as Width from "./Width";
+
+const segmenter = new Intl.Segmenter();
 
 // ANSI escape sequence constants
 const ESC = "\x1b";
@@ -272,18 +274,6 @@ const applyAnsiStyling = (lines: string[], escapeSequence: string): string[] =>
     })
   );
 
-/**
- * Calculates the visible (printable) length of a string, ignoring ANSI escape sequences
- */
-const getVisibleLength = (str: string): number => {
-  // Match various ANSI escape sequences:
-  // - CSI sequences: \u001B[...m (SGR codes for colors/styles)
-  // - CSI sequences: \u001B[...H, \u001B[...A, etc. (cursor movement)
-  // - DEC sequences: \u001B7, \u001B8 (save/restore cursor)
-  const ansiRegex = new RegExp(`${ESC}\\[[0-9;]*[a-zA-Z]|${ESC}[78]`, "g");
-  return str.replace(ansiRegex, "").length;
-};
-
 const DEC_SEQUENCE = /[78]/;
 const ESC_END = /[a-zA-Z]/;
 
@@ -319,12 +309,17 @@ const truncatePreservingAnsi = (
   str: string,
   maxVisibleLength: number
 ): string => {
-  if (getVisibleLength(str) <= maxVisibleLength) {
+  if (Width.ofString(str) <= maxVisibleLength) {
     return str;
   }
 
+  // Use grapheme segmentation for proper emoji handling
+  const segments = Array.fromIterable(segmenter.segment(str)).map(
+    ({ segment }) => segment
+  );
+
   return pipe(
-    str.split(""),
+    segments,
     Array.reduce(
       { result: "", visibleCount: 0, skipNext: 0 },
       ({ result, skipNext, visibleCount }, cur, index) => {
@@ -334,11 +329,11 @@ const truncatePreservingAnsi = (
         if (visibleCount >= maxVisibleLength) {
           return { result, visibleCount, skipNext };
         }
-        if (cur === `${ESC}` && str.split("")[index + 1] === "[") {
-          const sequenceEnd = findAnsiSequenceEnd(str.split(""), index);
+        if (cur === `${ESC}` && segments[index + 1] === "[") {
+          const sequenceEnd = findAnsiSequenceEnd(segments, index);
           return {
             visibleCount,
-            result: result + str.split("").slice(index, sequenceEnd).join(""),
+            result: result + segments.slice(index, sequenceEnd).join(""),
             skipNext: sequenceEnd - index - 1,
           };
         }
@@ -361,53 +356,51 @@ const padPreservingAnsi = (
   targetVisibleLength: number,
   alignment: Alignment = "AlignFirst"
 ): string => {
-  const currentVisibleLength = getVisibleLength(str);
+  const currentVisibleLength = Width.ofString(str);
   if (currentVisibleLength >= targetVisibleLength) {
     return truncatePreservingAnsi(str, targetVisibleLength);
   }
 
+  // Use grapheme segmentation for proper emoji handling
+  const segments = Array.fromIterable(segmenter.segment(str)).map(
+    ({ segment }) => segment
+  );
+
   return takePA(
-    str.split(""),
+    segments,
     alignment,
     " ",
-    str.split("").length + targetVisibleLength - currentVisibleLength
+    segments.length + targetVisibleLength - currentVisibleLength
   ).join("");
 };
 
 /**
- * ANSI-aware version of resizeBox that properly handles escape sequences
+ * ANSI-aware version of resizeBox for emojis that preserves zero-width joiners
  */
-const resizeBoxAnsiAware =
-  (r: number, c: number) =>
-  (self: string[]): string[] =>
-    takeP(
-      self.map((line) => padPreservingAnsi(line, c)),
-      blanks(c),
-      r
-    );
-
-export const resizeBoxAnsiAwareAligned = dual<
-  (
-    r: number,
-    c: number,
-    ha: Alignment,
-    va: Alignment
-  ) => (self: string[]) => string[],
-  (
-    self: string[],
-    r: number,
-    c: number,
-    ha: Alignment,
-    va: Alignment
-  ) => string[]
->(5, (self, r, c, ha, va) =>
-  takePA(
-    self.map((line) => padPreservingAnsi(line, c, ha)),
-    va,
+const resizeBox = dual<
+  (r: number, c: number) => (self: string[]) => string[],
+  (self: string[], r: number, c: number) => string[]
+>(3, (self, r, c) =>
+  takeP(
+    self.map((line) =>
+      Width.ofString(line) <= c ? line : truncatePreservingAnsi(line, c)
+    ),
     blanks(c),
     r
   )
 );
+
+/**
+ * ANSI-aware version of resizeBox with alignment for emojis that preserves zero-width joiners
+ */
+const resizeBoxAligned =
+  (r: number, c: number, ha: Alignment, va: Alignment) => (self: string[]) =>
+    takePA(
+      self.map((line) => padPreservingAnsi(line, c, ha)),
+      va,
+      blanks(c),
+      r
+    );
 
 /**
  * Converts a box into an array of text lines for display with ANSI annotation support.
@@ -441,22 +434,15 @@ export const renderAnnotatedBox = <A>({
       Match.tag("Blank", () => resizeBox([""], rows, cols)),
       Match.tag("Text", ({ text }) => resizeBox([text], rows, cols)),
       Match.tag("Row", ({ boxes }) =>
-        pipe(
-          Array.map(boxes, renderAnnotatedBox),
-          merge,
-          resizeBoxAnsiAware(rows, cols)
-        )
+        pipe(Array.map(boxes, renderAnnotatedBox), merge, resizeBox(rows, cols))
       ),
       Match.tag("Col", ({ boxes }) =>
-        pipe(
-          Array.flatMap(boxes, renderAnnotatedBox),
-          resizeBoxAnsiAware(rows, cols)
-        )
+        pipe(Array.flatMap(boxes, renderAnnotatedBox), resizeBox(rows, cols))
       ),
       Match.tag("SubBox", ({ box, xAlign, yAlign }) =>
         pipe(
           renderAnnotatedBox(box),
-          resizeBoxAnsiAwareAligned(rows, cols, xAlign, yAlign)
+          resizeBoxAligned(rows, cols, xAlign, yAlign)
         )
       ),
       Match.exhaustive
