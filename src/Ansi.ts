@@ -13,8 +13,6 @@ import {
 } from "./Box";
 import * as Width from "./Width";
 
-const segmenter = new Intl.Segmenter();
-
 // ANSI escape sequence constants
 const ESC = "\x1b";
 const CSI = `${ESC}[`;
@@ -195,27 +193,21 @@ export function combine(...annotations: AnsiAnnotation[]): AnsiAnnotation {
 /**
  * Type guard to check if annotation data is an ANSI style
  */
-const isAnsiStyle = (data: unknown): data is AnsiStyle => {
-  return (
-    Array.isArray(data) &&
-    data.every(
-      (item) =>
-        typeof item === "object" &&
-        item !== null &&
-        "_tag" in item &&
-        "name" in item &&
-        "code" in item
-    )
+const isAnsiStyle = (data: unknown): data is AnsiStyle =>
+  Array.isArray(data) &&
+  data.every(
+    (item) =>
+      typeof item === "object" &&
+      item !== null &&
+      "_tag" in item &&
+      "name" in item &&
+      "code" in item
   );
-};
 
-const isCommandAnnotation = (data: unknown): data is AnsiStyle => {
-  return (
-    isAnsiStyle(data) &&
-    data.length === 1 &&
-    data[0]?._tag === "CommandAttribute"
-  );
-};
+const isCommandAnnotation = (data: unknown): data is AnsiStyle =>
+  isAnsiStyle(data) &&
+  data.length === 1 &&
+  data[0]?._tag === "CommandAttribute";
 
 /**
  * Extracts ANSI escape sequence from annotation data if it's ANSI-related
@@ -313,10 +305,7 @@ const truncatePreservingAnsi = (
     return str;
   }
 
-  // Use grapheme segmentation for proper emoji handling
-  const segments = Array.fromIterable(segmenter.segment(str)).map(
-    ({ segment }) => segment
-  );
+  const segments = Width.segments(str);
 
   return pipe(
     segments,
@@ -362,9 +351,7 @@ const padPreservingAnsi = (
   }
 
   // Use grapheme segmentation for proper emoji handling
-  const segments = Array.fromIterable(segmenter.segment(str)).map(
-    ({ segment }) => segment
-  );
+  const segments = Width.segments(str);
 
   return takePA(
     segments,
