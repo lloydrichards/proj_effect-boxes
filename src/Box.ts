@@ -7,8 +7,6 @@ import type { Annotation } from "./Annotation";
 import { renderAnnotatedBox } from "./Ansi";
 import * as Width from "./Width";
 
-const segmenter = new Intl.Segmenter();
-
 export const BoxTypeId: unique symbol = Symbol.for("@effect/Box");
 
 export type BoxTypeId = typeof BoxTypeId;
@@ -1008,24 +1006,12 @@ export const blanks = (n: number): string =>
 const resizeBox = dual<
   (r: number, c: number) => (self: string[]) => string[],
   (self: string[], r: number, c: number) => string[]
->(3, (self, r, c) => {
-  // Grapheme segmenter for proper Unicode cluster handling
-  return takeP(
-    self.map((line) => {
-      // Remove zero-width joiners to separate multi-character emojis
-      const processedLine = line;
-      // Use grapheme segmentation instead of character spreading to preserve emojis
-      const segments = segmenter.segment(processedLine);
-      const graphemes: string[] = [];
-      for (const { segment } of segments) {
-        graphemes.push(segment);
-      }
-      return takeP(graphemes, " ", c).join("");
-    }),
-    blanks(c),
-    r
-  );
-});
+>(3, (self, r, c) =>
+  pipe(
+    self.map((line) => takeP(Width.segments(line), " ", c).join("")),
+    takeP(blanks(c), r)
+  )
+);
 
 /**
  * Adjusts the size of rendered text lines with alignment options.
@@ -1040,14 +1026,7 @@ const resizeBox = dual<
 const resizeBoxAligned =
   (r: number, c: number, ha: Alignment, va: Alignment) => (self: string[]) =>
     takePA(
-      self.map((line) =>
-        takePA(
-          Array.fromIterable(segmenter.segment(line)).map((d) => d.segment),
-          ha,
-          " ",
-          c
-        ).join("")
-      ),
+      self.map((line) => takePA(Width.segments(line), ha, " ", c).join("")),
       va,
       blanks(c),
       r
@@ -1088,9 +1067,9 @@ export const render = dual<
  */
 export const renderWithSpaces = <A>(self: Box<A>): string =>
   pipe(
-    renderBox(self as Box<never>),
+    renderBox(self),
     Array.join("\n"),
-    (d) => d + (renderBox(self as Box<never>).length > 0 ? "\n" : "")
+    String.concat(renderBox(self).length > 0 ? "\n" : "")
   );
 
 /**

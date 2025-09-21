@@ -1,10 +1,9 @@
-// Valid string terminator sequences are BEL, ESC\, and 0x9c
-const ST = "(?:\\u0007|\\u001B\\u005C|\\u009C)";
-// OSC sequences: ESC ] ... ST (non-greedy until first ST)
-const osc = `(?:\\u001B\\][\\s\\S]*?${ST})`;
-// CSI sequences: ESC[, optional intermediates, optional params, final byte
+import { Array, pipe } from "effect";
+
+const ST = "(?:\\u0007|\\u001B\\u005C|\\u009C)"; // Valid string terminator sequences are BEL, ESC\, and 0x9c
+const osc = `(?:\\u001B\\][\\s\\S]*?${ST})`; // ESC ] ... ST (non-greedy until first ST)
 const csi =
-  "[\\u001B\\u009B][[\\]()#;?]*(?:\\d{1,4}(?:[;:]\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]";
+  "[\\u001B\\u009B][[\\]()#;?]*(?:\\d{1,4}(?:[;:]\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]"; //  ESC[, intermediates (optional), params (optional), final byte
 
 /**
  * Strips ANSI escape sequences from a string
@@ -16,31 +15,21 @@ const csi =
 const stripAnsi = (str: string): string =>
   str.replace(new RegExp(`${osc}|${csi}`, "g"), "");
 
-/**
- * Grapheme segmenter for proper Unicode cluster handling
- */
 const segmenter = new Intl.Segmenter();
 
-/**
- * Regex for zero-width clusters (control chars, marks, surrogates, etc.)
- */
+export const segments = (str: string) =>
+  pipe(
+    segmenter.segment(str),
+    Array.fromIterable,
+    Array.map((d) => d.segment)
+  );
+
 const zeroWidthClusterRegex =
-  /^(?:\p{Default_Ignorable_Code_Point}|\p{Control}|\p{Mark}|\p{Surrogate})+$/v;
-
-/**
- * Regex for leading non-printing characters in a cluster
- */
+  /^(?:\p{Default_Ignorable_Code_Point}|\p{Control}|\p{Mark}|\p{Surrogate})+$/v; // zero-width clusters (control chars, marks, surrogates, etc.)
 const leadingNonPrintingRegex =
-  /^[\p{Default_Ignorable_Code_Point}\p{Control}\p{Format}\p{Mark}\p{Surrogate}]+/v;
+  /^[\p{Default_Ignorable_Code_Point}\p{Control}\p{Format}\p{Mark}\p{Surrogate}]+/v; // leading non-printing characters in a cluster
+const rgiEmojiRegex = /^\p{RGI_Emoji}$/v; // RGI (Recommended for General Interchange) emoji sequences
 
-/**
- * Regex for RGI (Recommended for General Interchange) emoji sequences
- */
-const rgiEmojiRegex = /^\p{RGI_Emoji}$/v;
-
-/**
- * Unicode ranges for wide characters
- */
 const WIDE_CHAR_RANGES = [
   // Hangul Jamo
   [0x11_00, 0x11_5f],
@@ -85,19 +74,11 @@ const WIDE_CHAR_RANGES = [
   [0x01_fa_70, 0x01_fa_ff],
 ] as const;
 
-/**
- * Check if a code point represents a fullwidth character
- * Includes ideographic space and fullwidth forms
- */
 const isFullWidth = (codePoint: number): boolean =>
   codePoint === 0x30_00 || // Ideographic space
   (codePoint >= 0xff_01 && codePoint <= 0xff_60) || // Fullwidth ASCII
   (codePoint >= 0xff_e0 && codePoint <= 0xff_e6); // Fullwidth symbols
 
-/**
- * Check if a code point represents a wide character (East Asian)
- * Simplified set focusing on common CJK ranges and emoji
- */
 const isWide = (codePoint: number): boolean => {
   for (const [start, end] of WIDE_CHAR_RANGES) {
     if (codePoint >= start && codePoint <= end) {
@@ -107,9 +88,6 @@ const isWide = (codePoint: number): boolean => {
   return false;
 };
 
-/**
- * Calculate the width of a single code point
- */
 const eastAsianWidth = (codePoint: number): number => {
   if (isFullWidth(codePoint) || isWide(codePoint)) {
     return 2;
@@ -117,9 +95,6 @@ const eastAsianWidth = (codePoint: number): number => {
   return 1;
 };
 
-/**
- * Check if a grapheme cluster is zero-width
- */
 const isZeroWidthCluster = (segment: string): boolean =>
   zeroWidthClusterRegex.test(segment);
 
@@ -159,30 +134,27 @@ export const ofString = (input: string): number => {
     return 0;
   }
 
-  let width = 0;
-  // Process each grapheme cluster
-  for (const { segment } of segmenter.segment(string)) {
-    // Skip zero-width clusters (control chars, pure marks, etc.)
-    if (isZeroWidthCluster(segment)) {
-      continue;
-    }
-
-    // RGI emoji sequences are always double-width
-    if (rgiEmojiRegex.test(segment)) {
-      width += 2;
-      continue;
-    }
-
-    // For other clusters, use East Asian Width of the first visible code point
-    const baseVisible = segment.replace(leadingNonPrintingRegex, "");
-
-    if (baseVisible.length > 0) {
-      const codePoint = baseVisible.codePointAt(0);
-      if (codePoint !== undefined) {
-        width += eastAsianWidth(codePoint);
+  return pipe(
+    segments(string),
+    Array.reduce(0, (acc, segment) => {
+      // Skip zero-width clusters (control chars, pure marks, etc.)
+      if (isZeroWidthCluster(segment)) {
+        return acc;
       }
-    }
-  }
+      // RGI emoji sequences are always double-width
+      if (rgiEmojiRegex.test(segment)) {
+        return acc + 2;
+      }
+      // For other clusters, use East Asian Width of the first visible code point
+      const baseVisible = segment.replace(leadingNonPrintingRegex, "");
+      if (baseVisible.length > 0) {
+        const codePoint = baseVisible.codePointAt(0);
+        if (codePoint !== undefined) {
+          return acc + eastAsianWidth(codePoint);
+        }
+      }
 
-  return width;
+      return acc;
+    })
+  );
 };

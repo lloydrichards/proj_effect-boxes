@@ -12,15 +12,12 @@ export interface Annotation<A = never> {
  * Type guard to check if a value is an Annotation.
  * @param value - The value to check
  */
-export const isAnnotation = (value: unknown): value is Annotation<unknown> => {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "data" in value &&
-    AnnotationBrand in value &&
-    (value as Record<PropertyKey, unknown>)[AnnotationBrand] === "annotation"
-  );
-};
+export const isAnnotation = (value: unknown): value is Annotation<unknown> =>
+  typeof value === "object" &&
+  value !== null &&
+  "data" in value &&
+  AnnotationBrand in value &&
+  (value as Record<PropertyKey, unknown>)[AnnotationBrand] === "annotation";
 
 /**
  * Type guard to check if a value is an Annotation with specific data type.
@@ -30,28 +27,23 @@ export const isAnnotation = (value: unknown): value is Annotation<unknown> => {
 export const isAnnotationWithData = <A>(
   value: unknown,
   dataGuard: (data: unknown) => data is A
-): value is Annotation<A> => {
-  return isAnnotation(value) && dataGuard(value.data);
-};
+): value is Annotation<A> => isAnnotation(value) && dataGuard(value.data);
 
 /**
  * Creates a new Annotation<A> with the provided data.
  * @param data - The annotation data of type A
  */
-export const createAnnotation = <A>(data: A): Annotation<A> => {
-  return {
-    [AnnotationBrand]: "annotation" as const,
-    data,
-  };
-};
+export const createAnnotation = <A>(data: A): Annotation<A> => ({
+  [AnnotationBrand]: "annotation" as const,
+  data,
+});
 
 /**
  * Extracts the data from an Annotation<A>.
  * @param annotation - The annotation to extract data from
  */
-export const getAnnotationData = <A>(annotation: Annotation<A>): A => {
-  return annotation.data;
-};
+export const getAnnotationData = <A>(annotation: Annotation<A>): A =>
+  annotation.data;
 
 /**
  * Maps the data of an Annotation<A> to create an Annotation<B>.
@@ -61,9 +53,7 @@ export const getAnnotationData = <A>(annotation: Annotation<A>): A => {
 export const mapAnnotationData = <A, B>(
   annotation: Annotation<A>,
   mapper: (data: A) => B
-): Annotation<B> => {
-  return createAnnotation(mapper(annotation.data));
-};
+): Annotation<B> => createAnnotation(mapper(annotation.data));
 
 /**
  * Combines two annotations by merging their data.
@@ -75,9 +65,7 @@ export const combineAnnotations = <A>(
   first: Annotation<A>,
   second: Annotation<A>,
   merger: (a: A, b: A) => A
-): Annotation<A> => {
-  return createAnnotation(merger(first.data, second.data));
-};
+): Annotation<A> => createAnnotation(merger(first.data, second.data));
 
 /**
  * Filters annotation data based on a predicate function.
@@ -87,9 +75,8 @@ export const combineAnnotations = <A>(
 export const filterAnnotation = <A>(
   annotation: Annotation<A>,
   predicate: (data: A) => boolean
-): Annotation<A> | undefined => {
-  return predicate(annotation.data) ? annotation : undefined;
-};
+): Annotation<A> | undefined =>
+  predicate(annotation.data) ? annotation : undefined;
 
 /**
  * Creates an array of annotations from an array of data.
@@ -97,9 +84,7 @@ export const filterAnnotation = <A>(
  */
 export const createAnnotations = <A>(
   dataArray: readonly A[]
-): Annotation<A>[] => {
-  return dataArray.map(createAnnotation);
-};
+): Annotation<A>[] => dataArray.map(createAnnotation);
 
 /**
  * Extracts data from an array of annotations.
@@ -107,9 +92,7 @@ export const createAnnotations = <A>(
  */
 export const extractAnnotationData = <A>(
   annotations: readonly Annotation<A>[]
-): A[] => {
-  return annotations.map(getAnnotationData);
-};
+): A[] => annotations.map(getAnnotationData);
 
 /**
  * Type-level utility to extract the data type from an Annotation type.
@@ -125,8 +108,5 @@ export const empty: Annotation<never> = createAnnotation(undefined as never);
  * Creates a copy of an annotation with the same data.
  * @param annotation - The annotation to clone
  */
-export const cloneAnnotation = <A>(
-  annotation: Annotation<A>
-): Annotation<A> => {
-  return createAnnotation(annotation.data);
-};
+export const cloneAnnotation = <A>(annotation: Annotation<A>): Annotation<A> =>
+  createAnnotation(annotation.data);
