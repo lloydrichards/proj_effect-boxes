@@ -1,16 +1,26 @@
-import { Array, Clock, Effect, pipe, Ref, Schedule, Stream } from "effect";
+import {
+  Array,
+  Clock,
+  Effect,
+  Option,
+  pipe,
+  Ref,
+  Schedule,
+  Stream,
+} from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 import * as Cmd from "../src/Cmd";
+import * as Reactive from "../src/Reactive";
 
 const display = (msg: string) => Effect.sync(() => process.stdout.write(msg));
 
 const StatusBar = (status: string, counter: number, time: string) =>
   pipe(
     [
-      Box.text(`⚙️ Status: ${status}`),
-      Box.text(`🧮 Counter: ${counter}`),
-      Box.text(`⏰ Time: ${time}`),
+      Box.text(`Status: ${status}`),
+      Box.text(`Counter: ${counter}`),
+      Box.text(`⏰ ${time}`),
     ],
     Box.punctuateH(Box.left, Box.text("  |  "))
   );
@@ -82,40 +92,62 @@ const main = Effect.gen(function* () {
 
   const counterRef = yield* Ref.make(0);
 
-  const top = Box.hcat(
-    [
-      ProgressBar(0, COMPLETE, PROGRESS_BAR_WIDTH).pipe(Border),
-      Box.text(`${((0 / COMPLETE) * 100).toFixed(0)}%`).pipe(
-        Box.alignHoriz(Box.right, 5),
-        Box.annotate(Ansi.blue),
-        Border,
-        Box.annotate(Ansi.green)
-      ),
-    ],
-    Box.center1
-  ).pipe(Padding(1), Border);
+  // First, create the display layout (what the user sees)
+  const buildDisplayLayout = (counter: number, timestamp: number) => {
+    const progress = Math.min(counter, COMPLETE);
+    const percentage = Math.round((progress / COMPLETE) * 100);
+    const timeStr = formatTime(timestamp);
+    const status = counter >= COMPLETE ? "completed" : "running";
 
-  const bottom = StatusBar("init", 0, "0").pipe(
-    Box.alignHoriz(Box.center1, 80),
-    Border
-  );
+    const top = Box.hcat<Ansi.AnsiStyle | Reactive.Reactive>(
+      [
+        ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH).pipe(
+          Reactive.makeReactive("progress-bar"),
+          Border
+        ),
+        Box.text(`${percentage.toString().padStart(3)}%`).pipe(
+          Box.alignHoriz(Box.right, 5),
+          Reactive.makeReactive("percentage"),
+          Box.annotate(percentage === 100 ? Ansi.green : Ansi.blue),
+          Border,
+          Box.annotate(Ansi.green)
+        ),
+      ],
+      Box.center1
+    ).pipe(Padding(1), Border);
 
-  const footer = Box.punctuateH(
-    [
-      Box.text("Press"),
-      Box.text("Ctrl+C").pipe(Box.annotate(Ansi.blue)),
-      Box.text("to stop..."),
-    ],
-    Box.left,
-    Box.text(" ")
-  );
+    const bottom = StatusBar(status, counter, timeStr).pipe(
+      Box.alignHoriz(Box.center1, 79),
+      Reactive.makeReactive("status-bar"),
+      Border
+    );
+
+    const footer = Box.punctuateH(
+      [
+        Box.text("Press"),
+        Box.text("Ctrl+C").pipe(Box.annotate(Ansi.blue)),
+        Box.text("to stop..."),
+      ],
+      Box.left,
+      Box.text(" ")
+    );
+
+    return Box.punctuateV<Ansi.AnsiStyle | Reactive.Reactive>(
+      [top, bottom, footer],
+      Box.top,
+      Box.char(" ")
+    );
+  };
+
+  // Display the initial layout
+  const initialLayout = buildDisplayLayout(0, Date.now());
+  yield* display(Box.render(initialLayout, { style: "pretty" }));
+  const positionMap = Reactive.getPositions(initialLayout);
 
   const tickStream = Stream.repeatEffect(
     Effect.gen(function* () {
       const now = yield* Clock.currentTimeMillis;
-
       const counter = yield* Ref.updateAndGet(counterRef, (n) => n + 1);
-
       return { counter, timestamp: now };
     })
   ).pipe(
@@ -123,21 +155,7 @@ const main = Effect.gen(function* () {
     Stream.takeUntil(({ counter }) => counter >= COMPLETE)
   );
 
-  // Render the initial layout
-  yield* display(
-    Box.render(Box.punctuateV([top, bottom, footer], Box.top, Box.char(" ")), {
-      style: "pretty",
-    })
-  );
-
-  // Calculate positions for dynamic updates
-  const progressBarRow = 3; // Row where progress bar characters go (inside first border)
-  const progressBarStartCol = 3; // Column where progress bar starts (after left border + padding)
-  const percentageCol = 6 + PROGRESS_BAR_WIDTH; // Column after progress bar and borders
-  const statusBarRow = 9; // Row where status bar is displayed (inside bottom border)
-  const statusBarStartCol = 2; // Column where status starts (after left border)
-
-  // Process each tick with partial updates
+  // Process each tick with dynamic updates using reactive positions
   yield* Stream.runForEach(tickStream, ({ counter, timestamp }) =>
     Effect.gen(function* () {
       const progress = Math.min(counter, COMPLETE);
@@ -145,40 +163,53 @@ const main = Effect.gen(function* () {
       const timeStr = formatTime(timestamp);
       const status = counter >= COMPLETE ? "completed" : "running";
 
-      yield* display(
-        pipe(
-          // PARTIAL UPDATE #1: Progress bar - update the entire progress bar
-          Cmd.cursorTo(progressBarStartCol, progressBarRow),
-          Box.combine(ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH)),
-
-          // PARTIAL UPDATE #2: Percentage - overwrite just the percentage value
-          Box.combine(Cmd.cursorTo(percentageCol, progressBarRow)),
-          Box.combine(
-            Box.text(`${percentage.toString().padStart(3)}%`).pipe(
-              Box.annotate(
-                Ansi.combine(
-                  percentage === 100 ? Ansi.green : Ansi.blue,
-                  Ansi.bold
-                )
-              )
-            )
+      // Create update commands using position map and Array.filterMap
+      const updates = pipe(
+        [
+          pipe(
+            positionMap,
+            Reactive.cursorToReactive("progress-bar"),
+            Option.map((cursorCmd) => [
+              cursorCmd,
+              ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH),
+            ])
           ),
-          // PARTIAL UPDATE #3: Status bar - update the entire status line
-          Box.combine(Cmd.cursorTo(statusBarStartCol, statusBarRow)),
-          Box.combine<Ansi.AnsiStyle>(
-            StatusBar(status, counter, timeStr).pipe(
-              Box.alignHoriz(Box.center1, 79)
-            )
+          pipe(
+            positionMap,
+            Reactive.cursorToReactive("percentage"),
+            Option.map((cursorCmd) => [
+              cursorCmd,
+              Box.text(`${percentage.toString().padStart(3)}%`).pipe(
+                Box.alignHoriz(Box.right, 5),
+                Box.annotate(percentage === 100 ? Ansi.green : Ansi.blue)
+              ),
+            ])
           ),
+          pipe(
+            positionMap,
+            Reactive.cursorToReactive("status-bar"),
+            Option.map((cursorCmd) => [
+              cursorCmd,
+              StatusBar(status, counter, timeStr).pipe(
+                Box.alignHoriz(Box.center1, 79)
+              ),
+            ])
+          ),
+        ],
+        // Filter out None values and flatten the update commands
+        Array.filterMap((option) => option),
+        Array.flatten
+      );
 
-          // Render all the combined commands and text updates
-          Box.combine(Cmd.cursorDown()),
-          Box.render({
+      // Render all updates if we have any
+      if (updates.length > 0) {
+        yield* display(
+          Box.render(Box.combineAll(updates), {
             style: "pretty",
             partial: true,
           })
-        )
-      );
+        );
+      }
     })
   );
 

@@ -1003,7 +1003,7 @@ export const blanks = (n: number): string =>
  *
  * @note Haskell: `resizeBox :: Int -> Int -> [String] -> [String]`
  */
-const resizeBox = dual<
+export const resizeBox = dual<
   (r: number, c: number) => (self: string[]) => string[],
   (self: string[], r: number, c: number) => string[]
 >(3, (self, r, c) =>
@@ -1023,7 +1023,7 @@ const resizeBox = dual<
  *
  * @note Haskell: `resizeBoxAligned :: Int -> Int -> Alignment -> Alignment -> [String] -> [String]`
  */
-const resizeBoxAligned =
+export const resizeBoxAligned =
   (r: number, c: number, ha: Alignment, va: Alignment) => (self: string[]) =>
     takePA(
       self.map((line) => takePA(Width.segments(line), ha, " ", c).join("")),
