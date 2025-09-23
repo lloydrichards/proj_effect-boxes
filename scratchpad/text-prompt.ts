@@ -1,6 +1,15 @@
 import { Terminal } from "@effect/platform";
 import { BunTerminal } from "@effect/platform-bun";
-import { Array, Effect, Match, Option, pipe, Ref, Stream } from "effect";
+import {
+  Array,
+  Console,
+  Effect,
+  Match,
+  Option,
+  pipe,
+  Ref,
+  Stream,
+} from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 import * as Cmd from "../src/Cmd";
@@ -51,7 +60,7 @@ const createPromptLayout = (
         Box.annotate(Ansi.combine(Ansi.bold, Ansi.yellow))
       ),
       Box.text(""),
-      Reactive.makeReactive(Box.text(state.input), "input-field"),
+      Box.text(state.input).pipe(Reactive.makeReactive("input-field")),
     ],
     Box.top,
     Box.char(" ")
@@ -59,6 +68,7 @@ const createPromptLayout = (
     Box.alignHoriz(Box.left, 80),
     Box.vAppend<Ansi.AnsiStyle | Reactive.Reactive>(
       Box.text(`${state.input.length}/100`).pipe(
+        Reactive.makeReactive("length-indicator"),
         Box.alignHoriz(Box.right, 80),
         Box.annotate(Ansi.dim)
       )
@@ -101,18 +111,35 @@ const handleRegularInput = (char: string, state: PromptState): PromptState => ({
 });
 
 // Handle keyboard input using pattern matching
-const processInput = (state: PromptState, input: string): PromptState =>
+const processInput = (
+  state: PromptState,
+  userInput: Terminal.UserInput
+): PromptState =>
   pipe(
-    Match.value(input),
-    Match.when("\r", () => ({ ...state, submitted: true })),
-    Match.when("\n", () => ({ ...state, submitted: true })),
-    Match.when("\x7f", () => handleBackspace(state)),
-    Match.when("\b", () => handleBackspace(state)),
-    Match.when("\x1b[C", () => handleRightArrow(state)),
-    Match.when("\x1b[D", () => handleLeftArrow(state)),
+    Match.value(userInput),
     Match.when(
-      (input) => input.length === 1 && input >= " ",
-      (char) => handleRegularInput(char, state)
+      ({ key }) => key.name === "return" || key.name === "enter",
+      () => ({ ...state, submitted: true })
+    ),
+    Match.when(
+      ({ key }) => key.name === "backspace",
+      () => handleBackspace(state)
+    ),
+    Match.when(
+      ({ key }) => key.name === "right",
+      () => handleRightArrow(state)
+    ),
+    Match.when(
+      ({ key }) => key.name === "left",
+      () => handleLeftArrow(state)
+    ),
+    Match.when(
+      ({ input }) => Option.isSome(input),
+      ({ input }) =>
+        handleRegularInput(
+          Option.getOrElse(input, () => ""),
+          state
+        )
     ),
     Match.orElse(() => state)
   );
@@ -123,14 +150,32 @@ const renderPrompt = (state: PromptState) =>
     if (state.submitted) {
       return;
     }
-    const maybeCursor = Reactive.getPositions(createPromptLayout(state)).pipe(
-      Reactive.cursorToReactive("input-field")
+    const positions = Reactive.getPositions(createPromptLayout(state));
+    const inputCursor = Reactive.cursorToReactive(positions, "input-field");
+    const lengthCursor = Reactive.cursorToReactive(
+      positions,
+      "length-indicator"
     );
 
-    if (Option.isSome(maybeCursor)) {
+    if (Option.isSome(inputCursor) && Option.isSome(lengthCursor)) {
       yield* pipe(
-        Box.combineAll([maybeCursor.value, Box.text(state.input)]),
-        Box.render({ partial: true, style: "pretty" }),
+        Box.combineAll<Reactive.Reactive | Ansi.AnsiStyle>([
+          lengthCursor.value,
+          Box.text(`${state.input.length}/100`).pipe(Box.annotate(Ansi.dim)),
+          // Clear and update input field
+          inputCursor.value,
+          Box.text(" ".repeat(20)),
+          inputCursor.value,
+          Box.text(state.input),
+          // move cursor to correct position
+          inputCursor.value,
+          Cmd.cursorForward(state.cursor),
+        ]),
+        Box.render({
+          partial: true,
+          preserveWhitespace: true,
+          style: "pretty",
+        }),
         display
       );
     }
@@ -162,7 +207,6 @@ const textPrompt = (message: string) =>
         const result = yield* Effect.ensuring(
           pipe(
             Stream.repeatEffect(keyPress.take),
-            Stream.map((input) => Option.getOrElse(input.input, () => "")),
             Stream.scan(initialState, processInput),
             Stream.takeWhile((state) => !state.submitted),
             Stream.runFoldEffect(initialState, (_, cur) =>
@@ -182,14 +226,16 @@ const textPrompt = (message: string) =>
     );
   });
 
-// Example usage with interruption handling
-const promptExample = Effect.gen(function* () {
-  const name = yield* textPrompt("What is your name?");
+// Swedish Chef prompt example
+const swedishChefPrompt = Effect.gen(function* () {
+  const ingredient = yield* textPrompt("What ingredient do you have?");
 
-  const job = yield* textPrompt("What do you do?");
+  const cookingMethod = yield* textPrompt("How should we cook it?");
 
   yield* display(
-    Box.text(`Hello, ${name} the ${job}.`).pipe(
+    Box.text(
+      `Bork, bork, bork! Ve vill ${cookingMethod} zee ${ingredient} in zee pot, yah!`
+    ).pipe(
       Box.annotate(Ansi.green),
       Box.alignHoriz(Box.left, 78),
       Box.moveLeft(2),
@@ -198,8 +244,11 @@ const promptExample = Effect.gen(function* () {
       Box.render({ style: "pretty" })
     )
   );
-}).pipe(Effect.provide(BunTerminal.layer));
+}).pipe(
+  Effect.provide(BunTerminal.layer),
+  Effect.catchAll(() => display("Goodbye!"))
+);
 
-// Run the example
+// Run the Swedish Chef example
 // Try pressing Ctrl+C to see the cursor cleanup in action
-Effect.runPromise(promptExample);
+Effect.runPromise(swedishChefPrompt);
