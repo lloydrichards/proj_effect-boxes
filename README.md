@@ -1,244 +1,86 @@
 # Effect Box
 
-A TypeScript port of Haskell's `Text.PrettyPrint.Boxes` library, providing a
-functional layout system for terminal applications within the Effect ecosystem.
+A functional layout system for terminal applications built with Effect.js.
+Create TUIs with composable boxes, ANSI styling, and reactive components.
 
-## Overview
+## What is Effect Box?
 
-The **Box** module is functional text layout system for Effect, ported over from
-Haskell. Think of it as a CSS flexbox system, but built specifically for
+Effect Box is a TypeScript port of Haskell's `Text.PrettyPrint.Boxes` library,
+providing a flex-style layout system for terminal applications within the Effect
+ecosystem. Think of it as a CSS flexbox system, but built specifically for
 functional composition of elements in terminal UIs, ASCII art, and structured
 text output.
 
-> [!NOTE] This repository is a work in progress. The Box module _may_ eventually
-> be:
->
-> - Published as a standalone NPM package
-> - Integrated directly into the Effect ecosystem via a pull request
-> - Used as inspiration for official Effect terminal UI libraries
+## Key Features
 
-## Quick Start
+- **Flex-y Layout System**: Horizontal and vertical composition with alignment
+  control
+- **Text Flow**: Automatic paragraph wrapping and column layout
+- **ANSI Color Support**: Rich terminal styling with colors and text attributes
+- **Reactive Components**: Create dynamic UIs with efficient partial updates
 
-- [Bun](https://bun.sh) runtime
+## Installation
+
+This library is not yet published on npm. To use it in your project, clone the
+repository and link it locally.
+
+> **Note:** The package name is `effect-boxes` in the code, but we refer to it
+> as "Effect Box" in documentation.
 
 ```bash
+# Clone the repository
+git clone https://github.com/lloydrichards/proj_effect-boxes.git
+cd proj_effect-boxes
+
 # Install dependencies
 bun install
 
-# Run tests
-bun test
-bun test --watch
+# Link the package locally
+bun link
 
-# Types, Lint and format
-bun type-check
-bun lint
-bun format
+# In your project directory, link to the local package
+cd your-project
+bun link effect-boxes
 ```
 
-### Exploring the Scratchpad
+Alternatively, you can add it directly from GitHub in your package.json:
 
-The `scratchpad/index.ts` file contains a live example showcasing Box
-capabilities within an Effect program:
-
-```bash
-bun run scratch
+```json
+"dependencies": {
+  "effect-boxes": "github:lloydrichards/proj_effect-boxes"
+}
 ```
 
-This demonstrates:
-
-- Real-time progress bar updates using Effect Streams
-- Status bars with live timestamps
-- Bordered components
-- Integration with Effect's Clock and Console
-
-### Understanding the Example
-
-The scratchpad shows how `Box` integrates with Effect:
+## Quick Start
 
 ```typescript
-const main = Effect.gen(function* () {
-  const counterRef = yield* Ref.make(0); // State management
+import { pipe } from "effect";
+import * as Box from "effect-boxes";
+import * as Ansi from "effect-boxes/ansi";
 
-  const tickStream = Stream.repeatEffect(
-    Effect.gen(function* () {
-      // Application logic
-    })
-  ).pipe(
-    // when to stop the loop
-    Stream.schedule(Schedule.spaced("200 milli"))
-  );
-
-  yield* Stream.runForEach(tickStream, ({ counter, timestamp }) =>
-    Effect.gen(function* () {
-      yield* Console.clear; // Clear terminal for redraw
-
-      // Render progress bar with latest data
-      yield* Box.printBox(
-        pipe(
-          [
-            ProgressBar().pipe(Border),
-            Box.text().pipe(Box.alignHoriz(Box.right, 5), Border),
-          ],
-          Box.hcat(Box.center1),
-          Padding(1),
-          Border
-        )
-      );
-
-      // Render status bar with latest data
-      yield* Box.printBox(
-        StatusBar().pipe(Box.alignHoriz(Box.center1, 80), Border)
-      );
-
-      yield* Console.log("\nPress Ctrl+C to stop...");
-    })
-  );
-
-  yield* Console.log("\n ...Task completed successfully!");
-});
-```
-
-```txt
-┌────────────────────────────────────────────────────────────────────────────────┐
-│                                                                                │
-│ ┌─────────────────────────────────────────────────────────────────────┐┌─────┐ │
-│ │██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░││  14%│ │
-│ └─────────────────────────────────────────────────────────────────────┘└─────┘ │
-│                                                                                │
-└────────────────────────────────────────────────────────────────────────────────┘
-
-┌────────────────────────────────────────────────────────────────────────────────┐
-│             Status: Running...  |  Counter: 9  |  Time: 1:43:52 PM             │
-└────────────────────────────────────────────────────────────────────────────────┘
-
-
-Press Ctrl+C to stop...
-```
-
-## What is the Box Module?
-
-A **Box** is a rectangular container with explicit dimensions (rows and columns)
-that can hold text or other boxes. Like the DOM tree, boxes can be nested within
-other boxes to create complex hierarchical layouts through functional
-composition. Each box knows its size and can be combined with others using
-mathematical operations:
-
-```ts
-// Simple boxes
-const g = Box.text("Hello\nWorld"); // 2 rows, 5 cols
-const s = Box.emptyBox(1, 3); // 1 row, 3 cols
-```
-
-```ts
-// Hierarchical composition (like DOM nesting)
-const nested = Box.vcat(
-  // Parent container
-  [
-    Box.text("Header"), // Child container
-    Box.hcat(
-      // Child container
-      [
-        Box.text("Left"), // Nested child
-        spacer, // Nested child
-        Box.text("Right"), // Nested child
-      ],
-      Box.center1
-    ),
-    Box.text("Footer"), // Child container
-  ],
-  Box.left
+// Create a simple bordered box with colored text
+const myBox = pipe(
+  Box.text("Hello, Effect Box!"),
+  Box.annotate(Ansi.blue),
+  Box.moveRight(2),
+  Box.moveDown(1)
 );
+
+// Render to string
+console.log(Box.render(myBox));
+
+// Or print directly using Effect
+import { Effect } from "effect";
+const program = Box.printBox(myBox);
+Effect.runPromise(program);
 ```
 
-### Effect Superpowers
-
-1. **Pipeable**: Boxes implement Effect's `Pipeable` interface, enabling
-   composition with the `.pipe()` method for chaining transformations
-2. **Equal**: Built-in structural equality through Effect's `Equal` interface,
-   allowing value-based comparisons and safe use in collections
-3. **Hash**: Optimized equality checks via Effect's `Hash` interface, providing
-   efficient hash-based lookups and deduplication
-4. **Immutability**: All operations return new boxes, never mutating existing
-   ones—following Effect's functional principles
-5. **Composition**: Combine boxes horizontally (`hcat`), vertically (`vcat`), or
-   with spacing and alignment using mathematical operations
-
-## Main Components
-
-### Box Creation
+## Example: Creating a Table
 
 ```typescript
-import * as Box from "./src/Box";
+import { pipe } from "effect";
+import * as Box from "effect-box";
 
-// Create boxes from text
-const greeting = Box.text("Hello\nWorld");
-
-// Create empty boxes with specific dimensions
-const spacer = Box.emptyBox(2, 10);
-
-// Create single character boxes
-const border = Box.char("│");
-```
-
-### Layout Operations
-
-```typescript
-// Horizontal composition
-const row = Box.hcat(
-  [Box.text("Left"), Box.text("Center"), Box.text("Right")],
-  Box.center1
-);
-
-// Vertical composition
-const column = Box.vcat(
-  [Box.text("Top"), Box.text("Middle"), Box.text("Bottom")],
-  Box.left
-);
-
-// With spacing
-const spaced = Box.hsep([Box.text("A"), Box.text("B")], 3, Box.top);
-```
-
-### Alignment and Positioning
-
-```typescript
-// Align within specific dimensions
-const centered = Box.align(
-  Box.text("Center me!"),
-  Box.center1, // horizontal alignment
-  Box.center1, // vertical alignment
-  5, // height
-  20 // width
-);
-
-// Move boxes around
-const positioned = Box.text("Hello").pipe(Box.moveRight(5), Box.moveDown(2));
-```
-
-### Text Flow and Paragraphs
-
-```typescript
-// Flow text into paragraphs
-const paragraph = Box.para(
-  "This is a long text that will be automatically flowed into multiple lines.",
-  Box.left,
-  30 // width
-);
-
-// Create newspaper-style columns
-const columns = Box.columns(
-  "Very long article text here...",
-  Box.left,
-  20, // column width
-  10 // column height
-);
-```
-
-## Common Usage Examples
-
-### Creating a Simple Table
-
-```typescript
 // Create a simple table layout
 const createTable = (headers: string[], rows: string[][]) => {
   const headerRow = Box.punctuateH(
@@ -276,68 +118,39 @@ console.log(Box.render(table));
 Alice        | 30           | New York
 Bob          | 25           | London
 Charlie      | 35           | Tokyo
-
+*/
 ```
 
-### Padding and Margins
+## Module Overview
 
-```typescript
-// Add padding around a box
-const Padding = (width: number) => (self: Box.Box) =>
-  pipe(
-    self,
-    Box.moveUp(width),
-    Box.moveDown(width),
-    Box.moveLeft(width),
-    Box.moveRight(width)
-  );
+| Module         |                                   Documentation | Description                                                                              |
+| -------------- | ----------------------------------------------: | ---------------------------------------------------------------------------------------- |
+| **Box**        |               [Box Module](./docs/using-box.md) | Core box creation and composition functions (`hcat`, `vcat`, `text`, `align`, `render`). |
+| **Annotation** | [Annotation Module](./docs/using-annotation.md) | Generic system for attaching metadata/annotations to boxes (styling, semantics).         |
+| **ANSI**       |             [ANSI Module](./docs/using-ansi.md) | ANSI styling and terminal rendering utilities (colors, attributes).                      |
+| **Cmd**        |               [Cmd Module](./docs/using-cmd.md) | Terminal control commands (cursor movement, screen clearing, etc.).                      |
+| **Reactive**   |     [Reactive Module](./docs/using-reactive.md) | Position tracking and primitives for interactive terminal interfaces.                    |
+| **Width**      |                                                 | Text width calculation utilities (unicode and ANSI-aware measurements).                  |
 
-const padded = Box.text("Hello\nWorld").pipe(Padding(2));
+> Note: For reusable patterns, testing guidance, and Effect.js integration
+> examples, see Common Patterns — [Common Patterns](./docs/common-patterns.md).
 
-console.log(Box.renderWith(padded, "."));
-/*
-.........
-.........
-..Hello..
-..World..
-.........
-.........
-```
+## Development
 
-### Bordered Content
+```bash
+# Install dependencies
+bun install
 
-```typescript
-// Add a border around a box
-const Border = (self: Box.Box) => {
-  const middleBorder = pipe(
-    Array.makeBy(self.rows, () => Box.char("│")),
-    Box.vcat(Box.left)
-  );
+# Run tests
+bun test
 
-  const topBorder = pipe(
-    [Box.char("┌"), Box.text("─".repeat(self.cols)), Box.char("┐")],
-    Box.hcat(Box.top)
-  );
+# Type check
+bun type-check
 
-  const bottomBorder = pipe(
-    [Box.char("└"), Box.text("─".repeat(self.cols)), Box.char("┘")],
-    Box.hcat(Box.top)
-  );
+# Lint and format
+bun lint
+bun format
 
-  const middleSection = pipe(
-    [middleBorder, self, middleBorder],
-    Box.hcat(Box.top)
-  );
-
-  return pipe([topBorder, middleSection, bottomBorder], Box.vcat(Box.left));
-};
-
-const bordered = Box.text("Hello\nWorld").pipe(Border);
-
-console.log(Box.render(bordered));
-/*
-┌─────┐
-│Hello│
-│World│
-└─────┘
+# Run examples
+bun run scratch
 ```
