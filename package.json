@@ -1,5 +1,5 @@
 {
-  "name": "edu_effect-cli-tui",
+  "name": "effect-boxes",
   "module": "src/index.tsx",
   "type": "module",
   "private": true,
