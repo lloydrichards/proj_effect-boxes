@@ -1,11 +1,11 @@
-# Effect Box
+# Effect Boxes
 
 A functional layout system for terminal applications built with Effect.js.
 Create TUIs with composable boxes, ANSI styling, and reactive components.
 
-## What is Effect Box?
+## What is Effect Boxes?
 
-Effect Box is a TypeScript port of Haskell's `Text.PrettyPrint.Boxes` library,
+Effect Boxes is a TypeScript port of Haskell's `Text.PrettyPrint.Boxes` library,
 providing a flex-style layout system for terminal applications within the Effect
 ecosystem. Think of it as a CSS flexbox system, but built specifically for
 functional composition of elements in terminal UIs, ASCII art, and structured
@@ -21,33 +21,29 @@ text output.
 
 ## Installation
 
-This library is not yet published on npm. To use it in your project, clone the
-repository and link it locally.
-
-> **Note:** The package name is `effect-boxes` in the code, but we refer to it
-> as "Effect Box" in documentation.
+Install directly from GitHub as a TypeScript library:
 
 ```bash
-# Clone the repository
-git clone https://github.com/lloydrichards/proj_effect-boxes.git
-cd proj_effect-boxes
+# Install with npm
+npm install git+https://github.com/lloydrichards/proj_effect-boxes.git
 
-# Install dependencies
-bun install
+# Install with yarn
+yarn add git+https://github.com/lloydrichards/proj_effect-boxes.git
 
-# Link the package locally
-bun link
+# Install with pnpm
+pnpm add git+https://github.com/lloydrichards/proj_effect-boxes.git
 
-# In your project directory, link to the local package
-cd your-project
-bun link effect-boxes
+# Install with bun
+bun add git+https://github.com/lloydrichards/proj_effect-boxes.git
 ```
 
-Alternatively, you can add it directly from GitHub in your package.json:
+Or add it directly in your `package.json`:
 
 ```json
-"dependencies": {
-  "effect-boxes": "github:lloydrichards/proj_effect-boxes"
+{
+  "dependencies": {
+    "effect-boxes": "git+https://github.com/lloydrichards/proj_effect-boxes.git"
+  }
 }
 ```
 
@@ -55,12 +51,11 @@ Alternatively, you can add it directly from GitHub in your package.json:
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-boxes";
-import * as Ansi from "effect-boxes/ansi";
+import { Box, Ansi } from "effect-boxes";
 
 // Create a simple bordered box with colored text
 const myBox = pipe(
-  Box.text("Hello, Effect Box!"),
+  Box.text("Hello, Effect Boxes!"),
   Box.annotate(Ansi.blue),
   Box.moveRight(2),
   Box.moveDown(1)
@@ -69,17 +64,16 @@ const myBox = pipe(
 // Render to string
 console.log(Box.render(myBox));
 
-// Or print directly using Effect
-import { Effect } from "effect";
-const program = Box.printBox(myBox);
-Effect.runPromise(program);
+// Alternative import patterns:
+// import * as Box from "effect-boxes/Box";
+// import * as Ansi from "effect-boxes/Ansi";
 ```
 
 ## Example: Creating a Table
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-box";
+import { Box } from "effect-boxes";
 
 // Create a simple table layout
 const createTable = (headers: string[], rows: string[][]) => {

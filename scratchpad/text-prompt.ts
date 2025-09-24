@@ -2,7 +2,6 @@ import { Terminal } from "@effect/platform";
 import { BunTerminal } from "@effect/platform-bun";
 import {
   Array,
-  Console,
   Effect,
   Match,
   Option,
