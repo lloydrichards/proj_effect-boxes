@@ -1,6 +1,6 @@
 # Box Module
 
-The Box module is the core of the Effect Box library, providing the fundamental
+The Box module is the core of the Effect Boxes library, providing the fundamental
 data structures and operations for creating and composing rectangular text
 layouts.
 

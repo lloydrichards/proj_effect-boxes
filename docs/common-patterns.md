@@ -1,11 +1,11 @@
 # Common Patterns
 
 This document covers common patterns, Effect.js integration details, and
-reusable components that apply across multiple modules in Effect Box.
+reusable components that apply across multiple modules in Effect Boxes.
 
 ## Effect.js Integration
 
-Effect Box integrates with the Effect.js ecosystem through several key
+Effect Boxes integrates with the Effect.js ecosystem through several key
 interfaces and patterns.
 
 ### Pipeable Interface
