@@ -555,7 +555,7 @@ export const hsep = dual<
  * @note Haskell: `vsep :: Foldable f => Int -> Alignment -> f Box -> Box`
  */
 export const vsep = dual<
-  (sep: number, a: Alignment) => <A>(bs: readonly Box<A>[]) => Box<A>,
+  (sep: number, a: Alignment) => <A>(self: readonly Box<A>[]) => Box<A>,
   <A>(self: readonly Box<A>[], sep: number, a: Alignment) => Box<A>
 >(
   3,
@@ -834,7 +834,7 @@ export const alignLeft = <A>(self: Box<A>): Box<A> =>
  * @note Haskell: `moveUp :: Int -> Box -> Box`
  */
 export const moveUp = dual<
-  (n: number) => <A>(b: Box<A>) => Box<A>,
+  (n: number) => <A>(self: Box<A>) => Box<A>,
   <A>(self: Box<A>, n: number) => Box<A>
 >(
   2,
@@ -998,7 +998,7 @@ export const takeP = dual<
  * @note Haskell: `takePA :: Alignment -> a -> Int -> [a] -> [a]`
  */
 export const takePA = dual<
-  <A>(alignment: Alignment, a: A, n: number) => (xs: readonly A[]) => A[],
+  <A>(alignment: Alignment, a: A, n: number) => (self: readonly A[]) => A[],
   <A>(self: readonly A[], alignment: Alignment, a: A, n: number) => A[]
 >(4, <A>(self: readonly A[], alignment: Alignment, a: A, n: number) => {
   if (n <= 0) {
