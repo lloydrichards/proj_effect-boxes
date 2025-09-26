@@ -1,9 +1,16 @@
+import * as Equal from "effect/Equal";
+import * as Hash from "effect/Hash";
+import { type Pipeable, pipeArguments } from "effect/Pipeable";
+
 const AnnotationBrand: unique symbol = Symbol.for("@effect/Box/Annotation");
 
 /**
  * Generic annotation wrapper with branded type safety.
  */
-export interface Annotation<A = never> {
+export interface Annotation<A = never>
+  extends Pipeable,
+    Equal.Equal,
+    Hash.Hash {
   readonly [AnnotationBrand]: "annotation";
   readonly data: A;
 }
@@ -35,6 +42,16 @@ export const isAnnotationWithData = <A>(
  */
 export const createAnnotation = <A>(data: A): Annotation<A> => ({
   [AnnotationBrand]: "annotation" as const,
+  [Equal.symbol](this: Annotation<A>, that: unknown): boolean {
+    return isAnnotation(that) && Equal.equals(this.data, that.data);
+  },
+  [Hash.symbol](this: Annotation<A>): number {
+    return Hash.hash(this.data);
+  },
+  pipe() {
+    // biome-ignore lint/correctness/noUndeclaredVariables: typescript does not recognize that this is a method on Box
+    return pipeArguments(this, arguments);
+  },
   data,
 });
 

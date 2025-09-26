@@ -61,7 +61,7 @@ describe("Ansi Annotation Integration", () => {
       const rendered = Box.render(reAnnotatedBox, { style: "pretty" });
 
       expect(rendered).toBe("\x1b[31mTransform me\x1b[0m\n");
-      expect(reAnnotatedBox.annotation).toEqual(Ansi.red);
+      expect(reAnnotatedBox.annotation?.data).toEqual(Ansi.red.data);
     });
 
     it("should support alterAnnotations for creating style variations", () => {
