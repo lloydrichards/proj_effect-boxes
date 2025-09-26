@@ -85,89 +85,63 @@ export interface Box<A = never>
 const isBox = <A>(u: unknown): u is Box<A> =>
   typeof u === "object" && u != null && BoxTypeId in u;
 
-const getContentInfo = <A>(content: Content<A>): string =>
-  pipe(
-    content,
-    Match.type<Content<A>>().pipe(
-      Match.tag("Text", ({ text }) =>
-        text.length > 20 ? ` "${text.slice(0, 17)}..."` : ` "${text}"`
-      ),
-      Match.tag("Row", ({ boxes }) => ` [${boxes.length} boxes horizontal]`),
-      Match.tag("Col", ({ boxes }) => ` [${boxes.length} boxes vertical]`),
-      Match.tag(
-        "SubBox",
-        ({ xAlign, yAlign }) => ` [aligned ${xAlign}/${yAlign}]`
-      ),
-      Match.tag("Blank", () => " [empty]"),
-      Match.exhaustive
-    )
-  );
+const getContentInfo = <A>(box: Box<A>): string =>
+  match(box, {
+    blank: () => " [empty]",
+    text: (text) =>
+      text.length > 20 ? ` "${text.slice(0, 17)}..."` : ` "${text}"`,
+    row: (boxes) => ` [${boxes.length} boxes horizontal]`,
+    col: (boxes) => ` [${boxes.length} boxes vertical]`,
+    subBox: (_, xAlign, yAlign) => ` [aligned ${xAlign}/${yAlign}]`,
+  });
 
-const contentEquals = <A>(self: Content<A>, that: Content<A>): boolean => {
-  if (self._tag !== that._tag) {
+const contentEquals = <A>(self: Box<A>, that: Box<A>): boolean => {
+  if (self.content._tag !== that.content._tag) {
     return false;
   }
 
-  return pipe(
-    self,
-    Match.type<Content<A>>().pipe(
-      Match.tag("Blank", () => true),
-      Match.tag("Text", ({ text }) => text === (that as Text).text),
-      Match.tag(
-        "Row",
-        ({ boxes }) =>
-          boxes.length === (that as Row<A>).boxes.length &&
-          boxes.every((box, i) => Equal.equals(box, (that as Row<A>).boxes[i]))
+  return match(self, {
+    blank: () => true,
+    text: (text: string) => text === (that.content as Text).text,
+    row: (boxes: Box<A>[]) =>
+      boxes.length === (that.content as Row<A>).boxes.length &&
+      boxes.every((box: Box<A>, i: number) =>
+        Equal.equals(box, (that.content as Row<A>).boxes[i])
       ),
-      Match.tag(
-        "Col",
-        ({ boxes }) =>
-          boxes.length === (that as Col<A>).boxes.length &&
-          boxes.every((box, i) => Equal.equals(box, (that as Col<A>).boxes[i]))
+    col: (boxes: Box<A>[]) =>
+      boxes.length === (that.content as Col<A>).boxes.length &&
+      boxes.every((box: Box<A>, i: number) =>
+        Equal.equals(box, (that.content as Col<A>).boxes[i])
       ),
-      Match.tag(
-        "SubBox",
-        ({ box, xAlign, yAlign }) =>
-          xAlign === (that as SubBox<A>).xAlign &&
-          yAlign === (that as SubBox<A>).yAlign &&
-          Equal.equals(box, (that as SubBox<A>).box)
-      ),
-      Match.exhaustive
-    )
-  );
+    subBox: (box: Box<A>, xAlign: Alignment, yAlign: Alignment) =>
+      xAlign === (that.content as SubBox<A>).xAlign &&
+      yAlign === (that.content as SubBox<A>).yAlign &&
+      Equal.equals(box, (that.content as SubBox<A>).box),
+  });
 };
 
-const contentHash = <A>(content: Content<A>): number =>
-  pipe(
-    content,
-    Match.type<Content<A>>().pipe(
-      Match.tag("Blank", () => Hash.hash("Blank")),
-      Match.tag("Text", ({ text }) =>
-        Hash.combine(Hash.hash("Text"))(Hash.hash(text))
+const contentHash = <A>(box: Box<A>): number =>
+  match(box, {
+    blank: () => Hash.hash("Blank"),
+    text: (text: string) => Hash.combine(Hash.hash("Text"))(Hash.hash(text)),
+    row: (boxes: Box<A>[]) =>
+      boxes.reduce(
+        (acc: number, box: Box<A>) => Hash.combine(acc)(Hash.hash(box)),
+        Hash.hash("Row")
       ),
-      Match.tag("Row", ({ boxes }) =>
-        boxes.reduce(
-          (acc, box) => Hash.combine(acc)(Hash.hash(box)),
-          Hash.hash("Row")
-        )
+    col: (boxes: Box<A>[]) =>
+      boxes.reduce(
+        (acc: number, box: Box<A>) => Hash.combine(acc)(Hash.hash(box)),
+        Hash.hash("Col")
       ),
-      Match.tag("Col", ({ boxes }) =>
-        boxes.reduce(
-          (acc, box) => Hash.combine(acc)(Hash.hash(box)),
-          Hash.hash("Col")
-        )
+    subBox: (box: Box<A>, xAlign: Alignment, yAlign: Alignment) =>
+      pipe(
+        Hash.hash("SubBox"),
+        Hash.combine(Hash.hash(xAlign)),
+        Hash.combine(Hash.hash(yAlign)),
+        Hash.combine(Hash.hash(box))
       ),
-      Match.tag("SubBox", ({ box, xAlign, yAlign }) =>
-        pipe(
-          Hash.hash("SubBox"),
-          Hash.combine(Hash.hash(xAlign)),
-          Hash.combine(Hash.hash(yAlign)),
-          Hash.combine(Hash.hash(box))
-        )
-      ),
-      Match.exhaustive
-    )
-  );
+  });
 
 const proto: Omit<Box, "rows" | "content" | "cols" | "annotation"> = {
   [BoxTypeId]: BoxTypeId,
@@ -176,7 +150,7 @@ const proto: Omit<Box, "rows" | "content" | "cols" | "annotation"> = {
       isBox<A>(that) &&
       this.rows === that.rows &&
       this.cols === that.cols &&
-      contentEquals(this.content, that.content) &&
+      contentEquals(this, that) &&
       Equal.equals(this.annotation, that.annotation)
     );
   },
@@ -186,7 +160,7 @@ const proto: Omit<Box, "rows" | "content" | "cols" | "annotation"> = {
       pipe(
         Hash.hash(this.rows),
         Hash.combine(Hash.hash(this.cols)),
-        Hash.combine(contentHash(this.content)),
+        Hash.combine(contentHash(this)),
         Hash.combine(Hash.hash(this.annotation))
       )
     );
@@ -202,7 +176,7 @@ const proto: Omit<Box, "rows" | "content" | "cols" | "annotation"> = {
   toString<A>(this: Box<A>) {
     const dimension = `${this.rows}x${this.cols}`;
     const tag = this.content._tag;
-    const contentInfo = getContentInfo(this.content);
+    const contentInfo = getContentInfo(this);
     const annotationInfo = this.annotation ? " annotated" : "";
 
     return `Box(${dimension} ${tag}${contentInfo}${annotationInfo})`;
@@ -940,28 +914,24 @@ export const merge = (renderedBoxes: string[][]): string[] => {
  *
  * @note Haskell: `renderBox :: Box -> [String]`
  */
-const renderBox = <A>({ cols, content, rows }: Box<A>): string[] => {
-  if (rows === 0 || cols === 0) {
+const renderBox = <A>(box: Box<A>): string[] => {
+  if (box.rows === 0 || box.cols === 0) {
     return [];
   }
 
-  return pipe(
-    content,
-    Match.type<Content<A>>().pipe(
-      Match.tag("Blank", () => resizeBox([""], rows, cols)),
-      Match.tag("Text", ({ text }) => resizeBox([text], rows, cols)),
-      Match.tag("Row", ({ boxes }) =>
-        pipe(Array.map(boxes, renderBox), merge, resizeBox(rows, cols))
+  return match(box, {
+    blank: () => resizeBox([""], box.rows, box.cols),
+    text: (text) => resizeBox([text], box.rows, box.cols),
+    row: (boxes) =>
+      pipe(Array.map(boxes, renderBox), merge, resizeBox(box.rows, box.cols)),
+    col: (boxes) =>
+      pipe(Array.flatMap(boxes, renderBox), resizeBox(box.rows, box.cols)),
+    subBox: (subBox, xAlign, yAlign) =>
+      pipe(
+        renderBox(subBox),
+        resizeBoxAligned(box.rows, box.cols, xAlign, yAlign)
       ),
-      Match.tag("Col", ({ boxes }) =>
-        pipe(Array.flatMap(boxes, renderBox), resizeBox(rows, cols))
-      ),
-      Match.tag("SubBox", ({ box, xAlign, yAlign }) =>
-        pipe(renderBox(box), resizeBoxAligned(rows, cols, xAlign, yAlign))
-      ),
-      Match.exhaustive
-    )
-  );
+  });
 };
 
 /**
@@ -1279,3 +1249,76 @@ export const alterAnnotations = dual<
  * @returns Array of boxes, one for each annotation returned by alter function
  */
 export const alterAnnotate = alterAnnotations;
+
+/**
+ * Pattern matching utility for Box content. Provides a type-safe way to handle
+ * all possible content variants without directly using Match.type.
+ *
+ * @param self - The box whose content to match against
+ * @param patterns - Object containing handler functions for each content type
+ * @returns Result of the matching pattern handler
+ *
+ * @example
+ * ```typescript
+ * const info = Box.match(box, {
+ *   blank: () => "empty box",
+ *   text: (text) => `text: "${text}"`,
+ *   row: (boxes) => `${boxes.length} boxes horizontal`,
+ *   col: (boxes) => `${boxes.length} boxes vertical`,
+ *   subBox: (box, xAlign, yAlign) => `aligned ${xAlign}/${yAlign}`
+ * })
+ * ```
+ */
+export const match = dual<
+  <A, R>(patterns: {
+    readonly blank: () => R;
+    readonly text: (text: string) => R;
+    readonly row: (boxes: Box<A>[]) => R;
+    readonly col: (boxes: Box<A>[]) => R;
+    readonly subBox: (box: Box<A>, xAlign: Alignment, yAlign: Alignment) => R;
+  }) => (self: Box<A>) => R,
+  <A, R>(
+    self: Box<A>,
+    patterns: {
+      readonly blank: () => R;
+      readonly text: (text: string) => R;
+      readonly row: (boxes: Box<A>[]) => R;
+      readonly col: (boxes: Box<A>[]) => R;
+      readonly subBox: (box: Box<A>, xAlign: Alignment, yAlign: Alignment) => R;
+    }
+  ) => R
+>(
+  2,
+  <A, R>(
+    self: Box<A>,
+    patterns: {
+      readonly blank: () => R;
+      readonly text: (text: string) => R;
+      readonly row: (boxes: Box<A>[]) => R;
+      readonly col: (boxes: Box<A>[]) => R;
+      readonly subBox: (box: Box<A>, xAlign: Alignment, yAlign: Alignment) => R;
+    }
+  ): R => {
+    switch (self.content._tag) {
+      case "Blank": {
+        return patterns.blank();
+      }
+      case "Text": {
+        return patterns.text(self.content.text);
+      }
+      case "Row": {
+        return patterns.row(self.content.boxes);
+      }
+      case "Col": {
+        return patterns.col(self.content.boxes);
+      }
+      case "SubBox": {
+        return patterns.subBox(
+          self.content.box,
+          self.content.xAlign,
+          self.content.yAlign
+        );
+      }
+    }
+  }
+);
