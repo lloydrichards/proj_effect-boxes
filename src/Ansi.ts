@@ -1,4 +1,4 @@
-import { Array, Match, Option, pipe } from "effect";
+import { Array, Option, pipe } from "effect";
 import { dual } from "effect/Function";
 import type { Annotation } from "./Annotation";
 import { createAnnotation } from "./Annotation";
@@ -6,7 +6,8 @@ import {
   type Alignment,
   type Box,
   blanks,
-  type Content,
+  make,
+  match,
   merge,
   takeP,
   takePA,
@@ -415,26 +416,19 @@ export const renderAnnotatedBox = <A>({
     return [];
   }
 
-  const contentLines = pipe(
-    content,
-    Match.type<Content<A>>().pipe(
-      Match.tag("Blank", () => resizeBox([""], rows, cols)),
-      Match.tag("Text", ({ text }) => resizeBox([text], rows, cols)),
-      Match.tag("Row", ({ boxes }) =>
-        pipe(Array.map(boxes, renderAnnotatedBox), merge, resizeBox(rows, cols))
+  const contentLines = match(make({ cols, content, rows, annotation }), {
+    blank: () => resizeBox([""], rows, cols),
+    text: (text) => resizeBox([text], rows, cols),
+    row: (boxes) =>
+      pipe(Array.map(boxes, renderAnnotatedBox), merge, resizeBox(rows, cols)),
+    col: (boxes) =>
+      pipe(Array.flatMap(boxes, renderAnnotatedBox), resizeBox(rows, cols)),
+    subBox: (box, xAlign, yAlign) =>
+      pipe(
+        renderAnnotatedBox(box),
+        resizeBoxAligned(rows, cols, xAlign, yAlign)
       ),
-      Match.tag("Col", ({ boxes }) =>
-        pipe(Array.flatMap(boxes, renderAnnotatedBox), resizeBox(rows, cols))
-      ),
-      Match.tag("SubBox", ({ box, xAlign, yAlign }) =>
-        pipe(
-          renderAnnotatedBox(box),
-          resizeBoxAligned(rows, cols, xAlign, yAlign)
-        )
-      ),
-      Match.exhaustive
-    )
-  );
+  });
 
   if (annotation && isAnsiStyle(annotation.data)) {
     const escapeSequence = getAnsiEscapeSequence(annotation.data);
