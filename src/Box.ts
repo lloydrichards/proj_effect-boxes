@@ -2,6 +2,7 @@ import { Array, Console, Effect, Match, pipe, String } from "effect";
 import * as Equal from "effect/Equal";
 import { dual } from "effect/Function";
 import * as Hash from "effect/Hash";
+import * as Inspectable from "effect/Inspectable";
 import { type Pipeable, pipeArguments } from "effect/Pipeable";
 import type { Annotation } from "./Annotation";
 import { renderAnnotatedBox } from "./Ansi";
@@ -69,7 +70,11 @@ export type Content<A = never> = Blank | Text | Row<A> | Col<A> | SubBox<A>;
 /**
  * The Box data type, representing a rectangular area of text with various combinators for layout and alignment.
  */
-export interface Box<A = never> extends Pipeable, Equal.Equal, Hash.Hash {
+export interface Box<A = never>
+  extends Pipeable,
+    Equal.Equal,
+    Hash.Hash,
+    Inspectable.Inspectable {
   readonly [BoxTypeId]: BoxTypeId;
   readonly rows: number;
   readonly cols: number;
@@ -79,6 +84,24 @@ export interface Box<A = never> extends Pipeable, Equal.Equal, Hash.Hash {
 
 const isBox = <A>(u: unknown): u is Box<A> =>
   typeof u === "object" && u != null && BoxTypeId in u;
+
+const getContentInfo = <A>(content: Content<A>): string =>
+  pipe(
+    content,
+    Match.type<Content<A>>().pipe(
+      Match.tag("Text", ({ text }) =>
+        text.length > 20 ? ` "${text.slice(0, 17)}..."` : ` "${text}"`
+      ),
+      Match.tag("Row", ({ boxes }) => ` [${boxes.length} boxes horizontal]`),
+      Match.tag("Col", ({ boxes }) => ` [${boxes.length} boxes vertical]`),
+      Match.tag(
+        "SubBox",
+        ({ xAlign, yAlign }) => ` [aligned ${xAlign}/${yAlign}]`
+      ),
+      Match.tag("Blank", () => " [empty]"),
+      Match.exhaustive
+    )
+  );
 
 const contentEquals = <A>(self: Content<A>, that: Content<A>): boolean => {
   if (self._tag !== that._tag) {
@@ -167,6 +190,30 @@ const proto: Omit<Box, "rows" | "content" | "cols" | "annotation"> = {
         Hash.combine(Hash.hash(this.annotation))
       )
     );
+  },
+  [Inspectable.NodeInspectSymbol]<A>(this: Box<A>): unknown {
+    return {
+      _tag: "Box",
+      rows: this.rows,
+      cols: this.cols,
+      content: this.content,
+    };
+  },
+  toString<A>(this: Box<A>) {
+    const dimension = `${this.rows}x${this.cols}`;
+    const tag = this.content._tag;
+    const contentInfo = getContentInfo(this.content);
+    const annotationInfo = this.annotation ? " annotated" : "";
+
+    return `Box(${dimension} ${tag}${contentInfo}${annotationInfo})`;
+  },
+  toJSON<A>(this: Box<A>) {
+    return {
+      _tag: "Box",
+      rows: this.rows,
+      cols: this.cols,
+      content: this.content,
+    };
   },
   pipe() {
     // biome-ignore lint/correctness/noUndeclaredVariables: typescript does not recognize that this is a method on Box

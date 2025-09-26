@@ -1,6 +1,7 @@
 import { String } from "effect";
 import * as Equal from "effect/Equal";
 import * as Hash from "effect/Hash";
+import * as Inspectable from "effect/Inspectable";
 import { describe, expect, it } from "vitest";
 import * as Annotation from "../src/Annotation";
 import * as Box from "../src/Box";
@@ -849,6 +850,101 @@ describe("Hash", () => {
     const hash1 = Hash.hash(Box.text("cached"));
     const hash2 = Hash.hash(Box.text("cached"));
     expect(hash1).toBe(hash2);
+  });
+});
+
+describe("Inspectable", () => {
+  it("provides enhanced toString method with content information", () => {
+    const textBox = Box.text("hello");
+    const emptyBox = Box.emptyBox(3, 5);
+    const charBox = Box.char("Z");
+    const longTextBox = Box.text(
+      "This is a very long text that should be truncated"
+    );
+    const hcatBox = Box.hcat([Box.text("A"), Box.text("B")], Box.top);
+    const vcatBox = Box.vcat([Box.text("X"), Box.text("Y")], Box.left);
+    const alignedBox = Box.align(
+      Box.text("test"),
+      Box.center1,
+      Box.center2,
+      5,
+      10
+    );
+    expect(textBox.toString()).toBe("Box(1x5 Col [1 boxes vertical])");
+    expect(emptyBox.toString()).toBe("Box(3x5 Blank [empty])");
+    expect(charBox.toString()).toBe('Box(1x1 Text "Z")');
+    expect(longTextBox.toString()).toBe("Box(1x49 Col [1 boxes vertical])");
+    expect(hcatBox.toString()).toBe("Box(1x2 Row [2 boxes horizontal])");
+    expect(vcatBox.toString()).toBe("Box(2x1 Col [2 boxes vertical])");
+    expect(alignedBox.toString()).toBe(
+      "Box(5x10 SubBox [aligned AlignCenter1/AlignCenter2])"
+    );
+  });
+
+  it("toString shows annotation status", () => {
+    const box = Box.text("test");
+    const annotatedBox = Box.annotate(
+      box,
+      Annotation.createAnnotation("my-annotation")
+    );
+    expect(box.toString()).toBe("Box(1x4 Col [1 boxes vertical])");
+    expect(annotatedBox.toString()).toBe(
+      "Box(1x4 Col [1 boxes vertical] annotated)"
+    );
+  });
+
+  it("toString truncates long text content in Text boxes", () => {
+    const shortText = Box.char("A");
+    const longTextChar = Box.char("This is way too long for display"); // char() only takes first character
+    const longTextBox = Box.make({
+      rows: 1,
+      cols: 30,
+      content: {
+        _tag: "Text",
+        text: "This is a very long text that should be truncated for display",
+      },
+    });
+
+    expect(shortText.toString()).toBe('Box(1x1 Text "A")');
+    expect(longTextChar.toString()).toBe('Box(1x1 Text "T")'); // char() only takes first character
+    expect(longTextBox.toString()).toBe(
+      'Box(1x30 Text "This is a very lo...")'
+    );
+  });
+
+  it("provides structured inspection via NodeInspectSymbol", () => {
+    const box = Box.char("X");
+    const inspected = box[Inspectable.NodeInspectSymbol]();
+
+    expect(inspected).toHaveProperty("_tag", "Box");
+    expect(inspected).toHaveProperty("rows", 1);
+    expect(inspected).toHaveProperty("cols", 1);
+    expect(inspected).toHaveProperty("content");
+    expect(inspected).not.toHaveProperty("annotation");
+  });
+
+  it("provides toJSON method for serialization", () => {
+    const box = Box.emptyBox(2, 3);
+    const json = box.toJSON();
+    expect(json).toHaveProperty("_tag", "Box");
+    expect(json).toHaveProperty("rows", 2);
+    expect(json).toHaveProperty("cols", 3);
+    expect(json).toHaveProperty("content");
+    expect(json).not.toHaveProperty("annotation");
+  });
+
+  it("excludes private implementation details from inspection", () => {
+    const box = Box.text("test");
+    const inspected = (box as any)[Inspectable.NodeInspectSymbol]();
+
+    // Should only contain public properties
+    const keys = Object.keys(inspected as object);
+    expect(keys).toEqual(
+      expect.arrayContaining(["_tag", "rows", "cols", "content"])
+    );
+    expect(keys).not.toContain("pipe");
+    expect(keys).not.toContain(Symbol.for("effect/Hash"));
+    expect(keys).not.toContain(Symbol.for("effect/Equal"));
   });
 });
 
