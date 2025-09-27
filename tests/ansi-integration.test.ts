@@ -222,7 +222,7 @@ describe("Ansi Annotation Integration", () => {
         Box.annotate(Ansi.underlined)
       );
 
-      const verticalLayout = Box.punctuateV<Ansi.AnsiStyle>(
+      const verticalLayout = Box.punctuateV(
         [headerBox, contentBox, footerBox],
         Box.left,
         Box.text("---")
