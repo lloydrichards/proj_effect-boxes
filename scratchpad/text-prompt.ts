@@ -1,14 +1,6 @@
 import { Terminal } from "@effect/platform";
 import { BunTerminal } from "@effect/platform-bun";
-import {
-  Array,
-  Effect,
-  Match,
-  Option,
-  pipe,
-  Ref,
-  Stream,
-} from "effect";
+import { Array, Effect, Match, Option, pipe, Ref, Stream } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 import * as Cmd from "../src/Cmd";
@@ -52,7 +44,7 @@ type PromptState = {
 const createPromptLayout = (
   state: PromptState
 ): Box.Box<Reactive.Reactive | Ansi.AnsiStyle> =>
-  Box.punctuateH<Ansi.AnsiStyle | Reactive.Reactive>(
+  Box.punctuateH(
     [
       Box.text("?").pipe(Box.annotate(Ansi.green)),
       Box.text(state.message).pipe(
@@ -158,7 +150,7 @@ const renderPrompt = (state: PromptState) =>
 
     if (Option.isSome(inputCursor) && Option.isSome(lengthCursor)) {
       yield* pipe(
-        Box.combineAll<Reactive.Reactive | Ansi.AnsiStyle>([
+        Box.combineAll([
           lengthCursor.value,
           Box.text(`${state.input.length}/100`).pipe(Box.annotate(Ansi.dim)),
           // Clear and update input field

@@ -99,7 +99,7 @@ const main = Effect.gen(function* () {
     const timeStr = formatTime(timestamp);
     const status = counter >= COMPLETE ? "completed" : "running";
 
-    const top = Box.hcat<Ansi.AnsiStyle | Reactive.Reactive>(
+    const top = Box.hcat(
       [
         ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH).pipe(
           Reactive.makeReactive("progress-bar"),
@@ -132,11 +132,7 @@ const main = Effect.gen(function* () {
       Box.text(" ")
     );
 
-    return Box.punctuateV<Ansi.AnsiStyle | Reactive.Reactive>(
-      [top, bottom, footer],
-      Box.top,
-      Box.char(" ")
-    );
+    return Box.punctuateV([top, bottom, footer], Box.top, Box.char(" "));
   };
 
   // Display the initial layout

@@ -67,6 +67,15 @@ type SubBox<A = never> = {
 
 export type Content<A = never> = Blank | Text | Row<A> | Col<A> | SubBox<A>;
 
+export type BoxAnnotations<T extends readonly unknown[]> = T extends readonly [
+  infer Head,
+  ...infer Tail,
+]
+  ? Head extends Box<infer A>
+    ? A | BoxAnnotations<Tail>
+    : never
+  : never;
+
 /**
  * The Box data type, representing a rectangular area of text with various combinators for layout and alignment.
  */
@@ -305,16 +314,16 @@ export const para = dual<
  * @note Haskell: `instance Semigroup Box where l <> r = hcat top [l,r]`
  */
 export const combine = dual<
-  <A>(l: Box<A>) => (self: Box<A>) => Box<A>,
-  <A>(self: Box<A>, l: Box<A>) => Box<A>
->(2, <A>(self: Box<A>, l: Box<A>): Box<A> => hcat([self, l], top));
+  <B>(l: Box<B>) => <A>(self: Box<A>) => Box<A | B>,
+  <A, B>(self: Box<A>, l: Box<B>) => Box<A | B>
+>(2, <A, B>(self: Box<A>, l: Box<B>): Box<A | B> => hcat([self, l], top));
 
 export const combineMany = dual<
-  <A>(start: Box<A>) => (self: Iterable<Box<A>>) => Box<A>,
-  <A>(self: Iterable<Box<A>>, start: Box<A>) => Box<A>
+  <A>(start: Box<A>) => <B>(self: Iterable<Box<B>>) => Box<A | B>,
+  <A, B>(self: Iterable<Box<B>>, start: Box<A>) => Box<A | B>
 >(
   2,
-  <A>(self: Iterable<Box<A>>, start: Box<A>): Box<A> =>
+  <A, B>(self: Iterable<Box<B>>, start: Box<A>): Box<A | B> =>
     hcat([start, ...Array.fromIterable(self)], top)
 );
 
@@ -324,9 +333,11 @@ export const combineMany = dual<
  *
  * @note Haskell: `instance Monoid Box where mempty = nullBox mappend = (<>) mconcat = hcat top`
  */
-export const combineAll = <A>(collection: Iterable<Box<A>>): Box<A> => {
+export const combineAll = <T extends readonly Box<unknown>[]>(
+  collection: T
+): Box<BoxAnnotations<T>> => {
   const boxes = Array.fromIterable(collection);
-  return boxes.length === 0 ? (nullBox as Box<A>) : hcat(boxes, top);
+  return boxes.length === 0 ? nullBox : hcat(boxes, top);
 };
 
 /**
@@ -377,19 +388,31 @@ const sumMax = <A>(
  * @note Haskell: `hcat :: Foldable f => Alignment -> f Box -> Box`
  */
 export const hcat = dual<
-  (a: Alignment) => <A>(self: readonly Box<A>[]) => Box<A>,
-  <A>(self: readonly Box<A>[], a: Alignment) => Box<A>
->(2, <A>(self: readonly Box<A>[], a: Alignment): Box<A> => {
-  const [w, h] = sumMax(cols, 0, rows, self);
-  return make({
-    rows: h,
-    cols: w,
-    content: {
-      _tag: "Row",
-      boxes: self.map(alignVert(a, h)) as Box<A>[],
-    } as Content<A>,
-  });
-});
+  <T extends readonly Box<unknown>[]>(
+    a: Alignment
+  ) => (self: T) => Box<BoxAnnotations<T>>,
+  <T extends readonly Box<unknown>[]>(
+    self: T,
+    a: Alignment
+  ) => Box<BoxAnnotations<T>>
+>(
+  2,
+  <T extends readonly Box<unknown>[]>(
+    self: T,
+    a: Alignment
+  ): Box<BoxAnnotations<T>> => {
+    const [w, h] = sumMax(cols, 0, rows, self);
+    return make({
+      rows: h,
+      cols: w,
+      content: {
+        _tag: "Row",
+        // Safe cast: alignVert preserves annotation types, so Box<unknown>[] becomes Box<BoxAnnotations<T>>[]
+        boxes: self.map(alignVert(a, h)) as Box<BoxAnnotations<T>>[],
+      } as Content<BoxAnnotations<T>>, // Safe cast: matches the Box<BoxAnnotations<T>> return type
+    });
+  }
+);
 
 /**
  * Arranges boxes vertically in a column with the specified alignment.
@@ -399,19 +422,31 @@ export const hcat = dual<
  * @note Haskell: `vcat :: Foldable f => Alignment -> f Box -> Box`
  */
 export const vcat = dual<
-  (a: Alignment) => <A>(self: readonly Box<A>[]) => Box<A>,
-  <A>(self: readonly Box<A>[], a: Alignment) => Box<A>
->(2, <A>(self: readonly Box<A>[], a: Alignment): Box<A> => {
-  const [h, w] = sumMax(rows, 0, cols, self);
-  return make({
-    rows: h,
-    cols: w,
-    content: {
-      _tag: "Col",
-      boxes: self.map(alignHoriz(a, w)) as Box<A>[],
-    } as Content<A>,
-  });
-});
+  <T extends readonly Box<unknown>[]>(
+    a: Alignment
+  ) => (self: T) => Box<BoxAnnotations<T>>,
+  <T extends readonly Box<unknown>[]>(
+    self: T,
+    a: Alignment
+  ) => Box<BoxAnnotations<T>>
+>(
+  2,
+  <T extends readonly Box<unknown>[]>(
+    self: T,
+    a: Alignment
+  ): Box<BoxAnnotations<T>> => {
+    const [h, w] = sumMax(rows, 0, cols, self);
+    return make({
+      rows: h,
+      cols: w,
+      content: {
+        _tag: "Col",
+        // Safe cast: alignHoriz preserves annotation types, so Box<unknown>[] becomes Box<BoxAnnotations<T>>[]
+        boxes: self.map(alignHoriz(a, w)) as Box<BoxAnnotations<T>>[],
+      } as Content<BoxAnnotations<T>>, // Safe cast: matches the Box<BoxAnnotations<T>> return type
+    });
+  }
+);
 
 /**
  * Places two boxes side by side horizontally.
@@ -476,14 +511,28 @@ export const vcatWithSpace = dual<
  * @note Haskell: `punctuateH :: Foldable f => Alignment -> Box -> f Box -> Box`
  */
 export const punctuateH = dual<
-  <A>(a: Alignment, p: Box<A>) => (self: readonly Box<A>[]) => Box<A>,
-  <A>(self: readonly Box<A>[], a: Alignment, p: Box<A>) => Box<A>
->(3, <A>(self: readonly Box<A>[], a: Alignment, p: Box<A>): Box<A> => {
-  if (self.length === 0) {
-    return nullBox as Box<A>;
+  <A, T extends readonly Box<unknown>[]>(
+    a: Alignment,
+    p: Box<A>
+  ) => (self: T) => Box<A | BoxAnnotations<T>>,
+  <A, T extends readonly Box<unknown>[]>(
+    self: T,
+    a: Alignment,
+    p: Box<A>
+  ) => Box<A | BoxAnnotations<T>>
+>(
+  3,
+  <A, T extends readonly Box<unknown>[]>(
+    self: T,
+    a: Alignment,
+    p: Box<A>
+  ): Box<A | BoxAnnotations<T>> => {
+    if (self.length === 0) {
+      return nullBox;
+    }
+    return hcat(Array.intersperse(self, p), a);
   }
-  return hcat(Array.intersperse(self, p), a);
-});
+);
 
 /**
  * Arranges boxes vertically with a separator box placed between each pair.
@@ -494,14 +543,28 @@ export const punctuateH = dual<
  * @note Haskell: `punctuateV :: Foldable f => Alignment -> Box -> f Box -> Box`
  */
 export const punctuateV = dual<
-  <A>(a: Alignment, p: Box<A>) => (self: readonly Box<A>[]) => Box<A>,
-  <A>(self: readonly Box<A>[], a: Alignment, p: Box<A>) => Box<A>
->(3, <A>(self: readonly Box<A>[], a: Alignment, p: Box<A>): Box<A> => {
-  if (self.length === 0) {
-    return nullBox as Box<A>;
+  <A, T extends readonly Box<unknown>[]>(
+    a: Alignment,
+    p: Box<A>
+  ) => (self: T) => Box<A | BoxAnnotations<T>>,
+  <A, T extends readonly Box<unknown>[]>(
+    self: T,
+    a: Alignment,
+    p: Box<A>
+  ) => Box<A | BoxAnnotations<T>>
+>(
+  3,
+  <A, T extends readonly Box<unknown>[]>(
+    self: T,
+    a: Alignment,
+    p: Box<A>
+  ): Box<A | BoxAnnotations<T>> => {
+    if (self.length === 0) {
+      return nullBox;
+    }
+    return vcat(Array.intersperse(self, p), a);
   }
-  return vcat(Array.intersperse(self, p), a);
-});
+);
 
 /**
  * Arranges boxes horizontally with the specified amount of space between each.
@@ -517,7 +580,7 @@ export const hsep = dual<
 >(
   3,
   <A>(self: readonly Box<A>[], sep: number, a: Alignment): Box<A> =>
-    punctuateH(self, a, emptyBox(0, sep) as Box<A>)
+    punctuateH(self, a, emptyBox(0, sep))
 );
 
 /**
@@ -534,7 +597,7 @@ export const vsep = dual<
 >(
   3,
   <A>(self: readonly Box<A>[], sep: number, a: Alignment): Box<A> =>
-    punctuateV(self, a, emptyBox(sep, 0) as Box<A>)
+    punctuateV(self, a, emptyBox(sep, 0))
 );
 
 /*
