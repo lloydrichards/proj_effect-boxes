@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import * as Width from "../src/Width";
+import * as Width from "../src/internal/width";
 
 describe("Width.of()", () => {
   describe("ASCII and Basic Latin", () => {
