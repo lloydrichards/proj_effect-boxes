@@ -9,38 +9,38 @@ import * as internalAnsi from "./internal/cmd";
 /**
  * Moves the cursor up by the specified number of lines (default: 1).
  */
-export const cursorUp: (lines: number) => Box<AnsiStyle> =
+export const cursorUp: (lines?: number) => Box<AnsiStyle> =
   internalAnsi.cursorUp;
 
 /**
  * Moves the cursor down by the specified number of lines (default: 1).
  */
-export const cursorDown: (lines: number) => Box<AnsiStyle> =
+export const cursorDown: (lines?: number) => Box<AnsiStyle> =
   internalAnsi.cursorDown;
 
 /**
  * Moves the cursor right by the specified number of columns (default: 1).
  */
-export const cursorForward: (columns: number) => Box<AnsiStyle> =
+export const cursorForward: (columns?: number) => Box<AnsiStyle> =
   internalAnsi.cursorForward;
 
 /**
  * Moves the cursor left by the specified number of columns (default: 1).
  */
-export const cursorBackward: (columns: number) => Box<AnsiStyle> =
+export const cursorBackward: (columns?: number) => Box<AnsiStyle> =
   internalAnsi.cursorBackward;
 
 /**
  * Moves the cursor to the specified position (0-based coordinates).
  */
-export const cursorTo: (column: number, row: number) => Box<AnsiStyle> =
+export const cursorTo: (column?: number, row?: number) => Box<AnsiStyle> =
   internalAnsi.cursorTo;
 
 /**
  * Moves the cursor by the specified offset relative to current position.
  * Positive values move right/down, negative values move left/up.
  */
-export const cursorMove: (column: number, row: number) => Box<AnsiStyle> =
+export const cursorMove: (column?: number, row?: number) => Box<AnsiStyle> =
   internalAnsi.cursorMove;
 
 /**

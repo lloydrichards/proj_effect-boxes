@@ -84,24 +84,24 @@ const formatTime = (timestamp: number): string => {
 
 const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
-  yield* display(Box.render(Cmd.clearScreen, { style: "pretty" }));
-  yield* display(Box.render(Cmd.cursorHide, { style: "pretty" }));
+  yield* display(Box.renderSync(Cmd.clearScreen, Box.pretty));
+  yield* display(Box.renderSync(Cmd.cursorHide, Box.pretty));
 
-  const COMPLETE = 1000;
-  const PROGRESS_BAR_WIDTH = 69;
+  const Complete = 1000;
+  const ProgressBarWidth = 69;
 
   const counterRef = yield* Ref.make(0);
 
   // First, create the display layout (what the user sees)
   const buildDisplayLayout = (counter: number, timestamp: number) => {
-    const progress = Math.min(counter, COMPLETE);
-    const percentage = Math.round((progress / COMPLETE) * 100);
+    const progress = Math.min(counter, Complete);
+    const percentage = Math.round((progress / Complete) * 100);
     const timeStr = formatTime(timestamp);
-    const status = counter >= COMPLETE ? "completed" : "running";
+    const status = counter >= Complete ? "completed" : "running";
 
     const top = Box.hcat(
       [
-        ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH).pipe(
+        ProgressBar(counter, Complete, ProgressBarWidth).pipe(
           Reactive.makeReactive("progress-bar"),
           Border
         ),
@@ -137,7 +137,7 @@ const main = Effect.gen(function* () {
 
   // Display the initial layout
   const initialLayout = buildDisplayLayout(0, Date.now());
-  yield* display(Box.render(initialLayout, { style: "pretty" }));
+  yield* display(Box.renderSync(initialLayout, Box.pretty));
   const positionMap = Reactive.getPositions(initialLayout);
 
   const tickStream = Stream.repeatEffect(
@@ -148,16 +148,16 @@ const main = Effect.gen(function* () {
     })
   ).pipe(
     Stream.schedule(Schedule.spaced("10 milli")),
-    Stream.takeUntil(({ counter }) => counter >= COMPLETE)
+    Stream.takeUntil(({ counter }) => counter >= Complete)
   );
 
   // Process each tick with dynamic updates using reactive positions
   yield* Stream.runForEach(tickStream, ({ counter, timestamp }) =>
     Effect.gen(function* () {
-      const progress = Math.min(counter, COMPLETE);
-      const percentage = Math.round((progress / COMPLETE) * 100);
+      const progress = Math.min(counter, Complete);
+      const percentage = Math.round((progress / Complete) * 100);
       const timeStr = formatTime(timestamp);
-      const status = counter >= COMPLETE ? "completed" : "running";
+      const status = counter >= Complete ? "completed" : "running";
 
       // Create update commands using position map and Array.filterMap
       const updates = pipe(
@@ -167,7 +167,7 @@ const main = Effect.gen(function* () {
             Reactive.cursorToReactive("progress-bar"),
             Option.map((cursorCmd) => [
               cursorCmd,
-              ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH),
+              ProgressBar(counter, Complete, ProgressBarWidth),
             ])
           ),
           pipe(
@@ -199,12 +199,7 @@ const main = Effect.gen(function* () {
 
       // Render all updates if we have any
       if (updates.length > 0) {
-        yield* display(
-          Box.render(Box.combineAll(updates), {
-            style: "pretty",
-            partial: true,
-          })
-        );
+        yield* display(Box.renderSync(Box.combineAll(updates), Box.pretty));
       }
     })
   );
@@ -219,7 +214,7 @@ const main = Effect.gen(function* () {
           Box.alignVert(Box.bottom, 5)
         )
       ),
-      Box.render({ style: "pretty" })
+      Box.renderSync(Box.pretty)
     )
   );
 });

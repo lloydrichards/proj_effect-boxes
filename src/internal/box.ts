@@ -11,8 +11,8 @@ import {
 } from "effect";
 import { dual } from "effect/Function";
 import { pipeArguments } from "effect/Pipeable";
-import { renderAnnotatedBox } from "../Ansi";
 import type * as Box from "../Box";
+import * as Renderer from "../Renderer";
 import * as Width from "./width";
 
 /** @internal */
@@ -672,10 +672,8 @@ export const moveRight = dual<
 );
 
 /** @internal */
-export const defaultRenderConfig: Box.RenderConfig = {
-  style: "plain",
-  preserveWhitespace: false,
-  partial: false,
+export const defaultRenderConfig: Renderer.RenderStyle = {
+  _tag: "Plain",
 };
 
 /** @internal */
@@ -799,32 +797,44 @@ export const resizeBoxAligned =
     );
 
 /** @internal */
-export const render = dual<
-  (config?: Box.RenderConfig) => <A>(self: Box.Box<A>) => string,
-  <A>(self: Box.Box<A>, config?: Box.RenderConfig) => string
->(2, (self, config) => {
-  const { preserveWhitespace, style } = config ?? defaultRenderConfig;
-  const rendered = renderBox(self);
+export const render = Renderer.render;
 
-  return pipe(
-    Match.value(style ?? "pretty").pipe(
-      Match.when("plain", () => renderBox(self)),
-      Match.when("pretty", () => renderAnnotatedBox(self)),
+export const pretty: Renderer.RenderStyle = {
+  _tag: "Pretty",
+  preserveWhitespace: false,
+};
+
+export const plain: Renderer.RenderStyle = {
+  _tag: "Plain",
+};
+
+/** @internal */
+export const renderSync = dual<
+  (config?: Renderer.RenderStyle) => <A>(self: Box.Box<A>) => string,
+  <A>(self: Box.Box<A>, config?: Renderer.RenderStyle) => string
+>(2, (self, config) =>
+  Effect.runSync(
+    Match.value(config ?? defaultRenderConfig).pipe(
+      Match.tag("Plain", () =>
+        pipe(
+          Renderer.render(self, undefined),
+          Effect.provide(Renderer.PlainRendererLive)
+        )
+      ),
+      Match.tag("Pretty", ({ preserveWhitespace }) =>
+        pipe(
+          Renderer.render(self, { preserveWhitespace }),
+          Effect.provide(Renderer.AnsiRendererLive)
+        )
+      ),
       Match.exhaustive
-    ),
-    (a) => (preserveWhitespace ? a : a.map(String.trimEnd)),
-    Array.join("\n"),
-    (d) => (config?.partial ? d : d + (rendered.length > 0 ? "\n" : ""))
-  );
-});
+    )
+  )
+);
 
 /** @internal */
 export const renderWithSpaces = <A>(self: Box.Box<A>): string =>
-  pipe(
-    renderBox(self),
-    Array.join("\n"),
-    String.concat(renderBox(self).length > 0 ? "\n" : "")
-  );
+  pipe(renderBox(self), Array.join("\n"));
 
 /** @internal */
 export const renderWith = dual<
@@ -835,9 +845,10 @@ export const renderWith = dual<
 );
 
 /** @internal */
-export const printBox = <A>(b: Box.Box<A>) =>
+export const printBox = (box: Box.Box<unknown>) =>
   Effect.gen(function* () {
-    yield* Console.log(render(b, { style: "pretty" }));
+    const rendered = yield* render(box);
+    yield* Console.log(rendered);
   });
 
 // -----------------------------------------------------------------------------

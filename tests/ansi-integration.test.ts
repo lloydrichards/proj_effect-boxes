@@ -11,9 +11,9 @@ describe("Ansi Annotation Integration", () => {
   describe("Box Annotation API Integration", () => {
     it("should support the specified API syntax for single styles", () => {
       const styledBox = Box.text("content").pipe(Box.annotate(Ansi.red));
-      const rendered = Box.render(styledBox, { style: "pretty" });
+      const rendered = Box.renderSync(styledBox, Box.pretty);
 
-      expect(rendered).toBe("\x1b[31mcontent\x1b[0m\n");
+      expect(rendered).toBe("\x1b[31mcontent\x1b[0m");
       expect(styledBox.annotation).toEqual(Ansi.red);
     });
 
@@ -22,8 +22,8 @@ describe("Ansi Annotation Integration", () => {
       const combinedStyle = Ansi.combine(Ansi.blue, Ansi.underlined);
 
       const styledBox = Box.text("combined").pipe(Box.annotate(combinedStyle));
-      const rendered = Box.render(styledBox, { style: "pretty" });
-      expect(rendered).toBe("\x1b[34;4mcombined\x1b[0m\n");
+      const rendered = Box.renderSync(styledBox, Box.pretty);
+      expect(rendered).toBe("\x1b[34;4mcombined\x1b[0m");
       const expectedData = [
         {
           _tag: "ForegroundColor",
@@ -47,7 +47,7 @@ describe("Ansi Annotation Integration", () => {
       expect(styledBox.cols).toBe(12); // 10 + 2 movement
       expect(styledBox.annotation).toBeDefined();
 
-      const rendered = Box.render(styledBox, { style: "pretty" });
+      const rendered = Box.renderSync(styledBox, Box.pretty);
       expect(rendered).toContain("\x1b[31m");
       expect(rendered).toContain("Hello");
     });
@@ -58,9 +58,9 @@ describe("Ansi Annotation Integration", () => {
       const styledBox = Box.text("Transform me").pipe(Box.annotate(Ansi.blue));
 
       const reAnnotatedBox = Box.reAnnotate(styledBox, () => Ansi.red.data);
-      const rendered = Box.render(reAnnotatedBox, { style: "pretty" });
+      const rendered = Box.renderSync(reAnnotatedBox, Box.pretty);
 
-      expect(rendered).toBe("\x1b[31mTransform me\x1b[0m\n");
+      expect(rendered).toBe("\x1b[31mTransform me\x1b[0m");
       expect(reAnnotatedBox.annotation?.data).toEqual(Ansi.red.data);
     });
 
@@ -77,14 +77,14 @@ describe("Ansi Annotation Integration", () => {
 
       const [redBox, blueBox, yellowBox] = variations;
       if (redBox && blueBox && yellowBox) {
-        expect(Box.render(redBox, { style: "pretty" })).toBe(
-          "\x1b[31mVary me\x1b[0m\n"
+        expect(Box.renderSync(redBox, Box.pretty)).toBe(
+          "\x1b[31mVary me\x1b[0m"
         );
-        expect(Box.render(blueBox, { style: "pretty" })).toBe(
-          "\x1b[34mVary me\x1b[0m\n"
+        expect(Box.renderSync(blueBox, Box.pretty)).toBe(
+          "\x1b[34mVary me\x1b[0m"
         );
-        expect(Box.render(yellowBox, { style: "pretty" })).toBe(
-          "\x1b[33mVary me\x1b[0m\n"
+        expect(Box.renderSync(yellowBox, Box.pretty)).toBe(
+          "\x1b[33mVary me\x1b[0m"
         );
       }
     });
@@ -98,7 +98,7 @@ describe("Ansi Annotation Integration", () => {
           .data as Ansi.AnsiStyle;
 
       const enhancedBox = Box.reAnnotate(styledBox, enhanceStyle);
-      const rendered = Box.render(enhancedBox, { style: "pretty" });
+      const rendered = Box.renderSync(enhancedBox, Box.pretty);
 
       expect(rendered).toContain("\x1b[37;45;4m"); // White fg, magenta bg, underlined
       expect(rendered).toContain("Complex");
@@ -115,7 +115,7 @@ describe("Ansi Annotation Integration", () => {
       const outerBox = Box.text("Outer").pipe(Box.annotate(Ansi.blue));
 
       const layout = Box.hcat([outerBox, innerBox as any], Box.top);
-      const rendered = Box.render(layout, { style: "pretty" });
+      const rendered = Box.renderSync(layout, Box.pretty);
 
       // Each box should maintain its own color
       expect(rendered).toContain("\x1b[34mOuter\x1b[0m"); // Red outer
@@ -132,7 +132,7 @@ describe("Ansi Annotation Integration", () => {
         Box.left
       );
 
-      const rendered = Box.render(parentBox, { style: "pretty" });
+      const rendered = Box.renderSync(parentBox, Box.pretty);
 
       // Only the middle line should be bold
       const lines = rendered.split("\n");
@@ -147,11 +147,11 @@ describe("Ansi Annotation Integration", () => {
       );
 
       const unstyledBox = Box.unAnnotate(styledBox);
-      const styledRendered = Box.render(styledBox, { style: "pretty" });
-      const unstyledRendered = Box.render(unstyledBox, { style: "pretty" });
+      const styledRendered = Box.renderSync(styledBox, Box.pretty);
+      const unstyledRendered = Box.renderSync(unstyledBox, Box.pretty);
 
       expect(styledRendered).toContain("\x1b[35m"); // Magenta
-      expect(unstyledRendered).toBe("Styled text\n"); // Plain text
+      expect(unstyledRendered).toBe("Styled text"); // Plain text
       expect(unstyledBox.annotation).toBeUndefined();
     });
   });
@@ -180,7 +180,7 @@ describe("Ansi Annotation Integration", () => {
       ).pipe(Box.annotate(blueUnderlinedAnnotation));
 
       const layout = Box.hsep([redBox, innerLayout as any], 1, Box.top);
-      const rendered = Box.render(layout, { style: "pretty" });
+      const rendered = Box.renderSync(layout, Box.pretty);
 
       // Check that all styles are applied correctly
       expect(rendered).toContain("\x1b[31mred\x1b[0m"); // Red text
@@ -201,7 +201,7 @@ describe("Ansi Annotation Integration", () => {
         Box.text(" | ")
       );
 
-      const rendered = Box.render(punctuatedLayout, { style: "pretty" });
+      const rendered = Box.renderSync(punctuatedLayout, Box.pretty);
 
       expect(rendered).toContain("\x1b[31mError\x1b[0m"); // Red
       expect(rendered).toContain("\x1b[33mWarning\x1b[0m"); // Yellow
@@ -228,7 +228,7 @@ describe("Ansi Annotation Integration", () => {
         Box.text("---")
       );
 
-      const rendered = Box.render(verticalLayout, { style: "pretty" });
+      const rendered = Box.renderSync(verticalLayout, Box.pretty);
 
       expect(rendered).toContain("\x1b[37;40;1mHEADER\x1b[0m"); // Header styling
       expect(rendered).toContain("\x1b[32mContent goes here\x1b[0m"); // Green content
@@ -254,7 +254,7 @@ describe("Ansi Annotation Integration", () => {
             Ansi.bold
           ).data
       );
-      const rendered = Box.render(transformedBox, { style: "pretty" });
+      const rendered = Box.renderSync(transformedBox, Box.pretty);
 
       // Blue should win due to last-wins conflict resolution
       expect(rendered).toContain("\x1b[34;1m"); // Blue foreground + bold
@@ -264,8 +264,8 @@ describe("Ansi Annotation Integration", () => {
     it("should handle empty boxes with ANSI annotations", () => {
       const emptyBox = Box.emptyBox(0, 0).pipe(Box.annotate(Ansi.cyan));
 
-      const rendered = Box.render(emptyBox, { style: "pretty" });
-      expect(rendered).toBe(""); // Empty boxes should render empty regardless of styling
+      const rendered = Box.renderSync(emptyBox, Box.pretty);
+      expect(rendered).toBe(""); // Empty boxes should render empty
     });
 
     it("should preserve box dimensions when adding annotations", () => {
@@ -275,7 +275,7 @@ describe("Ansi Annotation Integration", () => {
       expect(annotatedBox.rows).toBe(originalBox.rows);
       expect(annotatedBox.cols).toBe(originalBox.cols);
 
-      const annotatedRendered = Box.render(annotatedBox, { style: "pretty" });
+      const annotatedRendered = Box.renderSync(annotatedBox, Box.pretty);
 
       // Content should be preserved, just with ANSI codes added
       expect(annotatedRendered).toContain("Multi");
