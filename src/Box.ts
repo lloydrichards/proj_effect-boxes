@@ -5,6 +5,7 @@ import type * as Inspectable from "effect/Inspectable";
 import type { Pipeable } from "effect/Pipeable";
 import type { Annotation } from "./Annotation";
 import * as internal from "./internal/box";
+import type * as Renderer from "./Renderer";
 
 export const BoxTypeId: unique symbol = internal.BoxTypeId;
 
@@ -532,18 +533,10 @@ export const moveRight: {
  */
 
 /**
- * Configuration options for rendering boxes with annotations.
- */
-export type RenderConfig = {
-  readonly style?: "pretty" | "plain";
-  readonly preserveWhitespace?: boolean;
-  readonly partial?: boolean;
-};
-
-/**
  * Default render configuration for backwards compatibility (plain mode).
  */
-export const defaultRenderConfig: RenderConfig = internal.defaultRenderConfig;
+export const defaultRenderConfig: Renderer.RenderStyle =
+  internal.defaultRenderConfig;
 
 /**
  * Merges multiple arrays of rendered text lines into a single array.
@@ -619,18 +612,27 @@ export const resizeBoxAligned: (
 ) => (self: string[]) => string[] = internal.resizeBoxAligned;
 
 /**
- * Converts a box to a string suitable for display, removing trailing whitespace.
- * Supports optional RenderConfig to control styling behavior.
+ * Synchronous version of render() - converts a box to a string suitable for display.
+ * This is an alias for render() provided for clarity that this is the non-Effect version.
  * @param self - The box to render
  * @param config - Optional render configuration (defaults to pretty style)
  *
  * @note Haskell: `render :: Box -> String`
  */
-export const render: {
-  (config?: RenderConfig): <A>(self: Box<A>) => string;
-  <A>(self: Box<A>, config?: RenderConfig): string;
-} = internal.render;
+export const renderSync: {
+  (config?: Renderer.RenderStyle): <A>(self: Box<A>) => string;
+  <A>(self: Box<A>, config?: Renderer.RenderStyle): string;
+} = internal.renderSync;
 
+export const render: {
+  <A>(
+    config?: Renderer.RenderConfig | undefined
+  ): (box: Box<A>) => Effect.Effect<string, never, Renderer.Renderer>;
+  <A>(
+    box: Box<A>,
+    config?: Renderer.RenderConfig
+  ): Effect.Effect<string, never, Renderer.Renderer>;
+} = internal.render;
 /**
  * Converts a box to a string while preserving all whitespace including trailing spaces.
  * @param self - The box to render
@@ -656,8 +658,12 @@ export const renderWith: {
  *
  * @note Haskell: `printBox :: Box -> IO ()`
  */
-export const printBox: <A>(b: Box<A>) => Effect.Effect<void, never, never> =
-  internal.printBox;
+export const printBox: <A>(
+  b: Box<A>
+) => Effect.Effect<void, never, Renderer.Renderer> = internal.printBox;
+
+export const pretty: Renderer.RenderStyle = internal.pretty;
+export const plain: Renderer.RenderStyle = internal.plain;
 
 /*
  *  --------------------------------------------------------------------------------

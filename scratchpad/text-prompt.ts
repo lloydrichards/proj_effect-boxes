@@ -139,7 +139,7 @@ const processInput = (
 const renderPrompt = (state: PromptState) =>
   Effect.gen(function* () {
     if (state.submitted) {
-      return;
+      return yield* Effect.void;
     }
     const positions = Reactive.getPositions(createPromptLayout(state));
     const inputCursor = Reactive.cursorToReactive(positions, "input-field");
@@ -149,25 +149,22 @@ const renderPrompt = (state: PromptState) =>
     );
 
     if (Option.isSome(inputCursor) && Option.isSome(lengthCursor)) {
-      yield* pipe(
-        Box.combineAll([
-          lengthCursor.value,
-          Box.text(`${state.input.length}/100`).pipe(Box.annotate(Ansi.dim)),
-          // Clear and update input field
-          inputCursor.value,
-          Box.text(" ".repeat(20)),
-          inputCursor.value,
-          Box.text(state.input),
-          // move cursor to correct position
-          inputCursor.value,
-          Cmd.cursorForward(state.cursor),
-        ]),
-        Box.render({
-          partial: true,
-          preserveWhitespace: true,
-          style: "pretty",
-        }),
-        display
+      yield* display(
+        Box.renderSync(
+          Box.combineAll([
+            lengthCursor.value,
+            Box.text(`${state.input.length}/100`).pipe(Box.annotate(Ansi.dim)),
+            // Clear and update input field
+            inputCursor.value,
+            Box.text(" ".repeat(20)),
+            inputCursor.value,
+            Box.text(state.input),
+            // move cursor to correct position
+            inputCursor.value,
+            Cmd.cursorForward(state.cursor),
+          ]),
+          Box.pretty
+        )
       );
     }
   });
@@ -190,8 +187,9 @@ const textPrompt = (message: string) =>
         const initialState = yield* Ref.get(stateRef);
 
         yield* display(
-          Box.render({ partial: true })(
-            Cmd.clearScreen.pipe(Box.combine(createPromptLayout(initialState)))
+          Box.renderSync(
+            Box.combine(Cmd.clearScreen, createPromptLayout(initialState)),
+            Box.pretty
           )
         );
 
@@ -209,7 +207,7 @@ const textPrompt = (message: string) =>
             )
           ),
           // Cleanup: Clear screen and reset cursor
-          display(Box.render({ partial: true })(Cmd.clearScreen))
+          display(Box.renderSync(Cmd.clearScreen, Box.pretty))
         );
 
         return result.input;
@@ -224,15 +222,17 @@ const swedishChefPrompt = Effect.gen(function* () {
   const cookingMethod = yield* textPrompt("How should we cook it?");
 
   yield* display(
-    Box.text(
-      `Bork, bork, bork! Ve vill ${cookingMethod} zee ${ingredient} in zee pot, yah!`
-    ).pipe(
-      Box.annotate(Ansi.green),
-      Box.alignHoriz(Box.left, 78),
-      Box.moveLeft(2),
-      Box.moveRight(2),
-      Border,
-      Box.render({ style: "pretty" })
+    Box.renderSync(
+      Box.text(
+        `Bork, bork, bork! Ve vill ${cookingMethod} zee ${ingredient} in zee pot, yah!`
+      ).pipe(
+        Box.annotate(Ansi.green),
+        Box.alignHoriz(Box.left, 78),
+        Box.moveLeft(2),
+        Box.moveRight(2),
+        Border
+      ),
+      Box.pretty
     )
   );
 }).pipe(

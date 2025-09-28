@@ -1,4 +1,4 @@
-import { pipe, String, Array } from "effect";
+import { Array, pipe, String } from "effect";
 import { describe, expect, it } from "vitest";
 import * as Box from "../src/Box";
 
@@ -30,41 +30,38 @@ describe("Border", () => {
   it("should add a border around the box", () => {
     const box = Box.text("Hello\nWorld");
     const borderedBox = Border(box);
-    expect(Box.render()(borderedBox)).toBe(
+    expect(Box.renderSync(borderedBox, Box.pretty)).toBe(
       String.stripMargin(
         `|┌─────┐
          |│Hello│
          |│World│
-         |└─────┘
-         |`
+         |└─────┘`
       )
     );
   });
   it("should handle nested borders", () => {
     const box = Box.text("Hello\nWorld");
     const borderedBox = Border(Border(box));
-    expect(Box.render()(borderedBox)).toBe(
+    expect(Box.renderSync(borderedBox, Box.pretty)).toBe(
       String.stripMargin(
         `|┌───────┐
          |│┌─────┐│
          |││Hello││
          |││World││
          |│└─────┘│
-         |└───────┘
-         |`
+         |└───────┘`
       )
     );
   });
   it("should handle emojis in a box", () => {
     const box = Box.text("Hello 👋\nWorld 🌍");
     const borderedBox = Border(box);
-    expect(Box.render()(borderedBox)).toBe(
+    expect(Box.renderSync(borderedBox, Box.pretty)).toBe(
       String.stripMargin(
         `|┌────────┐
-         |│Hello 👋 │
-         |│World 🌍 │
-         |└────────┘
-         |`
+         |│Hello 👋│
+         |│World 🌍│
+         |└────────┘`
       )
     );
   });
@@ -73,12 +70,11 @@ describe("Border", () => {
     const box2 = Box.text("Box 2");
     const rowBox = pipe([box1, box2], Box.punctuateH(Box.left, Box.text(" ")));
     const borderedBox = Border(rowBox);
-    expect(Box.render()(borderedBox)).toBe(
+    expect(Box.renderSync(borderedBox, Box.pretty)).toBe(
       String.stripMargin(
         `|┌───────────┐
          |│Box 1 Box 2│
-         |└───────────┘
-         |`
+         |└───────────┘`
       )
     );
   });
@@ -87,24 +83,22 @@ describe("Border", () => {
     const box2 = Box.text("Box 🔥");
     const rowBox = pipe([box1, box2], Box.punctuateH(Box.left, Box.text(" ")));
     const borderedBox = Border(rowBox);
-    expect(Box.render()(borderedBox)).toBe(
+    expect(Box.renderSync(borderedBox, Box.pretty)).toBe(
       String.stripMargin(
         `|┌────────────┐
-         |│Box 1 Box 🔥 │
-         |└────────────┘
-         |`
+         |│Box 1 Box 🔥│
+         |└────────────┘`
       )
     );
   });
   it("should handle empty boxes", () => {
     const box = Box.text(" ");
     const borderedBox = Border(box);
-    expect(Box.render()(borderedBox)).toBe(
+    expect(Box.renderSync(borderedBox, Box.pretty)).toBe(
       String.stripMargin(
         `|┌─┐
          |│ │
-         |└─┘
-         |`
+         |└─┘`
       )
     );
   });

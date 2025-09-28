@@ -169,8 +169,8 @@ export const combine = (
  *  --  Rendering  -----------------------------------------------------------------
  *  --------------------------------------------------------------------------------
  */
-
-const isAnsi = (data: unknown): data is Ansi.AnsiStyle =>
+/** @internal */
+export const isAnsi = (data: unknown): data is Ansi.AnsiStyle =>
   Array.isArray(data) &&
   data.every(
     (item) =>
@@ -181,7 +181,8 @@ const isAnsi = (data: unknown): data is Ansi.AnsiStyle =>
       "code" in item
   );
 
-const isCommandAnnotation = (data: unknown): data is Ansi.AnsiStyle =>
+/** @internal */
+export const isCommandAnnotation = (data: unknown): data is Ansi.AnsiStyle =>
   isAnsi(data) && data.length === 1 && data[0]?._tag === "CommandAttribute";
 
 /** @internal */
@@ -207,7 +208,11 @@ export const getAnsiEscapeSequence = (data: Ansi.AnsiStyle): string | null => {
   );
 };
 
-const applyAnsiStyling = (lines: string[], escapeSequence: string): string[] =>
+/** @internal */
+export const applyAnsiStyling = (
+  lines: string[],
+  escapeSequence: string
+): string[] =>
   pipe(
     Option.fromNullable(escapeSequence),
     Option.filter((seq) => seq !== ""),
@@ -257,7 +262,8 @@ const findAnsiSequenceEnd = (
   return chars.length;
 };
 
-const truncatePreservingAnsi = (
+/** @internal */
+export const truncatePreservingAnsi = (
   str: string,
   maxVisibleLength: number
 ): string => {
@@ -296,8 +302,8 @@ const truncatePreservingAnsi = (
     (d) => d.result
   );
 };
-
-const padPreservingAnsi = (
+/** @internal */
+export const padPreservingAnsi = (
   str: string,
   targetVisibleLength: number,
   alignment: Box.Alignment = "AlignFirst"

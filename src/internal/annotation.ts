@@ -1,7 +1,7 @@
 import * as Equal from "effect/Equal";
 import * as Hash from "effect/Hash";
-import type * as Annotation from "../Annotation";
 import { pipeArguments } from "effect/Pipeable";
+import type * as Annotation from "../Annotation";
 
 /** @internal */
 const AnnotationSymbolKey = "@effect/boxes/Annotation";

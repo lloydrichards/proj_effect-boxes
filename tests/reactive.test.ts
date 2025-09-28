@@ -61,7 +61,9 @@ describe("Reactive Annotations", () => {
 
       expect(reactiveBox.rows).toBe(originalBox.rows);
       expect(reactiveBox.cols).toBe(originalBox.cols);
-      expect(Box.render()(reactiveBox)).toBe(Box.render()(originalBox));
+      expect(Box.renderSync(reactiveBox, Box.pretty)).toBe(
+        Box.renderSync(originalBox, Box.pretty)
+      );
     });
   });
 
@@ -69,8 +71,8 @@ describe("Reactive Annotations", () => {
     it("tracks single reactive box position", () => {
       const box = Reactive.makeReactive(Box.text("Hello"), "single");
       const positions = Reactive.getPositions(box);
-      const rendered = Box.render()(box);
-      expect(rendered).toBe("Hello\n");
+      const rendered = Box.renderSync(box, Box.pretty);
+      expect(rendered).toBe("Hello");
       expect(HashMap.has(positions, "single")).toBe(true);
 
       const position = Option.getOrUndefined(HashMap.get(positions, "single"));
@@ -88,9 +90,9 @@ describe("Reactive Annotations", () => {
       const combined = Box.hcat([box1, box2], Box.top);
 
       const positions = Reactive.getPositions(combined);
-      const rendered = Box.render()(combined);
+      const rendered = Box.renderSync(combined, Box.pretty);
 
-      expect(rendered).toBe("LeftRight\n");
+      expect(rendered).toBe("LeftRight");
       expect(HashMap.size(positions)).toBe(2);
 
       const leftPos = Option.getOrUndefined(HashMap.get(positions, "left-box"));
@@ -118,9 +120,9 @@ describe("Reactive Annotations", () => {
       const combined = Box.vcat([box1, box2], Box.left);
 
       const positions = Reactive.getPositions(combined);
-      const rendered = Box.render()(combined);
+      const rendered = Box.renderSync(combined, Box.pretty);
 
-      expect(rendered).toBe("Top\nBottom\n");
+      expect(rendered).toBe("Top\nBottom");
       expect(HashMap.size(positions)).toBe(2);
 
       const topPos = Option.getOrUndefined(HashMap.get(positions, "top-box"));
@@ -177,9 +179,9 @@ describe("Reactive Annotations", () => {
       const combined = Box.hcat([normalBox, reactiveBox], Box.top);
 
       const positions = Reactive.getPositions(combined);
-      const rendered = Box.render()(combined);
+      const rendered = Box.renderSync(combined, Box.pretty);
 
-      expect(rendered).toBe("NormalReactive\n");
+      expect(rendered).toBe("NormalReactive");
       expect(HashMap.size(positions)).toBe(1);
       expect(HashMap.has(positions, "reactive-only")).toBe(true);
 
@@ -259,10 +261,10 @@ describe("Reactive Annotations", () => {
 
       // Render with positions
       const positions = Reactive.getPositions(layout);
-      const rendered = Box.render()(layout);
+      const rendered = Box.renderSync(layout, Box.pretty);
 
       // Verify layout
-      expect(rendered).toBe("Header\n\n[OK] [Cancel]\n");
+      expect(rendered).toBe("Header\n\n[OK] [Cancel]");
 
       // Verify all positions are tracked
       expect(HashMap.size(positions)).toBe(3);

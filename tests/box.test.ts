@@ -9,33 +9,40 @@ import * as Box from "../src/Box";
 describe("Box", () => {
   it("text trims trailing spaces per line", () => {
     const s = "abc   \nxy  ";
-    expect(Box.render()(Box.text(s))).toBe(
+    expect(Box.renderSync(Box.text(s), Box.pretty)).toBe(
       String.stripMargin(
         `|abc
-         |xy
-         |`
+         |xy`
       )
     );
   });
 
   it("empty right identity", () => {
     const b = Box.hcat([Box.text("hi"), Box.text("!")], Box.top);
-    expect(Box.render()(Box.hAppend(b, Box.nullBox))).toBe(Box.render()(b));
+    expect(Box.renderSync(Box.hAppend(b, Box.nullBox), Box.pretty)).toBe(
+      Box.renderSync(b, Box.pretty)
+    );
   });
 
   it("empty left identity", () => {
     const b = Box.text("Z");
-    expect(Box.render()(Box.hAppend(Box.nullBox, b))).toBe(Box.render()(b));
+    expect(Box.renderSync(Box.hAppend(Box.nullBox, b), Box.pretty)).toBe(
+      Box.renderSync(b, Box.pretty)
+    );
   });
 
   it("empty top identity", () => {
     const b = Box.text("Z");
-    expect(Box.render()(Box.vAppend(Box.nullBox, b))).toBe(Box.render()(b));
+    expect(Box.renderSync(Box.vAppend(Box.nullBox, b), Box.pretty)).toBe(
+      Box.renderSync(b, Box.pretty)
+    );
   });
 
   it("empty bottom identity", () => {
     const b = Box.text("Z");
-    expect(Box.render()(Box.vAppend(b, Box.nullBox))).toBe(Box.render()(b));
+    expect(Box.renderSync(Box.vAppend(b, Box.nullBox), Box.pretty)).toBe(
+      Box.renderSync(b, Box.pretty)
+    );
   });
 
   it("associativity horizontal", () => {
@@ -44,7 +51,9 @@ describe("Box", () => {
     const c = Box.text("c");
     const leftH = Box.hAppend(a, Box.hAppend(b, c));
     const rightH = Box.hAppend(Box.hAppend(a, b), c);
-    expect(Box.render()(leftH)).toBe(Box.render()(rightH));
+    expect(Box.renderSync(leftH, Box.pretty)).toBe(
+      Box.renderSync(rightH, Box.pretty)
+    );
   });
 
   it("associativity vertical", () => {
@@ -53,7 +62,9 @@ describe("Box", () => {
     const c = Box.text("c");
     const leftV = Box.vAppend(a, Box.vAppend(b, c));
     const rightV = Box.vAppend(Box.vAppend(a, b), c);
-    expect(Box.render()(leftV)).toBe(Box.render()(rightV));
+    expect(Box.renderSync(leftV, Box.pretty)).toBe(
+      Box.renderSync(rightV, Box.pretty)
+    );
   });
 
   it("semigroup associativity", () => {
@@ -63,24 +74,30 @@ describe("Box", () => {
     const c = Box.text("c");
     const left = Box.combine(Box.combine(a, b), c);
     const right = Box.combine(a, Box.combine(b, c));
-    expect(Box.render()(left)).toBe(Box.render()(right));
-    expect(Box.render()(left)).toBe("abc\n");
+    expect(Box.renderSync(left, Box.pretty)).toBe(
+      Box.renderSync(right, Box.pretty)
+    );
+    expect(Box.renderSync(left, Box.pretty)).toBe("abc");
   });
 
   it("monoid left identity", () => {
     // empty <> x = x
     const box = Box.text("box");
     const result = Box.combine(Box.nullBox, box);
-    expect(Box.render()(result)).toBe(Box.render()(box));
-    expect(Box.render()(result)).toBe("box\n");
+    expect(Box.renderSync(result, Box.pretty)).toBe(
+      Box.renderSync(box, Box.pretty)
+    );
+    expect(Box.renderSync(result, Box.pretty)).toBe("box");
   });
 
   it("monoid right identity", () => {
     // x <> empty = x
     const box = Box.text("world");
     const result = Box.combine(box, Box.nullBox);
-    expect(Box.render()(result)).toBe(Box.render()(box));
-    expect(Box.render()(result)).toBe("world\n");
+    expect(Box.renderSync(result, Box.pretty)).toBe(
+      Box.renderSync(box, Box.pretty)
+    );
+    expect(Box.renderSync(result, Box.pretty)).toBe("world");
   });
 
   it("monoid combineAll with multiple boxes", () => {
@@ -90,13 +107,15 @@ describe("Box", () => {
       Box.text("c"),
       Box.text("d"),
     ]);
-    expect(Box.render()(result)).toBe("abcd\n");
+    expect(Box.renderSync(result, Box.pretty)).toBe("abcd");
   });
 
   it("monoid combineAll with empty collection", () => {
     const result = Box.combineAll([]);
-    expect(Box.render()(result)).toBe(Box.render()(Box.nullBox));
-    expect(Box.render()(result)).toBe("");
+    expect(Box.renderSync(result, Box.pretty)).toBe(
+      Box.renderSync(Box.nullBox, Box.pretty)
+    );
+    expect(Box.renderSync(result, Box.pretty)).toBe("");
   });
 
   it("combineMany combines a starting box with multiple boxes", () => {
@@ -104,7 +123,7 @@ describe("Box", () => {
       [Box.text("1"), Box.text("2"), Box.text("3")],
       Box.text("start")
     );
-    expect(Box.render()(result)).toBe("start123\n");
+    expect(Box.renderSync(result, Box.pretty)).toBe("start123");
   });
 
   it("rows and cols can describe a Box", () => {
@@ -123,7 +142,7 @@ describe("issue38 parity tests", () => {
     const b = Box.char("A");
     expect(b.rows).toBe(1);
     expect(b.cols).toBe(1);
-    expect(Box.render()(b)).toBe("A\n");
+    expect(Box.renderSync(b, Box.pretty)).toBe("A");
   });
 
   it("rows/cols report correct sizes and after composition", () => {
@@ -147,8 +166,7 @@ describe("issue38 parity tests", () => {
     expect(Box.renderWith(b, ".")).toBe(
       String.stripMargin(
         `|...
-         |...
-         |`
+         |...`
       )
     );
   });
@@ -158,11 +176,11 @@ describe("issue38 parity tests", () => {
     const b = Box.text("Z");
     const beside = (l: any, r: any) => Box.hcat([l, r], Box.top);
     const above = (t: any, bot: any) => Box.vcat([t, bot], Box.left);
-    expect(Box.render()(beside(a, b))).toBe(
-      Box.render()(Box.hcat([a, b], Box.top))
+    expect(Box.renderSync(beside(a, b), Box.pretty)).toBe(
+      Box.renderSync(Box.hcat([a, b], Box.top), Box.pretty)
     );
-    expect(Box.render()(above(b, a))).toBe(
-      Box.render()(Box.vcat([b, a], Box.left))
+    expect(Box.renderSync(above(b, a), Box.pretty)).toBe(
+      Box.renderSync(Box.vcat([b, a], Box.left), Box.pretty)
     );
   });
 
@@ -176,8 +194,7 @@ describe("issue38 parity tests", () => {
     expect(Box.renderWith(c1, ".")).toBe(
       String.stripMargin(
         `|xZ
-         |y.
-         |`
+         |y.`
       )
     );
 
@@ -185,8 +202,7 @@ describe("issue38 parity tests", () => {
     expect(Box.renderWith(c2, ".")).toBe(
       String.stripMargin(
         `|x.
-         |yZ
-         |`
+         |yZ`
       )
     );
   });
@@ -198,8 +214,7 @@ describe("issue38 parity tests", () => {
       String.stripMargin(
         `|x.
          |y.
-         |zQ
-         |`
+         |zQ`
       )
     );
   });
@@ -210,8 +225,7 @@ describe("issue38 parity tests", () => {
     expect(Box.renderWith(Box.vcat([a, b], Box.right), ".")).toBe(
       String.stripMargin(
         `|.a
-         |bb
-         |`
+         |bb`
       )
     );
   });
@@ -229,8 +243,7 @@ describe("issue38 parity tests", () => {
          |.....
          |..x..
          |.....
-         |.....
-         |`
+         |.....`
       )
     );
   });
@@ -248,8 +261,7 @@ describe("issue38 parity tests", () => {
          |.....
          |..x..
          |..y..
-         |.....
-         |`
+         |.....`
       )
     );
   });
@@ -268,8 +280,7 @@ describe("issue38 parity tests", () => {
          |.....
          |..xy.
          |.....
-         |.....
-         |`
+         |.....`
       )
     );
   });
@@ -281,10 +292,9 @@ describe("columns", () => {
     const cols = Box.columns(text, Box.left, 20, 5);
     expect(cols).toHaveLength(1);
     expect(cols[0]?.rows).toBe(5);
-    expect(Box.render()(cols[0] as any)).toBe(
+    expect(Box.renderSync(cols[0] as any, Box.pretty)).toBe(
       String.stripMargin(
         `|hello world
-         |
          |
          |
          |
@@ -301,7 +311,7 @@ describe("columns", () => {
     for (const col of cols) {
       expect(col.rows).toBe(3);
     }
-    const allText = cols.map((col) => Box.render()(col)).join("");
+    const allText = cols.map((col) => Box.renderSync(col, Box.pretty)).join("");
     expect(allText).toContain("This is a");
     expect(allText).toContain("very long");
   });
@@ -311,12 +321,11 @@ describe("columns", () => {
     const cols = Box.columns(text, Box.left, 6, 3);
     expect(cols).toHaveLength(1);
     if (cols[0]) {
-      expect(Box.render()(cols[0])).toBe(
+      expect(Box.renderSync(cols[0], Box.pretty)).toBe(
         String.stripMargin(
           `|line1
            |line2
-           |line3
-           |`
+           |line3`
         )
       );
     }
@@ -328,7 +337,7 @@ describe("columns", () => {
     expect(cols.length).toBeGreaterThanOrEqual(1);
     if (cols[0]) {
       expect(cols[0].rows).toBe(2);
-      const lines = Box.render()(cols[0]).split("\n").slice(0, -1);
+      const lines = Box.renderSync(cols[0], Box.pretty).split("\n");
       const hasRightAlignment = lines.some(
         (line) => line.startsWith(" ") && line.trim().length > 0
       );
@@ -340,16 +349,15 @@ describe("columns", () => {
     const cols = Box.columns("", Box.left, 10, 5);
     expect(cols).toHaveLength(1);
     expect(cols[0]?.rows).toBe(5);
-    expect(Box.render()(cols[0] as any)).toBe("");
+    expect(Box.renderSync(cols[0] as any, Box.pretty)).toBe("");
   });
 
   it("handles single word", () => {
     const cols = Box.columns("word", Box.left, 10, 3);
     expect(cols).toHaveLength(1);
-    expect(Box.render()(cols[0] as any)).toBe(
+    expect(Box.renderSync(cols[0] as any, Box.pretty)).toBe(
       String.stripMargin(
         `|word
-         |
          |
          |`
       )
@@ -372,7 +380,7 @@ describe("para", () => {
     const box = Box.para(text, Box.left, 10);
     expect(box.rows).toBeGreaterThan(0);
     expect(box.cols).toBeLessThanOrEqual(10);
-    expect(Box.render()(box)).toBe(
+    expect(Box.renderSync(box, Box.pretty)).toBe(
       String.stripMargin(
         `|This is a
          |test
@@ -380,8 +388,7 @@ describe("para", () => {
          |that
          |should
          |flow
-         |nicely.
-         |`
+         |nicely.`
       )
     );
   });
@@ -391,7 +398,7 @@ describe("para", () => {
     const box = Box.para(text, Box.right, 10);
     expect(box.rows).toBeGreaterThan(0);
     expect(box.cols).toBeLessThanOrEqual(10);
-    expect(Box.render()(box)).toBe(
+    expect(Box.renderSync(box, Box.pretty)).toBe(
       String.stripMargin(
         `|This is a
          |     test
@@ -399,8 +406,7 @@ describe("para", () => {
          |     that
          |   should
          |     flow
-         |  nicely.
-         |`
+         |  nicely.`
       )
     );
   });
@@ -410,7 +416,7 @@ describe("para", () => {
     const box = Box.para(text, Box.center1, 10);
     expect(box.rows).toBeGreaterThan(0);
     expect(box.cols).toBeLessThanOrEqual(10);
-    expect(Box.render()(box)).toBe(
+    expect(Box.renderSync(box, Box.pretty)).toBe(
       String.stripMargin(
         `|This is a
          |   test
@@ -418,22 +424,20 @@ describe("para", () => {
          |   that
          |  should
          |   flow
-         | nicely.
-         |`
+         | nicely.`
       )
     );
   });
 
   it("flows text to specified width", () => {
     const text = "Something longer than the width.";
-    expect(Box.render()(Box.para(text, Box.left, 4))).toBe(
+    expect(Box.renderSync(Box.para(text, Box.left, 4), Box.pretty)).toBe(
       String.stripMargin(
         `|Some
          |long
          |than
          |the
-         |widt
-         |`
+         |widt`
       )
     );
   });
@@ -442,28 +446,26 @@ describe("para", () => {
 describe("Spacing", () => {
   it("hcatWithSpace concatenates boxes horizontally with space", () => {
     const result = Box.hcatWithSpace(Box.text("left"), Box.text("right"));
-    expect(Box.render()(result)).toBe("left right\n");
+    expect(Box.renderSync(result, Box.pretty)).toBe("left right");
   });
 
   it("hcatWithSpace with multi-line boxes", () => {
     const result = Box.hcatWithSpace(Box.text("A\nB"), Box.text("X\nY"));
-    expect(Box.render()(result)).toBe(
+    expect(Box.renderSync(result, Box.pretty)).toBe(
       String.stripMargin(
         `|A X
-         |B Y
-         |`
+         |B Y`
       )
     );
   });
 
   it("vcatWithSpace concatenates boxes vertically with space", () => {
     const result = Box.vcatWithSpace(Box.text("top"), Box.text("bottom"));
-    expect(Box.render()(result)).toBe(
+    expect(Box.renderSync(result, Box.pretty)).toBe(
       String.stripMargin(
         `|top
          |
-         |bottom
-         |`
+         |bottom`
       )
     );
   });
@@ -473,12 +475,11 @@ describe("Spacing", () => {
       Box.text("short"),
       Box.text("much longer text")
     );
-    expect(Box.render()(result)).toBe(
+    expect(Box.renderSync(result, Box.pretty)).toBe(
       String.stripMargin(
         `|short
          |
-         |much longer text
-         |`
+         |much longer text`
       )
     );
   });
@@ -488,23 +489,13 @@ describe("Punctuation Functions", () => {
   it("punctuateH intersperse with comma", () => {
     const boxes = [Box.text("a"), Box.text("b"), Box.text("c")];
     const result = Box.punctuateH(boxes, Box.left, Box.text(","));
-    expect(Box.render()(result)).toBe(
-      String.stripMargin(
-        `|a,b,c
-         |`
-      )
-    );
+    expect(Box.renderSync(result, Box.pretty)).toBe("a,b,c");
   });
 
   it("punctuateH with single box", () => {
     const boxes = [Box.text("solo")];
     const result = Box.punctuateH(boxes, Box.left, Box.text("|"));
-    expect(Box.render()(result)).toBe(
-      String.stripMargin(
-        `|solo
-         |`
-      )
-    );
+    expect(Box.renderSync(result, Box.pretty)).toBe("solo");
   });
 
   it("punctuateH with different alignments", () => {
@@ -516,8 +507,7 @@ describe("Punctuation Functions", () => {
     expect(Box.renderWithSpaces(result)).toBe(
       String.stripMargin(
         `|A  
-         |B|X
-         |`
+         |B|X`
       )
     );
   });
@@ -528,14 +518,13 @@ describe("Punctuation Functions", () => {
       Box.left,
       Box.text("---")
     );
-    expect(Box.render()(result)).toBe(
+    expect(Box.renderSync(result, Box.pretty)).toBe(
       String.stripMargin(
         `|line1
          |---
          |line2
          |---
-         |line3
-         |`
+         |line3`
       )
     );
   });
@@ -546,29 +535,24 @@ describe("Punctuation Functions", () => {
       Box.left,
       Box.text("***")
     );
-    expect(Box.render()(result)).toBe(
-      String.stripMargin(
-        `|only
-         |`
-      )
-    );
+    expect(Box.renderSync(result, Box.pretty)).toBe("only");
   });
 
   it("punctuateV with different alignments", () => {
     expect(
-      Box.render()(
+      Box.renderSync(
         Box.punctuateV(
           [Box.text("A"), Box.text("WIDE")],
           Box.right,
           Box.text("--")
-        )
+        ),
+        Box.pretty
       )
     ).toBe(
       String.stripMargin(
         `|   A
          |  --
-         |WIDE
-         |`
+         |WIDE`
       )
     );
   });
@@ -581,17 +565,12 @@ describe("Separation", () => {
       0,
       Box.left
     );
-    expect(Box.render()(result)).toBe(
-      String.stripMargin(
-        `|abc
-         |`
-      )
-    );
+    expect(Box.renderSync(result, Box.pretty)).toBe("abc");
   });
 
   it("hsep with spacing", () => {
     const result = Box.hsep([Box.text("x"), Box.text("y")], 3, Box.left);
-    expect(Box.render()(result)).toBe("x   y\n");
+    expect(Box.renderSync(result, Box.pretty)).toBe("x   y");
   });
 
   it("hsep with different alignments", () => {
@@ -604,21 +583,19 @@ describe("Separation", () => {
       String.stripMargin(
         `|A  
          |B X
-         |C  
-         |`
+         |C  `
       )
     );
   });
 
   it("vsep with spacing", () => {
     const result = Box.vsep([Box.text("top"), Box.text("bottom")], 2, Box.left);
-    expect(Box.render()(result)).toBe(
+    expect(Box.renderSync(result, Box.pretty)).toBe(
       String.stripMargin(
         `|top
          |
          |
-         |bottom
-         |`
+         |bottom`
       )
     );
   });
@@ -629,8 +606,7 @@ describe("Separation", () => {
       String.stripMargin(
         `| A  
          |    
-         |WIDE
-         |`
+         |WIDE`
       )
     );
   });
@@ -647,8 +623,7 @@ describe("Movement", () => {
          |.x.
          |...
          |...
-         |...
-         |`
+         |...`
       )
     );
   });
@@ -660,8 +635,7 @@ describe("Movement", () => {
         `|...
          |.x.
          |...
-         |...
-         |`
+         |...`
       )
     );
   });
@@ -674,8 +648,7 @@ describe("Movement", () => {
          |...
          |...
          |.x.
-         |...
-         |`
+         |...`
       )
     );
   });
@@ -687,8 +660,7 @@ describe("Movement", () => {
         `|...
          |...
          |.x.
-         |...
-         |`
+         |...`
       )
     );
   });
@@ -699,8 +671,7 @@ describe("Movement", () => {
       String.stripMargin(
         `|.....
          |.x...
-         |.....
-         |`
+         |.....`
       )
     );
   });
@@ -711,8 +682,7 @@ describe("Movement", () => {
       String.stripMargin(
         `|....
          |.x..
-         |....
-         |`
+         |....`
       )
     );
   });
@@ -723,8 +693,7 @@ describe("Movement", () => {
       String.stripMargin(
         `|.....
          |...x.
-         |.....
-         |`
+         |.....`
       )
     );
   });
@@ -735,8 +704,7 @@ describe("Movement", () => {
       String.stripMargin(
         `|....
          |..x.
-         |....
-         |`
+         |....`
       )
     );
   });
@@ -746,7 +714,7 @@ describe("Pipeable", () => {
   it("supports basic pipe with single transformation", () => {
     const result = Box.text("test").pipe(Box.alignHoriz(Box.center1, 10));
     expect(result.rows).toBe(Box.text("test").rows);
-    expect(Box.render()(result)).toContain("test");
+    expect(Box.renderSync(result, Box.pretty)).toContain("test");
   });
 
   it("supports pipe chaining with multiple transformations", (): void => {
@@ -758,7 +726,7 @@ describe("Pipeable", () => {
     );
     expect(result.cols).toBe(17);
     expect(result.rows).toBe(6);
-    expect(Box.render()(result)).toContain("hello");
+    expect(Box.renderSync(result, Box.pretty)).toContain("hello");
   });
 
   it("allows pipe without any arguments to return the same box", () => {
@@ -779,9 +747,9 @@ describe("Pipeable", () => {
     ).pipe(Box.alignVert(Box.center1, 10), Box.moveRight(3));
     expect(final.cols).toBe(8);
     expect(final.rows).toBe(10);
-    expect(Box.render()(final)).toContain("A");
-    expect(Box.render()(final)).toContain("B");
-    expect(Box.render()(final)).toContain("C");
+    expect(Box.renderSync(final, Box.pretty)).toContain("A");
+    expect(Box.renderSync(final, Box.pretty)).toContain("B");
+    expect(Box.renderSync(final, Box.pretty)).toContain("C");
   });
 });
 
@@ -958,7 +926,9 @@ describe("Annotation Functions", () => {
       expect(annotatedBox.rows).toBe(box.rows);
       expect(annotatedBox.cols).toBe(box.cols);
       expect(annotatedBox.annotation).toEqual(annotation);
-      expect(Box.render()(annotatedBox)).toBe(Box.render()(box));
+      expect(Box.renderSync(annotatedBox, Box.pretty)).toBe(
+        Box.renderSync(box, Box.pretty)
+      );
     });
 
     it("supports dual signature with annotation first", () => {
@@ -996,7 +966,9 @@ describe("Annotation Functions", () => {
       const annotation = Annotation.createAnnotation({ id: "complex-box" });
       const annotated = Box.annotate(complexBox, annotation);
 
-      expect(Box.render()(annotated)).toBe(Box.render()(complexBox));
+      expect(Box.renderSync(annotated, Box.pretty)).toBe(
+        Box.renderSync(complexBox, Box.pretty)
+      );
       expect(annotated.rows).toBe(complexBox.rows);
       expect(annotated.cols).toBe(complexBox.cols);
       expect(annotated.annotation?.data).toEqual({ id: "complex-box" });
@@ -1013,7 +985,9 @@ describe("Annotation Functions", () => {
       expect(unAnnotatedBox.annotation).toBeUndefined();
       expect(unAnnotatedBox.rows).toBe(annotatedBox.rows);
       expect(unAnnotatedBox.cols).toBe(annotatedBox.cols);
-      expect(Box.render()(unAnnotatedBox)).toBe(Box.render()(annotatedBox));
+      expect(Box.renderSync(unAnnotatedBox, Box.pretty)).toBe(
+        Box.renderSync(annotatedBox, Box.pretty)
+      );
     });
 
     it("handles box without annotation gracefully", () => {
@@ -1023,7 +997,9 @@ describe("Annotation Functions", () => {
       expect(result.annotation).toBeUndefined();
       expect(result.rows).toBe(box.rows);
       expect(result.cols).toBe(box.cols);
-      expect(Box.render()(result)).toBe(Box.render()(box));
+      expect(Box.renderSync(result, Box.pretty)).toBe(
+        Box.renderSync(box, Box.pretty)
+      );
     });
 
     it("preserves complex box structure when removing annotation", () => {
@@ -1039,7 +1015,9 @@ describe("Annotation Functions", () => {
       const unAnnotated = Box.unAnnotate(annotated);
 
       expect(unAnnotated.annotation).toBeUndefined();
-      expect(Box.render()(unAnnotated)).toBe(Box.render()(complexBox));
+      expect(Box.renderSync(unAnnotated, Box.pretty)).toBe(
+        Box.renderSync(complexBox, Box.pretty)
+      );
     });
   });
 
@@ -1063,7 +1041,9 @@ describe("Annotation Functions", () => {
         name: "TEST",
         transformed: true,
       });
-      expect(Box.render()(reAnnotated)).toBe(Box.render()(box));
+      expect(Box.renderSync(reAnnotated, Box.pretty)).toBe(
+        Box.renderSync(box, Box.pretty)
+      );
     });
 
     it("supports dual signature with transform function first", () => {
@@ -1117,7 +1097,9 @@ describe("Annotation Functions", () => {
       expect(resultBoxes[2]?.annotation?.data).toBe("C");
 
       for (const resultBox of resultBoxes) {
-        expect(Box.render()(resultBox)).toBe(Box.render()(box));
+        expect(Box.renderSync(resultBox, Box.pretty)).toBe(
+          Box.renderSync(box, Box.pretty)
+        );
         expect(resultBox.rows).toBe(box.rows);
         expect(resultBox.cols).toBe(box.cols);
       }
@@ -1183,7 +1165,9 @@ describe("Annotation Functions", () => {
 
       expect(results).toHaveLength(3);
       results.forEach((resultBox, index) => {
-        expect(Box.render()(resultBox)).toBe(Box.render()(complexBox));
+        expect(Box.renderSync(resultBox, Box.pretty)).toBe(
+          Box.renderSync(complexBox, Box.pretty)
+        );
         expect(resultBox.annotation?.data.index).toBe(index);
         expect(resultBox.annotation?.data.id).toBe(`item-${index}`);
         expect(resultBox.annotation?.data.type).toBe("list");
@@ -1209,7 +1193,9 @@ describe("Annotation Functions", () => {
       resultsFromAlias.forEach((aliasBox, index) => {
         const originalBox = resultsFromOriginal[index] || Box.nullBox;
         expect(aliasBox.annotation?.data).toBe(originalBox?.annotation?.data);
-        expect(Box.render()(aliasBox)).toBe(Box.render()(originalBox));
+        expect(Box.renderSync(aliasBox, Box.pretty)).toBe(
+          Box.renderSync(originalBox, Box.pretty)
+        );
       });
 
       // Verify the actual results
@@ -1233,8 +1219,7 @@ describe("Annotation Functions", () => {
         String.stripMargin(
           `|...
            |.😁.
-           |...
-           |`
+           |...`
         )
       );
     });
@@ -1251,8 +1236,7 @@ describe("Annotation Functions", () => {
         String.stripMargin(
           `|...
            |.👩💻
-           |...
-           |`
+           |...`
         )
       );
     });

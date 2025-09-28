@@ -103,20 +103,20 @@ const Border = <A>(self: Box.Box<A>) => {
 
 const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
-  yield* display(Box.render(Cmd.clearScreen, { style: "pretty" }));
-  yield* display(Box.render(Cmd.cursorHide, { style: "pretty" }));
+  yield* display(Box.renderSync(Cmd.clearScreen, Box.pretty));
+  yield* display(Box.renderSync(Cmd.cursorHide, Box.pretty));
 
   // Terminal size and inner canvas
-  const INNER_W = 100;
-  const INNER_H = 16;
+  const InnerW = 100;
+  const InnerH = 16;
 
   // Flow field & walkers config
   const noise = simpleNoise;
   const noiseScale = 0.06;
   const timeSpeed = 0.0009;
   const strength = 0.25;
-  const WALKERS = 10;
-  const MAX_SPEED = 1;
+  const Walkers = 10;
+  const MaxSpeed = 1;
 
   // Convert velocity to directional arrow
   const velocityToArrow = (vel: Vec2): string => {
@@ -135,8 +135,8 @@ const main = Effect.gen(function* () {
   };
 
   // Initialize the initial state
-  const initialWalkers: Walker[] = Array.from({ length: WALKERS }, (_, i) => ({
-    pos: v(Math.random() * INNER_W, Math.random() * INNER_H),
+  const initialWalkers: Walker[] = Array.from({ length: Walkers }, (_, i) => ({
+    pos: v(Math.random() * InnerW, Math.random() * InnerH),
     vel: v(0, 0),
     symbol: "·", // Will be updated to arrow based on velocity
     color: colors[i % colors.length] ?? Ansi.cyan,
@@ -160,10 +160,10 @@ const main = Effect.gen(function* () {
 
       // Apply force and update velocity
       const force = v(Math.cos(angle) * strength, Math.sin(angle) * strength);
-      const newVel = limit(add(walker.vel, force), MAX_SPEED);
+      const newVel = limit(add(walker.vel, force), MaxSpeed);
 
       // Update position with wrapping
-      const newPos = wrap(add(walker.pos, newVel), INNER_W, INNER_H);
+      const newPos = wrap(add(walker.pos, newVel), InnerW, InnerH);
 
       // Update symbol to show direction of movement
       const newSymbol = velocityToArrow(newVel);
@@ -200,9 +200,9 @@ const main = Effect.gen(function* () {
   // Render the initial layout
   yield* display(
     pipe(
-      Box.emptyBox(INNER_H, INNER_W).pipe(Border),
+      Box.emptyBox(InnerH, InnerW).pipe(Border),
       Box.vAppend(Box.text("Flow Field Walkers (Ctrl+C to exit)")),
-      Box.render({ style: "pretty" })
+      Box.renderSync(Box.pretty)
     )
   );
 
@@ -232,12 +232,12 @@ const main = Effect.gen(function* () {
                 )
               )
             ),
-            Box.render({ style: "pretty", partial: true })
+            Box.renderSync(Box.pretty)
           )
         );
       })
     ),
-    display(Box.render(Cmd.cursorShow, { style: "pretty" }))
+    display(Box.renderSync(Cmd.cursorShow, Box.pretty))
   );
 
   yield* Effect.addFinalizer(() => {
@@ -247,9 +247,9 @@ const main = Effect.gen(function* () {
         Cmd.cursorShow,
         Box.combine(Cmd.home),
         Box.combine<Ansi.AnsiStyle>(
-          Box.emptyBox(INNER_H * 2, INNER_W).pipe(Border)
+          Box.emptyBox(InnerH * 2, InnerW).pipe(Border)
         ),
-        Box.render({ style: "pretty" })
+        Box.renderSync(Box.pretty)
       )
     );
   });

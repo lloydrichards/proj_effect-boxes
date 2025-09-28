@@ -1,4 +1,4 @@
-import { Array, Effect, pipe, Ref, Schedule, Stream } from "effect";
+import { Array, Console, Effect, pipe, Ref, Schedule, Stream } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 import * as Cmd from "../src/Cmd";
@@ -79,8 +79,8 @@ const main = Effect.gen(function* () {
   yield* display(Ansi.renderAnnotatedBox(Cmd.cursorHide).join(""));
 
   // Define UI dimensions and layout
-  const PROGRESS_BAR_WIDTH = 40;
-  const COMPLETE = PROGRESS_BAR_WIDTH;
+  const ProgressBarWidth = 40;
+  const Complete = ProgressBarWidth;
   const counterRef = yield* Ref.make(0);
 
   // Create the initial static layout
@@ -112,29 +112,32 @@ const main = Effect.gen(function* () {
   );
 
   // Render the initial layout
-  yield* Box.printBox(headerBox);
-  yield* Box.printBox(
-    Box.hcat(
-      [
-        ProgressBar(0, COMPLETE, PROGRESS_BAR_WIDTH).pipe(Border),
-        Box.text(`${((0 / COMPLETE) * 100).toFixed(0)}%`).pipe(
-          Box.alignHoriz(Box.right, 5),
-          Box.annotate(Ansi.blue),
-          Border,
-          Box.annotate(Ansi.green)
-        ),
-      ],
-      Box.center1
-    ).pipe(Padding(1), Border)
+  yield* Console.log(Box.renderSync(headerBox, Box.pretty));
+  yield* Console.log(
+    Box.renderSync(
+      Box.hcat(
+        [
+          ProgressBar(0, Complete, ProgressBarWidth).pipe(Border),
+          Box.text(`${((0 / Complete) * 100).toFixed(0)}%`).pipe(
+            Box.alignHoriz(Box.right, 5),
+            Box.annotate(Ansi.blue),
+            Border,
+            Box.annotate(Ansi.green)
+          ),
+        ],
+        Box.center1
+      ).pipe(Padding(1), Border),
+      Box.pretty
+    )
   );
-  yield* Box.printBox(footerBox);
+  yield* Console.log(Box.renderSync(footerBox, Box.pretty));
 
   // Calculate positions for dynamic updates
-  const progressBarRow = 8; // Row where progress bar characters go
+  const progressBarRow = 7; // Row where progress bar characters go
   const progressBarStartCol = 3; // Column where '[' ends and bar begins
-  const percentageRow = 8; // Row where percentage is displayed
-  const percentageCol = 6 + PROGRESS_BAR_WIDTH; // Column after '] '
-  const counterRow = 13; // Row where counter is displayed
+  const percentageRow = 7; // Row where percentage is displayed
+  const percentageCol = 6 + ProgressBarWidth; // Column after '] '
+  const counterRow = 11; // Row where counter is displayed
   const counterCol = 9; // Column after 'Counter: '
 
   // Create the animation stream
@@ -145,21 +148,21 @@ const main = Effect.gen(function* () {
     })
   ).pipe(
     Stream.schedule(Schedule.spaced("100 milli")),
-    Stream.takeUntil(({ counter }) => counter > COMPLETE)
+    Stream.takeUntil(({ counter }) => counter > Complete)
   );
 
   // Process each tick with partial updates - this is the core of partial rerendering
   yield* Stream.runForEach(tickStream, ({ counter }) =>
     Effect.gen(function* () {
-      const progress = Math.min(counter, COMPLETE);
-      const percentage = Math.round((progress / COMPLETE) * 100);
+      const progress = Math.min(counter, Complete);
+      const percentage = Math.round((progress / Complete) * 100);
 
-      if (counter <= COMPLETE) {
+      if (counter <= Complete) {
         yield* display(
           pipe(
             // PARTIAL UPDATE #1: Progress bar - add one character at a time
             Cmd.cursorTo(progressBarStartCol, progressBarRow),
-            Box.combine(ProgressBar(counter, COMPLETE, PROGRESS_BAR_WIDTH)),
+            Box.combine(ProgressBar(counter, Complete, ProgressBarWidth)),
 
             // PARTIAL UPDATE #2: Percentage - overwrite just the percentage value
             Box.combine(Cmd.cursorTo(percentageCol, percentageRow)),
@@ -186,10 +189,7 @@ const main = Effect.gen(function* () {
             ),
 
             // Render all the combined commands and text updates
-            Box.render({
-              style: "pretty",
-              partial: true,
-            })
+            Box.renderSync(Box.pretty)
           )
         );
       } else {
@@ -208,9 +208,9 @@ const main = Effect.gen(function* () {
           Box.alignVert(Box.bottom, 4)
         )
       ),
-      Box.render({ style: "pretty" })
+      Box.renderSync(Box.pretty)
     )
   );
 });
 
-Effect.runPromise(main as Effect.Effect<void, unknown, never>);
+Effect.runPromise(main);
