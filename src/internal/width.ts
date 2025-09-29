@@ -5,6 +5,9 @@ const osc = `(?:\\u001B\\][\\s\\S]*?${ST})`; // ESC ] ... ST (non-greedy until f
 const csi =
   "[\\u001B\\u009B][[\\]()#;?]*(?:\\d{1,4}(?:[;:]\\d{0,4})*)?[\\dA-PR-TZcf-nq-uy=><~]"; //  ESC[, intermediates (optional), params (optional), final byte
 
+// Pre-compiled regex for performance - avoid recreating on each call
+const ANSI_REGEX = new RegExp(`${osc}|${csi}`, "g");
+
 /**
  * Strips ANSI escape sequences from a string
  * Matches:
@@ -12,17 +15,34 @@ const csi =
  * - OSC sequences: ESC ] ... (BEL|ESC\|0x9C) (operating system commands)
  * - Simple sequences: ESC letter (save/restore cursor, etc.)
  */
-const stripAnsi = (str: string): string =>
-  str.replace(new RegExp(`${osc}|${csi}`, "g"), "");
+const stripAnsi = (str: string): string => str.replace(ANSI_REGEX, "");
+
+// Simple caches using native Map for performance in hot paths
+const widthCache = new Map<string, number>();
+const segmentCache = new Map<string, readonly string[]>();
 
 const segmenter = new Intl.Segmenter();
 
-export const segments = (str: string) =>
-  pipe(
+export const segments = (str: string): readonly string[] => {
+  // Check cache first for repeated strings
+  const cached = segmentCache.get(str);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const result = pipe(
     segmenter.segment(str),
     Array.fromIterable,
     Array.map((d) => d.segment)
   );
+
+  // Cache the result for future use (only for reasonably sized strings to prevent memory bloat)
+  if (str.length <= 1000) {
+    segmentCache.set(str, result);
+  }
+
+  return result;
+};
 
 const zeroWidthClusterRegex =
   /^(?:\p{Default_Ignorable_Code_Point}|\p{Control}|\p{Mark}|\p{Surrogate})+$/v; // zero-width clusters (control chars, marks, surrogates, etc.)
@@ -128,13 +148,22 @@ const isZeroWidthCluster = (segment: string): boolean =>
  * ```
  */
 export const ofString = (input: string): number => {
+  // Check cache first for frequently computed strings
+  const cached = widthCache.get(input);
+  if (cached !== undefined) {
+    return cached;
+  }
+
   const string = stripAnsi(input);
 
   if (string.length === 0) {
-    return 0;
+    const result = 0;
+    // Cache empty string results
+    widthCache.set(input, result);
+    return result;
   }
 
-  return pipe(
+  const result = pipe(
     segments(string),
     Array.reduce(0, (acc, segment) => {
       // Skip zero-width clusters (control chars, pure marks, etc.)
@@ -157,4 +186,11 @@ export const ofString = (input: string): number => {
       return acc;
     })
   );
+
+  // Cache result for future use (only for reasonably sized strings to prevent memory bloat)
+  if (input.length <= 1000) {
+    widthCache.set(input, result);
+  }
+
+  return result;
 };
