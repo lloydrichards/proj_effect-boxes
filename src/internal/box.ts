@@ -698,27 +698,6 @@ export const merge = (renderedBoxes: string[][]): string[] => {
 };
 
 /** @internal */
-const renderBox = <A>(box: Box.Box<A>): string[] => {
-  if (box.rows === 0 || box.cols === 0) {
-    return [];
-  }
-
-  return match(box, {
-    blank: () => resizeBox([""], box.rows, box.cols),
-    text: (text) => resizeBox([text], box.rows, box.cols),
-    row: (boxes) =>
-      pipe(Array.map(boxes, renderBox), merge, resizeBox(box.rows, box.cols)),
-    col: (boxes) =>
-      pipe(Array.flatMap(boxes, renderBox), resizeBox(box.rows, box.cols)),
-    subBox: (subBox, xAlign, yAlign) =>
-      pipe(
-        renderBox(subBox),
-        resizeBoxAligned(box.rows, box.cols, xAlign, yAlign)
-      ),
-  });
-};
-
-/** @internal */
 export const takeP = dual<
   <A>(a: A, n: number) => (self: readonly A[]) => A[],
   <A>(self: readonly A[], a: A, n: number) => A[]
@@ -801,53 +780,26 @@ export const resizeBoxAligned =
 /** @internal */
 export const render = Renderer.render;
 
-export const pretty: Renderer.RenderStyle = {
-  _tag: "Pretty",
-  preserveWhitespace: false,
-};
-
-export const plain: Renderer.RenderStyle = {
-  _tag: "Plain",
-};
+/** @internal */
+export const renderPrettySync = <A>(self: Box.Box<A>): string =>
+  pipe(
+    Renderer.render(self, { preserveWhitespace: false }),
+    Effect.provide(Renderer.AnsiRendererLive),
+    Effect.runSync
+  );
 
 /** @internal */
-export const renderSync = dual<
-  (config?: Renderer.RenderStyle) => <A>(self: Box.Box<A>) => string,
-  <A>(self: Box.Box<A>, config?: Renderer.RenderStyle) => string
->(2, (self, config) =>
-  Effect.runSync(
-    Match.value(config ?? defaultRenderConfig).pipe(
-      Match.tag("Plain", () =>
-        pipe(
-          Renderer.render(self, undefined),
-          Effect.provide(Renderer.PlainRendererLive)
-        )
-      ),
-      Match.tag("Pretty", ({ preserveWhitespace }) =>
-        pipe(
-          Renderer.render(self, { preserveWhitespace }),
-          Effect.provide(Renderer.AnsiRendererLive)
-        )
-      ),
-      Match.exhaustive
-    )
-  )
-);
+export const renderPlainSync = <A>(self: Box.Box<A>): string =>
+  pipe(
+    Renderer.render(self, { preserveWhitespace: true }),
+    Effect.provide(Renderer.PlainRendererLive),
+    Effect.runSync
+  );
 
 /** @internal */
-export const renderWithSpaces = <A>(self: Box.Box<A>): string =>
-  pipe(renderBox(self), Array.join("\n"));
-
-/** @internal */
-export const renderWith = dual<
-  (sep?: string) => <A>(self: Box.Box<A>) => string,
-  <A>(self: Box.Box<A>, sep?: string) => string
->(2, <A>(self: Box.Box<A>, sep?: string): string =>
-  pipe(renderWithSpaces(self), String.replace(/ /g, sep ?? " "))
-);
-
-/** @internal */
-export const printBox = (box: Box.Box<unknown>) =>
+export const printBox = (
+  box: Box.Box<unknown>
+): Effect.Effect<void, never, Renderer.Renderer> =>
   Effect.gen(function* () {
     const rendered = yield* render(box);
     yield* Console.log(rendered);

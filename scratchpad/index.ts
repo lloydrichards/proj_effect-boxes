@@ -84,8 +84,8 @@ const formatTime = (timestamp: number): string => {
 
 const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
-  yield* display(Box.renderSync(Cmd.clearScreen, Box.pretty));
-  yield* display(Box.renderSync(Cmd.cursorHide, Box.pretty));
+  yield* display(Box.renderPrettySync(Cmd.clearScreen));
+  yield* display(Box.renderPrettySync(Cmd.cursorHide));
 
   const Complete = 1000;
   const ProgressBarWidth = 69;
@@ -137,7 +137,7 @@ const main = Effect.gen(function* () {
 
   // Display the initial layout
   const initialLayout = buildDisplayLayout(0, Date.now());
-  yield* display(Box.renderSync(initialLayout, Box.pretty));
+  yield* display(Box.renderPrettySync(initialLayout));
   const positionMap = Reactive.getPositions(initialLayout);
 
   const tickStream = Stream.repeatEffect(
@@ -199,7 +199,7 @@ const main = Effect.gen(function* () {
 
       // Render all updates if we have any
       if (updates.length > 0) {
-        yield* display(Box.renderSync(Box.combineAll(updates), Box.pretty));
+        yield* display(Box.renderPrettySync(Box.combineAll(updates)));
       }
     })
   );
@@ -214,7 +214,7 @@ const main = Effect.gen(function* () {
           Box.alignVert(Box.bottom, 5)
         )
       ),
-      Box.renderSync(Box.pretty)
+      Box.renderPrettySync
     )
   );
 });

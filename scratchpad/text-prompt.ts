@@ -150,7 +150,7 @@ const renderPrompt = (state: PromptState) =>
 
     if (Option.isSome(inputCursor) && Option.isSome(lengthCursor)) {
       yield* display(
-        Box.renderSync(
+        Box.renderPrettySync(
           Box.combineAll([
             lengthCursor.value,
             Box.text(`${state.input.length}/100`).pipe(Box.annotate(Ansi.dim)),
@@ -162,8 +162,7 @@ const renderPrompt = (state: PromptState) =>
             // move cursor to correct position
             inputCursor.value,
             Cmd.cursorForward(state.cursor),
-          ]),
-          Box.pretty
+          ])
         )
       );
     }
@@ -187,9 +186,8 @@ const textPrompt = (message: string) =>
         const initialState = yield* Ref.get(stateRef);
 
         yield* display(
-          Box.renderSync(
-            Box.combine(Cmd.clearScreen, createPromptLayout(initialState)),
-            Box.pretty
+          Box.renderPrettySync(
+            Box.combine(Cmd.clearScreen, createPromptLayout(initialState))
           )
         );
 
@@ -207,7 +205,7 @@ const textPrompt = (message: string) =>
             )
           ),
           // Cleanup: Clear screen and reset cursor
-          display(Box.renderSync(Cmd.clearScreen, Box.pretty))
+          display(Box.renderPrettySync(Cmd.clearScreen))
         );
 
         return result.input;
@@ -222,7 +220,7 @@ const swedishChefPrompt = Effect.gen(function* () {
   const cookingMethod = yield* textPrompt("How should we cook it?");
 
   yield* display(
-    Box.renderSync(
+    Box.renderPrettySync(
       Box.text(
         `Bork, bork, bork! Ve vill ${cookingMethod} zee ${ingredient} in zee pot, yah!`
       ).pipe(
@@ -231,8 +229,7 @@ const swedishChefPrompt = Effect.gen(function* () {
         Box.moveLeft(2),
         Box.moveRight(2),
         Border
-      ),
-      Box.pretty
+      )
     )
   );
 }).pipe(

@@ -120,6 +120,7 @@ export type RenderStyle =
 export type RenderConfig = {
   readonly preserveWhitespace?: boolean;
 };
+
 /**
  * Renderer service tag for Effect.js dependency injection.
  *

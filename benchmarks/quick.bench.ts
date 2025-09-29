@@ -4,7 +4,6 @@ import { Array } from "effect";
 import { bench, describe } from "vitest";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
-import * as AnsiInternal from "../src/internal/ansi";
 import * as Width from "../src/internal/width";
 
 // Quick test data
@@ -37,7 +36,7 @@ describe("Quick Performance Benchmarks", () => {
   bench(
     "ANSI truncate - colored text",
     () => {
-      AnsiInternal.truncatePreservingAnsi(testData.ansi, 20);
+      Ansi.truncatePreservingAnsi(testData.ansi, 20);
     },
     { time: 500 }
   );
@@ -52,7 +51,7 @@ describe("Quick Performance Benchmarks", () => {
         ],
         Box.left
       );
-      Box.renderSync(nested, Box.pretty);
+      Box.renderPrettySync(nested);
     },
     { time: 500 }
   );
@@ -64,7 +63,7 @@ describe("Quick Performance Benchmarks", () => {
         Box.text(testData.ascii),
         Ansi.combine(Ansi.bold, Ansi.red)
       );
-      AnsiInternal.renderAnnotatedBox(annotated);
+      Ansi.renderAnnotatedBox(annotated);
     },
     { time: 500 }
   );

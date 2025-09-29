@@ -112,9 +112,9 @@ const main = Effect.gen(function* () {
   );
 
   // Render the initial layout
-  yield* Console.log(Box.renderSync(headerBox, Box.pretty));
+  yield* Console.log(Box.renderPrettySync(headerBox));
   yield* Console.log(
-    Box.renderSync(
+    Box.renderPrettySync(
       Box.hcat(
         [
           ProgressBar(0, Complete, ProgressBarWidth).pipe(Border),
@@ -126,11 +126,10 @@ const main = Effect.gen(function* () {
           ),
         ],
         Box.center1
-      ).pipe(Padding(1), Border),
-      Box.pretty
+      ).pipe(Padding(1), Border)
     )
   );
-  yield* Console.log(Box.renderSync(footerBox, Box.pretty));
+  yield* Console.log(Box.renderPrettySync(footerBox));
 
   // Calculate positions for dynamic updates
   const progressBarRow = 7; // Row where progress bar characters go
@@ -189,7 +188,7 @@ const main = Effect.gen(function* () {
             ),
 
             // Render all the combined commands and text updates
-            Box.renderSync(Box.pretty)
+            Box.renderPrettySync
           )
         );
       } else {
@@ -208,7 +207,7 @@ const main = Effect.gen(function* () {
           Box.alignVert(Box.bottom, 4)
         )
       ),
-      Box.renderSync(Box.pretty)
+      Box.renderPrettySync
     )
   );
 });
