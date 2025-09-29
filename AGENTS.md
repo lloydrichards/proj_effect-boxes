@@ -289,6 +289,24 @@ describe("Box properties", () => {
 });
 ```
 
+### Benchmarking
+
+For performance-critical functions, consider adding benchmarks:
+
+```typescript
+import { bench } from "vitest";
+import * as Box from "../src/Box";
+
+bench(
+  "hcat with 100 boxes",
+  () => {
+    const boxes = Array.from({ length: 100 }, (_, i) => Box.text(`Box ${i}`));
+    Box.hcat(boxes, Box.top);
+  },
+  { time: 500 }
+);
+```
+
 ## 🛠️ Development Environment
 
 ### Development Commands
@@ -302,6 +320,7 @@ bun install
 # Run tests
 bun run test        # Run all tests once
 bun run test --watch  # Watch mode for development
+bun run benchmark:quick  # Run benchmarks
 
 # Type checking
 bun run type-check  # TypeScript compilation check
@@ -474,35 +493,63 @@ Closes #123
 
 ## 📝 Documentation Standards
 
-### Code Documentation
+> **Authority**: See `.patterns/standard-jsdoc.md` for complete guidelines. This
+> section provides essential patterns for coding agents.
 
-- Every module should have a TSDoc comment explaining its purpose
-- Public functions must have complete TSDoc documentation
-- Complex algorithms should have inline comments explaining the logic
-- Keep README.md updated with examples and API documentation
-- Maintain clear examples in the scratchpad directory
+### Core Principles
+
+- **All examples MUST compile** via `bun run type-check`
+- **No `any` types, type assertions, or unsafe patterns**
+- **Follow Effect.js ecosystem patterns** for consistency
+- **Preserve existing Haskell references** using `@note Haskell:` format
+
+### Required JSDoc Elements
+
+All public functions must include:
+
+- Clear description with action verbs and specific behavior
+- `@category` tag (constructors, combinators, utilities, transformations)
+- At least one `@example` with compiling code
+- Existing `@note Haskell:` references (preserve mathematical context)
+
+### Standard Template
 
 ````typescript
 /**
- * Aligns a box horizontally within a given width.
+ * Brief one-line description starting with action verb.
  *
- * @param self - The box to align
- * @param alignment - How to align (left, right, center1, center2)
- * @param width - Target width for alignment
- * @returns A new box with horizontal alignment applied
+ * **Example**
  *
- * @example
  * ```typescript
- * const centered = Box.text("Hello").pipe(
- *   Box.alignHoriz(Box.center1, 20)
- * )
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const result = Box.functionName(params)
+ * console.log(Box.render(result))
+ * // Expected output comment
  * ```
+ *
+ * @note Haskell: `functionName :: InputType -> OutputType`
+ * @category constructors
  */
-export const alignHoriz = dual<
-  (alignment: Alignment, width: number) => (self: Box) => Box,
-  (self: Box, alignment: Alignment, width: number) => Box
->(3, alignHorizImpl);
 ````
+
+### Description Guidelines
+
+- **Start with action verbs**: "Creates", "Combines", "Transforms"
+- **Be specific about behavior**: Include edge cases and constraints
+- **Use present tense**: "Calculates" not "Will calculate"
+- **Preserve mathematical context**: Keep existing `@note Haskell:` patterns
+
+### Categories for effect-boxes
+
+- `@category constructors` - Box creation functions (text, emptyBox)
+- `@category combinators` - Box combination functions (hcat, vcat)
+- `@category transformations` - Box modification functions (align*, move*)
+- `@category utilities` - Helper functions (rows, cols, render)
+
+### Internal Functions
+
+Use `/** @internal */` for implementation details not part of public API.
 
 ## ℹ️ Where to Find More Information
 
