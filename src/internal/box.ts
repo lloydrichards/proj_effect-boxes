@@ -982,7 +982,7 @@ export const reAnnotate = dual<
 });
 
 /** @internal */
-export const alterAnnotations = dual<
+export const alterAnnotation = dual<
   <A, B>(alter: (annotation: A) => B[]) => (self: Box.Box<A>) => Box.Box<B>[],
   <A, B>(self: Box.Box<A>, alter: (annotation: A) => B[]) => Box.Box<B>[]
 >(2, <A, B>(self: Box.Box<A>, alter: (annotation: A) => B[]): Box.Box<B>[] => {
@@ -1036,4 +1036,4 @@ export const alterAnnotations = dual<
 });
 
 /** @internal */
-export const alterAnnotate = alterAnnotations;
+export const alterAnnotate = alterAnnotation;
