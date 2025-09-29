@@ -407,3 +407,27 @@ export const renderAnnotatedBox: <A>({
   rows,
   annotation,
 }: Box<A>) => string[] = internal.renderAnnotatedBox;
+
+/**
+ * Truncates a string to a target width while preserving ANSI escape sequences.
+ *
+ * Ensures that ANSI codes remain intact while the visible text is cut
+ * to fit within the specified width. Useful for displaying colored
+ * text in constrained spaces.
+ *
+ * @example
+ * ```typescript
+ * import * as Ansi from "effect-boxes/Ansi"
+ *
+ * const coloredText = "\x1b[31mThis is a long red text\x1b[0m"
+ * const truncated = Ansi.truncatePreservingAnsi(coloredText, 10)
+ * console.log(truncated)
+ * // Outputs: "\x1b[31mThis is a \x1b[0m"
+ * ```
+ *
+ * @category utilities
+ */
+export const truncatePreservingAnsi: (
+  text: string,
+  targetWidth: number
+) => string = internal.truncatePreservingAnsi;

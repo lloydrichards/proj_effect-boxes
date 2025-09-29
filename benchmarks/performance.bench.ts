@@ -343,9 +343,7 @@ describe("Box Merging Benchmarks", () => {
       "small rendered boxes (5)",
       () => {
         BoxInternal.merge(
-          boxArrays.small.map((box) =>
-            Box.renderSync(box, Box.pretty).split("\n")
-          )
+          boxArrays.small.map((box) => Box.renderPrettySync(box).split("\n"))
         );
       },
       { time: 1000 }
@@ -355,9 +353,7 @@ describe("Box Merging Benchmarks", () => {
       "medium rendered boxes (20)",
       () => {
         BoxInternal.merge(
-          boxArrays.medium.map((box) =>
-            Box.renderSync(box, Box.pretty).split("\n")
-          )
+          boxArrays.medium.map((box) => Box.renderPrettySync(box).split("\n"))
         );
       },
       { time: 1000 }
@@ -367,9 +363,7 @@ describe("Box Merging Benchmarks", () => {
       "large rendered boxes (50)",
       () => {
         BoxInternal.merge(
-          boxArrays.large.map((box) =>
-            Box.renderSync(box, Box.pretty).split("\n")
-          )
+          boxArrays.large.map((box) => Box.renderPrettySync(box).split("\n"))
         );
       },
       { time: 1000 }
@@ -380,15 +374,14 @@ describe("Box Merging Benchmarks", () => {
     bench(
       "nested small structure",
       () => {
-        Box.renderSync(
+        Box.renderPrettySync(
           Box.vcat(
             [
               Box.hcat(boxArrays.small.slice(0, 3), Box.top),
               Box.hcat(boxArrays.small.slice(2, 5), Box.top),
             ],
             Box.left
-          ),
-          Box.pretty
+          )
         );
       },
       { time: 1000 }
@@ -397,15 +390,14 @@ describe("Box Merging Benchmarks", () => {
     bench(
       "nested medium structure",
       () => {
-        Box.renderSync(
+        Box.renderPrettySync(
           Box.vcat(
             [
               Box.hcat(boxArrays.medium.slice(0, 10), Box.top),
               Box.hcat(boxArrays.medium.slice(10, 20), Box.top),
             ],
             Box.left
-          ),
-          Box.pretty
+          )
         );
       },
       { time: 1000 }
@@ -638,7 +630,7 @@ describe("Integrated Performance Benchmarks", () => {
     "Large document rendering",
     () => {
       const doc = createLargeDocument();
-      Box.renderSync(doc, Box.pretty);
+      Box.renderPrettySync(doc);
     },
     { time: 1000 }
   );
@@ -681,7 +673,7 @@ describe("Integrated Performance Benchmarks", () => {
     "Colored table rendering",
     () => {
       const table = createColoredTable();
-      Box.renderSync(table, Box.pretty);
+      Box.renderPrettySync(table);
     },
     { time: 1000 }
   );
@@ -725,7 +717,7 @@ describe("Integrated Performance Benchmarks", () => {
     "Complex layout rendering",
     () => {
       const layout = createComplexLayout();
-      Box.renderSync(layout, Box.pretty);
+      Box.renderPrettySync(layout);
     },
     { time: 1000 }
   );

@@ -998,35 +998,49 @@ export const resizeBoxAligned: (
 ) => (self: string[]) => string[] = internal.resizeBoxAligned;
 
 /**
- * Synchronously converts a box to a string suitable for display.
+ * Renders a box to a pretty string with ANSI styling.
  *
- * The primary function for converting boxes to string representation.
- * Uses the specified render style to control output formatting.
+ * Synchronous version of render for quick rendering without Effect.
+ *
+ * @note Haskell: `renderPrettySync :: Box -> String`
+ * @category utilities
+ */
+export const renderPrettySync: <A>(self: Box<A>) => string =
+  internal.renderPrettySync;
+
+/**
+ * Renders a box to a plain string without any special formatting.
+ *
+ * Synchronous version of render for quick rendering without Effect.
+ *
+ * @note Haskell: `renderPlainSync :: Box -> String`
+ * @category utilities
+ */
+export const renderPlainSync: <A>(self: Box<A>) => string =
+  internal.renderPlainSync;
+
+/** * Renders a box to a Renderer within an Effect context.
+ *
+ * Asynchronous rendering that supports complex rendering strategies
+ * and configurations. Returns an Effect that produces a Renderer.
  *
  * @example
  * ```typescript
  * import * as Box from "effect-boxes/Box"
+ * import * as Effect from "effect/Effect"
  *
- * const box = Box.text("Hello\nWorld")
- * const output = Box.renderSync(box, Box.pretty)
- * console.log(output)
- * // Hello
- * // World
+ * const box = Box.text("Hello, Effect!")
+ * const renderedEffect = Box.render(box)
  *
- * const plainOutput = Box.renderSync(box, Box.plain)
- * console.log(plainOutput)
- * // Hello
- * // World
+ * // Run the effect to get the Renderer
+ * Effect.runPromise(renderedEffect).then((renderer) => {
+ *   console.log(renderer.toString())
+ * })
  * ```
  *
- * @note Haskell: `render :: Box -> String`
+ * @note Haskell: `render :: RenderConfig -> Box -> Effect<String, never, Renderer>`
  * @category utilities
  */
-export const renderSync: {
-  (config: Renderer.RenderStyle): <A>(self: Box<A>) => string;
-  <A>(self: Box<A>, config: Renderer.RenderStyle): string;
-} = internal.renderSync;
-
 export const render: {
   <A>(
     config?: Renderer.RenderConfig | undefined
@@ -1036,41 +1050,6 @@ export const render: {
     config?: Renderer.RenderConfig
   ): Effect.Effect<string, never, Renderer.Renderer>;
 } = internal.render;
-/**
- * Converts a box to a string while preserving all whitespace including trailing spaces.
- *
- * Unlike `renderSync`, this function maintains exact spacing including trailing
- * spaces on each line, which can be important for precise text alignment.
- *
- * @example
- * ```typescript
- * import * as Box from "effect-boxes/Box"
- *
- * const box = Box.text("Hello   ")
- * const withSpaces = Box.renderWithSpaces(box)
- * const regular = Box.renderSync(box, Box.plain)
- *
- * console.log(`"${withSpaces}"`)
- * // "Hello   "
- * console.log(`"${regular}"`)
- * // "Hello" (trailing spaces trimmed)
- * ```
- *
- * @note Haskell: `renderWithSpaces :: Box -> String`
- * @category utilities
- */
-export const renderWithSpaces: <A>(self: Box<A>) => string =
-  internal.renderWithSpaces;
-
-/**
- * Converts a box to a string using a custom separator instead of spaces.
- *
- * @category utilities
- */
-export const renderWith: {
-  (sep?: string): <A>(self: Box<A>) => string;
-  <A>(self: Box<A>, sep?: string): string;
-} = internal.renderWith;
 
 /**
  * Prints a box to the console using the Effect Console.
@@ -1081,20 +1060,6 @@ export const renderWith: {
 export const printBox: <A>(
   b: Box<A>
 ) => Effect.Effect<void, never, Renderer.Renderer> = internal.printBox;
-
-/**
- * Pretty rendering style with enhanced formatting.
- *
- * @category constructors
- */
-export const pretty: Renderer.RenderStyle = internal.pretty;
-
-/**
- * Plain rendering style without special formatting.
- *
- * @category constructors
- */
-export const plain: Renderer.RenderStyle = internal.plain;
 
 /*
  *  --------------------------------------------------------------------------------

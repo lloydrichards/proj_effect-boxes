@@ -103,8 +103,8 @@ const Border = <A>(self: Box.Box<A>) => {
 
 const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
-  yield* display(Box.renderSync(Cmd.clearScreen, Box.pretty));
-  yield* display(Box.renderSync(Cmd.cursorHide, Box.pretty));
+  yield* display(Box.renderPrettySync(Cmd.clearScreen));
+  yield* display(Box.renderPrettySync(Cmd.cursorHide));
 
   // Terminal size and inner canvas
   const InnerW = 100;
@@ -202,7 +202,7 @@ const main = Effect.gen(function* () {
     pipe(
       Box.emptyBox(InnerH, InnerW).pipe(Border),
       Box.vAppend(Box.text("Flow Field Walkers (Ctrl+C to exit)")),
-      Box.renderSync(Box.pretty)
+      Box.renderPrettySync
     )
   );
 
@@ -232,12 +232,12 @@ const main = Effect.gen(function* () {
                 )
               )
             ),
-            Box.renderSync(Box.pretty)
+            Box.renderPrettySync
           )
         );
       })
     ),
-    display(Box.renderSync(Cmd.cursorShow, Box.pretty))
+    display(Box.renderPrettySync(Cmd.cursorShow))
   );
 
   yield* Effect.addFinalizer(() => {
@@ -249,7 +249,7 @@ const main = Effect.gen(function* () {
         Box.combine<Ansi.AnsiStyle>(
           Box.emptyBox(InnerH * 2, InnerW).pipe(Border)
         ),
-        Box.renderSync(Box.pretty)
+        Box.renderPrettySync
       )
     );
   });

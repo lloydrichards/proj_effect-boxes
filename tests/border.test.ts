@@ -30,7 +30,7 @@ describe("Border", () => {
   it("should add a border around the box", () => {
     const box = Box.text("Hello\nWorld");
     const borderedBox = Border(box);
-    expect(Box.renderSync(borderedBox, Box.pretty)).toBe(
+    expect(Box.renderPrettySync(borderedBox)).toBe(
       String.stripMargin(
         `|┌─────┐
          |│Hello│
@@ -42,7 +42,7 @@ describe("Border", () => {
   it("should handle nested borders", () => {
     const box = Box.text("Hello\nWorld");
     const borderedBox = Border(Border(box));
-    expect(Box.renderSync(borderedBox, Box.pretty)).toBe(
+    expect(Box.renderPrettySync(borderedBox)).toBe(
       String.stripMargin(
         `|┌───────┐
          |│┌─────┐│
@@ -56,7 +56,7 @@ describe("Border", () => {
   it("should handle emojis in a box", () => {
     const box = Box.text("Hello 👋\nWorld 🌍");
     const borderedBox = Border(box);
-    expect(Box.renderSync(borderedBox, Box.pretty)).toBe(
+    expect(Box.renderPrettySync(borderedBox)).toBe(
       String.stripMargin(
         `|┌────────┐
          |│Hello 👋│
@@ -70,7 +70,7 @@ describe("Border", () => {
     const box2 = Box.text("Box 2");
     const rowBox = pipe([box1, box2], Box.punctuateH(Box.left, Box.text(" ")));
     const borderedBox = Border(rowBox);
-    expect(Box.renderSync(borderedBox, Box.pretty)).toBe(
+    expect(Box.renderPrettySync(borderedBox)).toBe(
       String.stripMargin(
         `|┌───────────┐
          |│Box 1 Box 2│
@@ -83,7 +83,7 @@ describe("Border", () => {
     const box2 = Box.text("Box 🔥");
     const rowBox = pipe([box1, box2], Box.punctuateH(Box.left, Box.text(" ")));
     const borderedBox = Border(rowBox);
-    expect(Box.renderSync(borderedBox, Box.pretty)).toBe(
+    expect(Box.renderPrettySync(borderedBox)).toBe(
       String.stripMargin(
         `|┌────────────┐
          |│Box 1 Box 🔥│
@@ -94,7 +94,7 @@ describe("Border", () => {
   it("should handle empty boxes", () => {
     const box = Box.text(" ");
     const borderedBox = Border(box);
-    expect(Box.renderSync(borderedBox, Box.pretty)).toBe(
+    expect(Box.renderPrettySync(borderedBox)).toBe(
       String.stripMargin(
         `|┌─┐
          |│ │
