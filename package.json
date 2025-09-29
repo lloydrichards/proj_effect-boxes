@@ -59,7 +59,9 @@
     "type-check": "tsc --noEmit",
     "format": "biome check --write",
     "test": "vitest run",
-    "scratch": "bun run scratchpad/index.ts"
+    "scratch": "bun run scratchpad/index.ts",
+    "benchmark": "vitest bench --run",
+    "benchmark:quick": "vitest bench benchmarks/quick.bench.ts --run"
   },
   "dependencies": {
     "effect": "^3.17.13"
@@ -72,6 +74,7 @@
     "@effect/platform-bun": "^0.79.1",
     "@types/bun": "^1.2.22",
     "@vitest/coverage-v8": "3.2.4",
+    "tinybench": "^5.0.1",
     "typescript": "^5.9.2",
     "ultracite": "5.4.4",
     "vitest": "^3.2.4"
