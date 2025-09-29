@@ -620,8 +620,8 @@ export const resizeBoxAligned: (
  * @note Haskell: `render :: Box -> String`
  */
 export const renderSync: {
-  (config?: Renderer.RenderStyle): <A>(self: Box<A>) => string;
-  <A>(self: Box<A>, config?: Renderer.RenderStyle): string;
+  (config: Renderer.RenderStyle): <A>(self: Box<A>) => string;
+  <A>(self: Box<A>, config: Renderer.RenderStyle): string;
 } = internal.renderSync;
 
 export const render: {

@@ -190,22 +190,25 @@ export const getAnsiEscapeSequence = (data: Ansi.AnsiStyle): string | null => {
   if (data.length === 0) {
     return null;
   }
-  return pipe(
-    Array.partition(data, (attr) => attr._tag === "CommandAttribute"),
-    ([styleAttr, cmdAttr]) => {
-      const styleCode =
-        styleAttr.length > 0
-          ? styleAttr.map((style) => style.code).join(";")
-          : null;
-      const cmdCode =
-        cmdAttr.length > 0 ? cmdAttr.map((cmd) => cmd.code).join("") : null;
 
-      return (
-        `${styleCode ? `${CSI}${styleCode}m` : ""}${cmdCode ?? ""}`.trim() ||
-        null
-      );
+  // Optimized partitioning with simple loops for better performance
+  const styleCodes: string[] = [];
+  const cmdCodes: string[] = [];
+
+  for (const attr of data) {
+    if (attr._tag === "CommandAttribute") {
+      cmdCodes.push(attr.code);
+    } else {
+      styleCodes.push(attr.code);
     }
-  );
+  }
+
+  const styleCode = styleCodes.length > 0 ? styleCodes.join(";") : null;
+  const cmdCode = cmdCodes.length > 0 ? cmdCodes.join("") : null;
+
+  const result =
+    `${styleCode ? `${CSI}${styleCode}m` : ""}${cmdCode ?? ""}`.trim();
+  return result || null;
 };
 
 /** @internal */
@@ -237,6 +240,7 @@ export const applyAnsiStyling = (
     })
   );
 
+// Pre-compiled regex patterns for performance
 const DEC_SEQUENCE = /[78]/;
 const ESC_END = /[a-zA-Z]/;
 
@@ -249,14 +253,14 @@ const findAnsiSequenceEnd = (
     return startIndex + 2;
   }
 
-  // Handle CSI sequences (ESC [ ... letter)
+  // Handle CSI sequences (ESC [ ... letter) - optimized loop instead of Effect operations
   if (chars[startIndex + 1] === "[") {
-    return pipe(
-      Array.drop(chars, startIndex + 2),
-      Array.findFirstIndex((char: string) => ESC_END.test(char)),
-      Option.map((endPos: number) => startIndex + 2 + endPos + 1),
-      Option.getOrElse(() => chars.length)
-    );
+    for (let i = startIndex + 2; i < chars.length; i++) {
+      if (ESC_END.test(chars[i] || "")) {
+        return i + 1;
+      }
+    }
+    return chars.length;
   }
 
   return chars.length;
@@ -273,34 +277,38 @@ export const truncatePreservingAnsi = (
 
   const segments = Width.segments(str);
 
-  return pipe(
-    segments,
-    Array.reduce(
-      { result: "", visibleCount: 0, skipNext: 0 },
-      ({ result, skipNext, visibleCount }, cur, index) => {
-        if (skipNext > 0) {
-          return { result, visibleCount, skipNext: skipNext - 1 };
-        }
-        if (visibleCount >= maxVisibleLength) {
-          return { result, visibleCount, skipNext };
-        }
-        if (cur === `${ESC}` && segments[index + 1] === "[") {
-          const sequenceEnd = findAnsiSequenceEnd(segments, index);
-          return {
-            visibleCount,
-            result: result + segments.slice(index, sequenceEnd).join(""),
-            skipNext: sequenceEnd - index - 1,
-          };
-        }
-        return {
-          skipNext,
-          result: result + cur,
-          visibleCount: visibleCount + 1,
-        };
+  // Optimized imperative loop for better performance in hot path
+  let result = "";
+  let visibleCount = 0;
+  let skipNext = 0;
+
+  for (let index = 0; index < segments.length; index++) {
+    if (skipNext > 0) {
+      skipNext--;
+      continue;
+    }
+    if (visibleCount >= maxVisibleLength) {
+      break;
+    }
+
+    const cur = segments[index];
+
+    if (cur === ESC && segments[index + 1] === "[") {
+      const sequenceEnd = findAnsiSequenceEnd(segments, index);
+      // Batch append ANSI sequence for efficiency
+      const sequenceParts: string[] = [];
+      for (let i = index; i < sequenceEnd; i++) {
+        sequenceParts.push(segments[i] || "");
       }
-    ),
-    (d) => d.result
-  );
+      result += sequenceParts.join("");
+      skipNext = sequenceEnd - index - 1;
+    } else {
+      result += cur;
+      visibleCount++;
+    }
+  }
+
+  return result;
 };
 /** @internal */
 export const padPreservingAnsi = (
@@ -313,7 +321,26 @@ export const padPreservingAnsi = (
     return truncatePreservingAnsi(str, targetVisibleLength);
   }
 
-  // Use grapheme segmentation for proper emoji handling
+  // Fast path for simple cases without ANSI sequences
+  if (!str.includes(ESC)) {
+    const padding = " ".repeat(targetVisibleLength - currentVisibleLength);
+    switch (alignment) {
+      case "AlignFirst":
+        return str + padding;
+      case "AlignLast":
+        return padding + str;
+      case "AlignCenter1":
+      case "AlignCenter2": {
+        const leftPad = Math.floor(
+          (targetVisibleLength - currentVisibleLength) / 2
+        );
+        const rightPad = targetVisibleLength - currentVisibleLength - leftPad;
+        return " ".repeat(leftPad) + str + " ".repeat(rightPad);
+      }
+    }
+  }
+
+  // Use grapheme segmentation for proper emoji handling (complex case with ANSI)
   const segments = Width.segments(str);
 
   return takePA(

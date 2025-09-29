@@ -681,18 +681,20 @@ export const merge = (renderedBoxes: string[][]): string[] => {
   if (renderedBoxes.length === 0) {
     return [];
   }
-  return pipe(
-    Array.makeBy(
-      Math.max(...renderedBoxes.map((lines) => lines.length)),
-      (i) => i
-    ),
-    Array.map((rowIndex) =>
-      pipe(
-        renderedBoxes,
-        Array.reduce("", (acc, lines) => acc + (lines[rowIndex] ?? ""))
-      )
-    )
-  );
+
+  const maxLines = Math.max(...renderedBoxes.map((lines) => lines.length));
+  const result: string[] = [];
+
+  // Optimize string concatenation with Array.join() instead of O(n²) += operations
+  for (let rowIndex = 0; rowIndex < maxLines; rowIndex++) {
+    const lineParts: string[] = [];
+    for (const box of renderedBoxes) {
+      lineParts.push(box[rowIndex] ?? "");
+    }
+    result.push(lineParts.join(""));
+  }
+
+  return result;
 };
 
 /** @internal */

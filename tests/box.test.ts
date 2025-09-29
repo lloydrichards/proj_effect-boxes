@@ -419,11 +419,11 @@ describe("para", () => {
     expect(Box.renderSync(box, Box.pretty)).toBe(
       String.stripMargin(
         `|This is a
-         |   test
+         |  test
          |paragraph
-         |   that
-         |  should
-         |   flow
+         |  that
+         | should
+         |  flow
          | nicely.`
       )
     );
