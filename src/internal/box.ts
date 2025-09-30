@@ -11,7 +11,7 @@ import {
 } from "effect";
 import { dual } from "effect/Function";
 import { pipeArguments } from "effect/Pipeable";
-import type * as Box from "../Box";
+import * as Box from "../Box";
 import * as Renderer from "../Renderer";
 import * as Width from "./width";
 
@@ -193,29 +193,56 @@ export const make = <A>(b: {
 
 /** @internal */
 
-export const nullBox: Box.Box<never> = make({
-  rows: 0,
-  cols: 0,
-  content: { _tag: "Blank" },
-});
-
-/** @internal */
-
-export const emptyBox = (rows = 0, cols = 0): Box.Box<never> =>
+export const nullBox: Effect.Effect<Box.Box<never>> = Effect.succeed(
   make({
-    rows,
-    cols,
+    rows: 0,
+    cols: 0,
     content: { _tag: "Blank" },
-  });
+  })
+);
 
 /** @internal */
 
-export const char = (c: string): Box.Box<never> =>
-  make({
-    rows: 1,
-    cols: 1,
-    content: { _tag: "Text", text: c[0] ?? " " },
-  });
+export const emptyBox = (
+  rows = 0,
+  cols = 0
+): Effect.Effect<Box.Box<never>, Box.BoxError> => {
+  if (rows < 0 || cols < 0) {
+    return Effect.fail(
+      new Box.BoxError({
+        message: `Box dimensions must be non-negative. Received: ${rows}x${cols}`,
+      })
+    );
+  }
+  return Effect.succeed(
+    make({
+      rows,
+      cols,
+      content: { _tag: "Blank" },
+    })
+  );
+};
+
+/** @internal */
+
+export const char = (
+  c: string
+): Effect.Effect<Box.Box<never>, Box.BoxError> => {
+  if (c.length === 0) {
+    return Effect.fail(
+      new Box.BoxError({
+        message: "Character box cannot be empty.",
+      })
+    );
+  }
+  return Effect.succeed(
+    make({
+      rows: 1,
+      cols: 1,
+      content: { _tag: "Text", text: c[0] ?? " " },
+    })
+  );
+};
 
 const unsafeLine = (t: string): Box.Box<never> =>
   make({
@@ -226,22 +253,71 @@ const unsafeLine = (t: string): Box.Box<never> =>
 
 /** @internal */
 
-export const text = (s: string): Box.Box<never> =>
-  pipe(s, String.split("\n"), Array.map(unsafeLine), vcat(left));
+export const text = (
+  s: string
+): Effect.Effect<Box.Box<never>, Box.BoxError> => {
+  if (s.trim() === "") {
+    return Effect.fail(
+      new Box.BoxError({
+        message: "Text content cannot be empty or whitespace only.",
+      })
+    );
+  }
+
+  const lines = pipe(s, String.split("\n"));
+  const lineBoxes = lines.map((line) =>
+    line.length === 0
+      ? make({
+          rows: 1,
+          cols: 0,
+          content: { _tag: "Text", text: "" },
+        })
+      : unsafeLine(line)
+  );
+
+  return Effect.succeed(vcat(lineBoxes, left));
+};
 
 /** @internal */
 
-export const line = (s: string): Box.Box<never> =>
-  unsafeLine(String.replace(/\n|\r/g, "")(s));
+export const line = (
+  s: string
+): Effect.Effect<Box.Box<never>, Box.BoxError> => {
+  const cleanedString = String.replace(/\n|\r/g, "")(s);
+  if (cleanedString.length === 0) {
+    return Effect.fail(
+      new Box.BoxError({
+        message: "Line box cannot be empty.",
+      })
+    );
+  }
+  return Effect.succeed(unsafeLine(cleanedString));
+};
 
 /** @internal */
 
 export const para = dual<
-  (a: Box.Alignment, w: number) => (self: string) => Box.Box<never>,
-  (self: string, a: Box.Alignment, w: number) => Box.Box<never>
+  (
+    a: Box.Alignment,
+    w: number
+  ) => (self: string) => Effect.Effect<Box.Box<never>, Box.BoxError>,
+  (
+    self: string,
+    a: Box.Alignment,
+    w: number
+  ) => Effect.Effect<Box.Box<never>, Box.BoxError>
 >(3, (self, a, w) => {
+  if (self.trim() === "") {
+    return Effect.fail(
+      new Box.BoxError({
+        message: "Paragraph content cannot be empty or whitespace only.",
+      })
+    );
+  }
+
   const lines = flow(self, w);
-  return mkParaBox(lines, a, lines.length);
+  const result = mkParaBox(lines, a, lines.length);
+  return Effect.succeed(result);
 });
 
 /** @internal */
@@ -270,7 +346,7 @@ export const combineAll = <T extends readonly Box.Box<unknown>[]>(
   collection: T
 ): Box.Box<Box.BoxAnnotations<T>> => {
   const boxes = Array.fromIterable(collection);
-  return boxes.length === 0 ? nullBox : hcat(boxes, top);
+  return boxes.length === 0 ? nullBoxSync : hcat(boxes, top);
 };
 
 /** @internal */
@@ -363,7 +439,7 @@ export const hcatWithSpace = dual<
 >(
   2,
   <A>(self: Box.Box<A>, l: Box.Box<A>): Box.Box<A> =>
-    hcat([self, emptyBox(0, 1), l], top)
+    hcat([self, emptyBoxSync(0, 1), l], top)
 );
 
 /** @internal */
@@ -379,7 +455,7 @@ export const vcatWithSpace = dual<
 >(
   2,
   <A>(self: Box.Box<A>, t: Box.Box<A>): Box.Box<A> =>
-    vcat([self, emptyBox(1, 0), t], left)
+    vcat([self, emptyBoxSync(1, 0), t], left)
 );
 
 /** @internal */
@@ -401,7 +477,7 @@ export const punctuateH = dual<
     p: Box.Box<A>
   ): Box.Box<A | Box.BoxAnnotations<T>> => {
     if (self.length === 0) {
-      return nullBox;
+      return nullBoxSync;
     }
     return hcat(Array.intersperse(self, p), a);
   }
@@ -426,7 +502,7 @@ export const punctuateV = dual<
     p: Box.Box<A>
   ): Box.Box<A | Box.BoxAnnotations<T>> => {
     if (self.length === 0) {
-      return nullBox;
+      return nullBoxSync;
     }
     return vcat(Array.intersperse(self, p), a);
   }
@@ -442,7 +518,7 @@ export const hsep = dual<
 >(
   3,
   <A>(self: readonly Box.Box<A>[], sep: number, a: Box.Alignment): Box.Box<A> =>
-    punctuateH(self, a, emptyBox(0, sep))
+    punctuateH(self, a, emptyBoxSync(0, sep))
 );
 
 /** @internal */
@@ -455,7 +531,7 @@ export const vsep = dual<
 >(
   3,
   <A>(self: readonly Box.Box<A>[], sep: number, a: Box.Alignment): Box.Box<A> =>
-    punctuateV(self, a, emptyBox(sep, 0))
+    punctuateV(self, a, emptyBoxSync(sep, 0))
 );
 
 /*
@@ -490,14 +566,31 @@ export const columns = dual<
   pipe(self, flow(w), Array.chunksOf(h), Array.map(mkParaBox(a, h)))
 );
 
+// Internal synchronous versions for backwards compatibility
+const nullBoxSync: Box.Box<never> = make({
+  rows: 0,
+  cols: 0,
+  content: { _tag: "Blank" },
+});
+
+const emptyBoxSync = (rows = 0, cols = 0): Box.Box<never> =>
+  make({
+    rows,
+    cols,
+    content: { _tag: "Blank" },
+  });
+
+const textSync = (s: string): Box.Box<never> =>
+  pipe(s, String.split("\n"), Array.map(unsafeLine), vcat(left));
+
 const mkParaBox = dual<
   (a: Box.Alignment, n: number) => (self: string[]) => Box.Box,
   (self: string[], a: Box.Alignment, n: number) => Box.Box
 >(3, (self, a, n) => {
   if (self.length === 0) {
-    return emptyBox(n, 0);
+    return emptyBoxSync(n, 0);
   }
-  return pipe(self, Array.map(text), vcat(a), alignVert(top, n));
+  return pipe(self, Array.map(textSync), vcat(a), alignVert(top, n));
 });
 
 const whitespaceRegex = /\s+/;
@@ -989,3 +1082,136 @@ export const alterAnnotation = dual<
 
 /** @internal */
 export const alterAnnotate = alterAnnotation;
+
+/*
+ *  --------------------------------------------------------------------------------
+ *  --  Effect-First Combinators  --------------------------------------------------
+ *  --------------------------------------------------------------------------------
+ */
+
+/** @internal */
+export const hcatEffect = dual<
+  <T extends readonly unknown[]>(
+    a: Box.Alignment
+  ) => (
+    self: Effect.Effect<Box.Box<unknown>, Box.BoxError>[]
+  ) => Effect.Effect<Box.Box<Box.BoxAnnotations<T>>, Box.BoxError>,
+  <T extends readonly unknown[]>(
+    self: Effect.Effect<Box.Box<unknown>, Box.BoxError>[],
+    a: Box.Alignment
+  ) => Effect.Effect<Box.Box<Box.BoxAnnotations<T>>, Box.BoxError>
+>(2, (self, a) => {
+  if (self.length === 0) {
+    return Effect.fail(
+      new Box.BoxError({
+        message: "Cannot horizontally concatenate empty array of boxes.",
+      })
+    );
+  }
+
+  return pipe(
+    Effect.all(self),
+    Effect.map((boxes) => hcat(boxes as Box.Box<unknown>[], a))
+  );
+});
+
+/** @internal */
+export const vcatEffect = dual<
+  <T extends readonly unknown[]>(
+    a: Box.Alignment
+  ) => (
+    self: Effect.Effect<Box.Box<unknown>, Box.BoxError>[]
+  ) => Effect.Effect<Box.Box<Box.BoxAnnotations<T>>, Box.BoxError>,
+  <T extends readonly unknown[]>(
+    self: Effect.Effect<Box.Box<unknown>, Box.BoxError>[],
+    a: Box.Alignment
+  ) => Effect.Effect<Box.Box<Box.BoxAnnotations<T>>, Box.BoxError>
+>(2, (self, a) => {
+  if (self.length === 0) {
+    return Effect.fail(
+      new Box.BoxError({
+        message: "Cannot vertically concatenate empty array of boxes.",
+      })
+    );
+  }
+
+  return pipe(
+    Effect.all(self),
+    Effect.map((boxes) => vcat(boxes, a))
+  );
+});
+
+/** @internal */
+export const hAppendEffect = dual<
+  <A, B>(
+    l: Effect.Effect<Box.Box<A>, Box.BoxError>
+  ) => (
+    self: Effect.Effect<Box.Box<B>, Box.BoxError>
+  ) => Effect.Effect<Box.Box<A | B>, Box.BoxError>,
+  <A, B>(
+    self: Effect.Effect<Box.Box<A>, Box.BoxError>,
+    l: Effect.Effect<Box.Box<B>, Box.BoxError>
+  ) => Effect.Effect<Box.Box<A | B>, Box.BoxError>
+>(2, (self, l) => hcatEffect([self, l], top));
+
+/** @internal */
+export const vAppendEffect = dual<
+  <A, B>(
+    t: Effect.Effect<Box.Box<A>, Box.BoxError>
+  ) => (
+    self: Effect.Effect<Box.Box<B>, Box.BoxError>
+  ) => Effect.Effect<Box.Box<A | B>, Box.BoxError>,
+  <A, B>(
+    self: Effect.Effect<Box.Box<A>, Box.BoxError>,
+    t: Effect.Effect<Box.Box<B>, Box.BoxError>
+  ) => Effect.Effect<Box.Box<A | B>, Box.BoxError>
+>(2, (self, t) => vcatEffect([self, t], left));
+
+/** @internal */
+export const combineEffect = dual<
+  <B>(
+    l: Effect.Effect<Box.Box<B>, Box.BoxError>
+  ) => <A>(
+    self: Effect.Effect<Box.Box<A>, Box.BoxError>
+  ) => Effect.Effect<Box.Box<A | B>, Box.BoxError>,
+  <A, B>(
+    self: Effect.Effect<Box.Box<A>, Box.BoxError>,
+    l: Effect.Effect<Box.Box<B>, Box.BoxError>
+  ) => Effect.Effect<Box.Box<A | B>, Box.BoxError>
+>(2, (self, l) => hcatEffect([self, l], top));
+
+/** @internal */
+export const combineAllEffect = (
+  collection: Effect.Effect<Box.Box<unknown>, Box.BoxError>[]
+) => {
+  if (collection.length === 0) {
+    return nullBox;
+  }
+  return hcatEffect(collection, top);
+};
+
+/** @internal */
+export const hcatWithSpaceEffect = dual<
+  <A, B>(
+    l: Effect.Effect<Box.Box<A>, Box.BoxError>
+  ) => (
+    self: Effect.Effect<Box.Box<B>, Box.BoxError>
+  ) => Effect.Effect<Box.Box<A | B>, Box.BoxError>,
+  <A, B>(
+    self: Effect.Effect<Box.Box<A>, Box.BoxError>,
+    l: Effect.Effect<Box.Box<B>, Box.BoxError>
+  ) => Effect.Effect<Box.Box<A | B>, Box.BoxError>
+>(2, (self, l) => hcatEffect([self, emptyBox(0, 1), l], top));
+
+/** @internal */
+export const vcatWithSpaceEffect = dual<
+  <A, B>(
+    t: Effect.Effect<Box.Box<A>, Box.BoxError>
+  ) => (
+    self: Effect.Effect<Box.Box<B>, Box.BoxError>
+  ) => Effect.Effect<Box.Box<A | B>, Box.BoxError>,
+  <A, B>(
+    self: Effect.Effect<Box.Box<A>, Box.BoxError>,
+    t: Effect.Effect<Box.Box<B>, Box.BoxError>
+  ) => Effect.Effect<Box.Box<A | B>, Box.BoxError>
+>(2, (self, t) => vcatEffect([self, emptyBox(1, 0), t], left));

@@ -1,4 +1,4 @@
-import type { Effect } from "effect";
+import { Data, type Effect } from "effect";
 import type * as Equal from "effect/Equal";
 import type * as Hash from "effect/Hash";
 import type * as Inspectable from "effect/Inspectable";
@@ -6,6 +6,11 @@ import type { Pipeable } from "effect/Pipeable";
 import type { Annotation } from "./Annotation";
 import * as internal from "./internal/box";
 import type * as Renderer from "./Renderer";
+
+export class BoxError extends Data.TaggedError("BoxError")<{
+  readonly message: string;
+  readonly cause?: unknown;
+}> {}
 
 export const BoxTypeId: unique symbol = internal.BoxTypeId;
 
@@ -164,7 +169,7 @@ export const isBox: <A>(u: unknown) => u is Box<A> = internal.isBox;
  * @note Haskell: `nullBox :: Box`
  * @category constructors
  */
-export const nullBox: Box<never> = internal.nullBox;
+export const nullBox: Effect.Effect<Box<never>> = internal.nullBox;
 
 /**
  * Creates an empty box with the specified dimensions.
@@ -188,8 +193,10 @@ export const nullBox: Box<never> = internal.nullBox;
  * @note Haskell: `empty :: Int -> Int -> Box`
  * @category constructors
  */
-export const emptyBox: (rows?: number, cols?: number) => Box<never> =
-  internal.emptyBox;
+export const emptyBox: (
+  rows?: number,
+  cols?: number
+) => Effect.Effect<Box<never>, BoxError> = internal.emptyBox;
 
 /**
  * Creates a 1x1 box containing a single character.
@@ -215,7 +222,8 @@ export const emptyBox: (rows?: number, cols?: number) => Box<never> =
  * @note Haskell: `char :: Char -> Box`
  * @category constructors
  */
-export const char: (c: string) => Box<never> = internal.char;
+export const char: (c: string) => Effect.Effect<Box<never>, BoxError> =
+  internal.char;
 
 /**
  * Creates a box containing multi-line text, splitting on newlines.
@@ -242,7 +250,8 @@ export const char: (c: string) => Box<never> = internal.char;
  * @note Haskell: `text :: String -> Box`
  * @category constructors
  */
-export const text: (s: string) => Box<never> = internal.text;
+export const text: (s: string) => Effect.Effect<Box<never>, BoxError> =
+  internal.text;
 
 /**
  * Creates a single-line box from a string, removing any line breaks.
@@ -266,7 +275,8 @@ export const text: (s: string) => Box<never> = internal.text;
  * @note Haskell: `line :: String -> Box`
  * @category constructors
  */
-export const line: (s: string) => Box<never> = internal.line;
+export const line: (s: string) => Effect.Effect<Box<never>, BoxError> =
+  internal.line;
 
 /**
  * Creates a paragraph box with text flowed to fit within the specified width.
@@ -292,8 +302,11 @@ export const line: (s: string) => Box<never> = internal.line;
  * @category constructors
  */
 export const para: {
-  (a: Alignment, w: number): (self: string) => Box<never>;
-  (self: string, a: Alignment, w: number): Box<never>;
+  (
+    a: Alignment,
+    w: number
+  ): (self: string) => Effect.Effect<Box<never>, BoxError>;
+  (self: string, a: Alignment, w: number): Effect.Effect<Box<never>, BoxError>;
 } = internal.para;
 
 /**
@@ -321,9 +334,16 @@ export const para: {
  * @category combinators
  */
 export const combine: {
-  <B>(l: Box<B>): <A>(self: Box<A>) => Box<A | B>;
-  <A, B>(self: Box<A>, l: Box<B>): Box<A | B>;
-} = internal.combine;
+  <B>(
+    l: Effect.Effect<Box<B>, BoxError>
+  ): <A>(
+    self: Effect.Effect<Box<A>, BoxError>
+  ) => Effect.Effect<Box<A | B>, BoxError>;
+  <A, B>(
+    self: Effect.Effect<Box<A>, BoxError>,
+    l: Effect.Effect<Box<B>, BoxError>
+  ): Effect.Effect<Box<A | B>, BoxError>;
+} = internal.combineEffect;
 
 /**
  * Combines multiple boxes with a starting box using the Semigroup operation.
@@ -357,9 +377,10 @@ export const combineMany: {
  * @note Haskell: `instance Monoid Box where mempty = nullBox mappend = (<>) mconcat = hcat top`
  * @category combinators
  */
-export const combineAll: <T extends readonly Box<unknown>[]>(
-  collection: T
-) => Box<BoxAnnotations<T>> = internal.combineAll;
+export const combineAll: <T extends readonly unknown[]>(
+  collection: Effect.Effect<Box<unknown>, BoxError>[]
+) => Effect.Effect<Box<BoxAnnotations<T>>, BoxError> =
+  internal.combineAllEffect;
 
 /**
  * Gets the number of rows in a box.
@@ -482,14 +503,16 @@ export const match: {
  * @category combinators
  */
 export const hcat: {
-  <T extends readonly Box<unknown>[]>(
+  <T extends readonly unknown[]>(
     a: Alignment
-  ): (self: T) => Box<BoxAnnotations<T>>;
-  <T extends readonly Box<unknown>[]>(
-    self: T,
+  ): (
+    self: Effect.Effect<Box<unknown>, BoxError>[]
+  ) => Effect.Effect<Box<BoxAnnotations<T>>, BoxError>;
+  <T extends readonly unknown[]>(
+    self: Effect.Effect<Box<unknown>, BoxError>[],
     a: Alignment
-  ): Box<BoxAnnotations<T>>;
-} = internal.hcat;
+  ): Effect.Effect<Box<BoxAnnotations<T>>, BoxError>;
+} = internal.hcatEffect;
 
 /**
  * Arranges boxes vertically in a column with the specified horizontal alignment.
@@ -514,14 +537,14 @@ export const hcat: {
  * @category combinators
  */
 export const vcat: {
-  <T extends readonly Box<unknown>[]>(
+  <T extends readonly (Box<unknown> | Effect.Effect<Box<unknown>, BoxError>)[]>(
     a: Alignment
-  ): (self: T) => Box<BoxAnnotations<T>>;
-  <T extends readonly Box<unknown>[]>(
+  ): (self: T) => Effect.Effect<Box<BoxAnnotations<T>>, BoxError>;
+  <T extends readonly (Box<unknown> | Effect.Effect<Box<unknown>, BoxError>)[]>(
     self: T,
     a: Alignment
-  ): Box<BoxAnnotations<T>>;
-} = internal.vcat;
+  ): Effect.Effect<Box<BoxAnnotations<T>>, BoxError>;
+} = internal.vcatEffect;
 
 /**
  * Places two boxes side by side horizontally.
@@ -545,9 +568,16 @@ export const vcat: {
  * @category combinators
  */
 export const hAppend: {
-  <A>(l: Box<A>): (self: Box<A>) => Box<A>;
-  <A>(self: Box<A>, l: Box<A>): Box<A>;
-} = internal.hAppend;
+  <A>(
+    l: Effect.Effect<Box<A>, BoxError>
+  ): <B>(
+    self: Effect.Effect<Box<B>, BoxError>
+  ) => Effect.Effect<Box<A | B>, BoxError>;
+  <A, B>(
+    self: Effect.Effect<Box<A>, BoxError>,
+    l: Effect.Effect<Box<B>, BoxError>
+  ): Effect.Effect<Box<A | B>, BoxError>;
+} = internal.hAppendEffect;
 
 /**
  * Places two boxes side by side with a single space column between them.
@@ -602,9 +632,16 @@ export const hcatWithSpace: {
  * @category combinators
  */
 export const vAppend: {
-  <A>(t: Box<A>): (self: Box<A>) => Box<A>;
-  <A>(self: Box<A>, t: Box<A>): Box<A>;
-} = internal.vAppend;
+  <A>(
+    t: Effect.Effect<Box<A>, BoxError>
+  ): <B>(
+    self: Effect.Effect<Box<B>, BoxError>
+  ) => Effect.Effect<Box<A | B>, BoxError>;
+  <A, B>(
+    self: Effect.Effect<Box<A>, BoxError>,
+    t: Effect.Effect<Box<B>, BoxError>
+  ): Effect.Effect<Box<A | B>, BoxError>;
+} = internal.vAppendEffect;
 
 /**
  * Stacks two boxes vertically with a single empty row between them.
