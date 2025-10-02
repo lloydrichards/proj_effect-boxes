@@ -11,6 +11,7 @@ import {
 } from "effect";
 import { dual } from "effect/Function";
 import { pipeArguments } from "effect/Pipeable";
+import type * as Annotation from "../Annotation";
 import type * as Box from "../Box";
 import * as Renderer from "../Renderer";
 import * as Width from "./width";
@@ -497,6 +498,9 @@ const mkParaBox = dual<
   if (self.length === 0) {
     return emptyBox(n, 0);
   }
+  if (self.length === 1 && self[0] === "") {
+    return emptyBox(n, 0);
+  }
   return pipe(self, Array.map(text), vcat(a), alignVert(top, n));
 });
 
@@ -623,7 +627,6 @@ export const align = dual<
         yAlign: av,
         box: self,
       },
-      annotation: self.annotation,
     })
 );
 
@@ -929,7 +932,7 @@ export const reAnnotate = dual<
     annotation: {
       ...self.annotation,
       data: transform(self.annotation.data),
-    } as import("../Annotation").Annotation<B>,
+    } as Annotation.Annotation<B>,
   });
 });
 

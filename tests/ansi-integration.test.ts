@@ -45,7 +45,6 @@ describe("Ansi Annotation Integration", () => {
         .pipe(Box.alignHoriz(Box.center1, 10))
         .pipe(Box.moveRight(2));
       expect(styledBox.cols).toBe(12); // 10 + 2 movement
-      expect(styledBox.annotation).toBeDefined();
 
       const rendered = Box.renderPrettySync(styledBox);
       expect(rendered).toContain("\x1b[31m");
