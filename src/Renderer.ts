@@ -2,6 +2,7 @@ import { type Effect, Layer } from "effect";
 import type * as Box from "./Box";
 import * as internal from "./internal/renderer";
 import { makeAnsiRenderer } from "./renderer/AnsiRenderer";
+import { HtmlRenderConfig, makeHtmlRenderer } from "./renderer/HtmlRenderer";
 import { makePlainRenderer } from "./renderer/PlainRenderer";
 
 /**
@@ -394,3 +395,52 @@ export const PlainRendererLive: Layer.Layer<Renderer> = makePlainRenderer;
  * @category layers
  */
 export const AnsiRendererLive: Layer.Layer<Renderer> = makeAnsiRenderer;
+
+/**
+ * HTML renderer layer implementation.
+ *
+ * Provides a Renderer service that converts box layouts into HTML format.
+ * Preserves structural and styling annotations by translating them into
+ * appropriate HTML tags and attributes. Useful for web applications,
+ * documentation generation, or any context where HTML output is required.
+ *
+ * @example
+ * ```typescript
+ * import * as Renderer from "effect-boxes/Renderer"
+ * import * as Box from "effect-boxes/Box"
+ * import * as Html from "effect-boxes/Html"
+ * import { Effect, pipe } from "effect"
+ *
+ * const htmlBox = Box.vcat([
+ *   Box.text("Hello World").pipe(Box.annotate(Html.h1)),
+ *   Box.text("This is an example of HTML rendering.").pipe(Box.annotate(Html.p)),
+ *   Box.text("Goodbye!").pipe(Box.annotate(Html.p))
+ * ], Box.left)
+ *
+ * const htmlOutput = pipe(
+ *   htmlBox,
+ *   Renderer.render(),
+ *   Effect.provide(Renderer.HtmlRendererLive)
+ * )
+ * // Result: HTML string with appropriate tags
+ * ```
+ *
+ * @category layers
+ */
+export const HtmlRendererLive: Layer.Layer<Renderer> = makeHtmlRenderer.pipe(
+  Layer.provideMerge(HtmlRenderConfig.Default)
+);
+
+export const HtmlPrettyRendererLive: Layer.Layer<Renderer> =
+  makeHtmlRenderer.pipe(
+    Layer.provide(
+      Layer.succeed(
+        HtmlRenderConfig,
+        HtmlRenderConfig.make({
+          indent: true,
+          indentSize: 2,
+          preserveWhitespace: true,
+        })
+      )
+    )
+  );
