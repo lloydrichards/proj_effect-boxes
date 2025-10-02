@@ -53,15 +53,14 @@ export const renderBox = <A>(
   box: Box.Box<A>,
   processor: R.TextProcessor,
   renderRecursive: <B>(childBox: Box.Box<B>) => Effect.Effect<string[]>
-): Effect.Effect<string[]> => {
-  if (box.rows === 0 || box.cols === 0) {
-    return Effect.succeed([]);
-  }
-
-  return match(box, {
+): Effect.Effect<string[]> =>
+  match(box, {
     blank: () =>
       Effect.succeed(
-        resizeBoxWithProcessor([""], box.rows, box.cols, processor)
+        // Zero-width boxes should render as empty, not as newlines
+        box.cols === 0
+          ? []
+          : resizeBoxWithProcessor([""], box.rows, box.cols, processor)
       ),
     text: (text) =>
       Effect.succeed(
@@ -96,7 +95,6 @@ export const renderBox = <A>(
         )
       ),
   });
-};
 
 /** @internal */
 const resizeBoxWithProcessor = (

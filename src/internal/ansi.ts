@@ -235,6 +235,11 @@ export const applyAnsiStyling = (
               : `${withPrefix}${RESET}`;
           }
 
+          // Don't apply styling to empty lines
+          if (line === "") {
+            return line;
+          }
+
           return `${sequence}${line}${RESET}`;
         }),
     })
