@@ -1,16 +1,16 @@
 import { Effect, Layer } from "effect";
 import type * as Annotation from "../Annotation";
 import type * as Box from "../Box";
-import type * as R from "../Renderer";
 import {
-  truncatePreservingAnsi,
-  padPreservingAnsi,
-  isAnsi,
-  getAnsiEscapeSequence,
   applyAnsiStyling,
+  getAnsiEscapeSequence,
+  isAnsi,
   isCommandAnnotation,
+  padPreservingAnsi,
+  truncatePreservingAnsi,
 } from "../internal/ansi";
 import { Renderer, renderBox } from "../internal/renderer";
+import type * as R from "../Renderer";
 
 /** @internal */
 
@@ -44,8 +44,7 @@ export const makeAnsiRenderer = Layer.effect(
     const renderContent = <A>(box: Box.Box<A>): Effect.Effect<string[]> => {
       if (
         (box.rows === 0 || box.cols === 0) &&
-        box.annotation &&
-        isCommandAnnotation(box.annotation.data)
+        isCommandAnnotation(box.annotation?.data)
       ) {
         const seq = getAnsiEscapeSequence(box.annotation.data);
         return Effect.succeed(seq ? [seq] : []);
@@ -64,4 +63,3 @@ export const makeAnsiRenderer = Layer.effect(
     };
   })
 );
-

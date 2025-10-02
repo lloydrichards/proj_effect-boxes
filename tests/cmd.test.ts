@@ -458,12 +458,12 @@ describe("CMD Module", () => {
           Box.left
         );
 
-        const rendered = Ansi.renderAnnotatedBox(layout);
+        const rendered = Box.renderPrettySync(layout);
 
         // Should contain the text and escape sequences from the commands
-        expect(rendered.join("")).toContain("Hello");
-        expect(rendered.join("")).toContain("\x1b7"); // save position
-        expect(rendered.join("")).toContain("\x1b8"); // restore position
+        expect(rendered).toContain("Hello");
+        expect(rendered).toContain("\x1b7"); // save position
+        expect(rendered).toContain("\x1b8"); // restore position
       });
     });
   });

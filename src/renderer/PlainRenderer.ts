@@ -1,10 +1,10 @@
 import { Effect, Layer } from "effect";
 import type * as Annotation from "../Annotation";
 import type * as Box from "../Box";
-import type * as R from "../Renderer";
 import { takeP, takePA } from "../internal/box";
 import { Renderer, renderBox } from "../internal/renderer";
 import * as Width from "../internal/width";
+import type * as R from "../Renderer";
 
 /** @internal */
 
