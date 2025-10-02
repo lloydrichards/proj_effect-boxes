@@ -1,6 +1,8 @@
-import type { Effect, Layer } from "effect";
+import { type Effect, Layer } from "effect";
 import type * as Box from "./Box";
 import * as internal from "./internal/renderer";
+import { makeAnsiRenderer } from "./renderer/AnsiRenderer";
+import { makePlainRenderer } from "./renderer/PlainRenderer";
 
 /**
  * Text processing interface for customizing line rendering behavior.
@@ -358,8 +360,7 @@ export const render: {
  *
  * @category layers
  */
-export const PlainRendererLive: Layer.Layer<Renderer> =
-  internal.PlainRendererLive;
+export const PlainRendererLive: Layer.Layer<Renderer> = makePlainRenderer;
 
 /**
  * ANSI-enabled renderer layer implementation.
@@ -392,5 +393,4 @@ export const PlainRendererLive: Layer.Layer<Renderer> =
  *
  * @category layers
  */
-export const AnsiRendererLive: Layer.Layer<Renderer> =
-  internal.AnsiRendererLive;
+export const AnsiRendererLive: Layer.Layer<Renderer> = makeAnsiRenderer;
