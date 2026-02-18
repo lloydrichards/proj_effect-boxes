@@ -140,7 +140,7 @@ const main = Effect.gen(function* () {
   yield* display(Box.renderPrettySync(initialLayout));
   const positionMap = Reactive.getPositions(initialLayout);
 
-  const tickStream = Stream.repeatEffect(
+  const tickStream = Stream.fromEffectRepeat(
     Effect.gen(function* () {
       const now = yield* Clock.currentTimeMillis;
       const counter = yield* Ref.updateAndGet(counterRef, (n) => n + 1);
@@ -193,7 +193,8 @@ const main = Effect.gen(function* () {
           ),
         ],
         // Filter out None values and flatten the update commands
-        Array.filterMap((option) => option),
+        Array.filter(Option.isSome),
+        Array.map((option) => option.value),
         Array.flatten
       );
 

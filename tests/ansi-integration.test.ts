@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: Testing runtime rather than build */
 import { describe, expect, it } from "vitest";
 import * as Annotation from "../src/Annotation";
 import * as Ansi from "../src/Ansi";

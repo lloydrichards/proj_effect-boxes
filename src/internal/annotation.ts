@@ -38,7 +38,6 @@ export const createAnnotation = <A>(data: A): Annotation.Annotation<A> => ({
     return Hash.hash(this.data);
   },
   pipe() {
-    // biome-ignore lint/correctness/noUndeclaredVariables: typescript does not recognize that this is a method on Box
     return pipeArguments(this, arguments);
   },
   data,

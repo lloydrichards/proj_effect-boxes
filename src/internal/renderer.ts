@@ -5,7 +5,7 @@ import type * as Box from "../Box";
 import type * as R from "../Renderer";
 import { blanks, match, merge, takeP, takePA } from "./box";
 
-export class Renderer extends Context.Tag("Renderer")<
+export class Renderer extends Context.Service<
   Renderer,
   {
     readonly renderContent: <A>(box: Box.Box<A>) => Effect.Effect<string[]>;
@@ -15,7 +15,7 @@ export class Renderer extends Context.Tag("Renderer")<
     ) => Effect.Effect<string[]>;
     readonly processor: R.TextProcessor;
   }
->() {}
+>()("Renderer") {}
 
 export const defaultRenderConfig: R.RenderConfig = {
   preserveWhitespace: false,

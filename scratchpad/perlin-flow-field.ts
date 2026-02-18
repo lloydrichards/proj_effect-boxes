@@ -184,7 +184,7 @@ const main = Effect.gen(function* () {
   // State management
   const counterRef = yield* Ref.make(0);
 
-  const tickStream = Stream.repeatEffect(
+  const tickStream = Stream.fromEffectRepeat(
     Effect.gen(function* () {
       const now = yield* Clock.currentTimeMillis;
 

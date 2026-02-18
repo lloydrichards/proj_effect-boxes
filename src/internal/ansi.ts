@@ -217,7 +217,7 @@ export const applyAnsiStyling = (
   escapeSequence: string
 ): string[] =>
   pipe(
-    Option.fromNullable(escapeSequence),
+    Option.fromNullishOr(escapeSequence),
     Option.filter((seq) => seq !== ""),
     Option.match({
       onNone: () => lines,

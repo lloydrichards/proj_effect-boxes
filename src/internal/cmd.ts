@@ -59,7 +59,8 @@ export const cursorMove = (column = 0, row = 0): Box.Box<Ansi.AnsiStyle> =>
           (v) => v.value !== 0
         ),
       ],
-      Array.filterMap((movement) => movement),
+      Array.filter(Option.isSome),
+      Array.map((movement) => movement.value),
       Array.map((movement) => `${CSI}${movement.value}${movement.code}`),
       Array.join("")
     )

@@ -192,17 +192,24 @@ const textPrompt = (message: string) =>
         );
 
         const result = yield* Effect.ensuring(
-          pipe(
-            Stream.repeatEffect(keyPress.take),
-            Stream.scan(initialState, processInput),
-            Stream.takeWhile((state) => !state.submitted),
-            Stream.runFoldEffect(initialState, (_, cur) =>
+          Stream.runFoldEffect(
+            pipe(
+              Stream.fromEffectRepeat(
+                keyPress.take as Effect.Effect<Terminal.UserInput>
+              ),
+              Stream.scan<PromptState, Terminal.UserInput>(
+                initialState,
+                processInput
+              ),
+              Stream.takeWhile((state) => !state.submitted)
+            ),
+            () => initialState,
+            (_, cur) =>
               Effect.gen(function* () {
                 yield* Ref.set(stateRef, cur);
                 yield* renderPrompt(cur);
                 return cur;
               })
-            )
           ),
           // Cleanup: Clear screen and reset cursor
           display(Box.renderPrettySync(Cmd.clearScreen))
@@ -234,8 +241,8 @@ const swedishChefPrompt = Effect.gen(function* () {
   );
 }).pipe(
   Effect.provide(BunTerminal.layer),
-  Effect.catchAll(() => display("Goodbye!"))
-);
+  Effect.catch(() => display("Goodbye!"))
+) as Effect.Effect<void>;
 
 // Run the Swedish Chef example
 // Try pressing Ctrl+C to see the cursor cleanup in action

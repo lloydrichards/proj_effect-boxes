@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: Testing runtime rather than build */
 import { String } from "effect";
 import * as Equal from "effect/Equal";
 import * as Hash from "effect/Hash";
@@ -896,7 +897,7 @@ describe("Inspectable", () => {
 
   it("excludes private implementation details from inspection", () => {
     const box = Box.text("test");
-    const inspected = (box as any)[Inspectable.NodeInspectSymbol]();
+    const inspected = box[Inspectable.NodeInspectSymbol]();
 
     // Should only contain public properties
     const keys = Object.keys(inspected as object);

@@ -140,7 +140,7 @@ const main = Effect.gen(function* () {
   const counterCol = 9; // Column after 'Counter: '
 
   // Create the animation stream
-  const tickStream = Stream.repeatEffect(
+  const tickStream = Stream.fromEffectRepeat(
     Effect.gen(function* () {
       const counter = yield* Ref.updateAndGet(counterRef, (n) => n + 1);
       return { counter };
