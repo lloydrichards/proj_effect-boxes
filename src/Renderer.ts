@@ -428,19 +428,18 @@ export const AnsiRendererLive: Layer.Layer<Renderer> = makeAnsiRenderer;
  * @category layers
  */
 export const HtmlRendererLive: Layer.Layer<Renderer> = makeHtmlRenderer.pipe(
-  Layer.provideMerge(HtmlRenderConfig.Default)
+  Layer.provideMerge(
+    Layer.succeed(HtmlRenderConfig)(HtmlRenderConfig.defaultValue())
+  )
 );
 
 export const HtmlPrettyRendererLive: Layer.Layer<Renderer> =
   makeHtmlRenderer.pipe(
     Layer.provide(
-      Layer.succeed(
-        HtmlRenderConfig,
-        HtmlRenderConfig.make({
-          indent: true,
-          indentSize: 2,
-          preserveWhitespace: true,
-        })
-      )
+      Layer.succeed(HtmlRenderConfig)({
+        indent: true,
+        indentSize: 2,
+        preserveWhitespace: true,
+      })
     )
   );

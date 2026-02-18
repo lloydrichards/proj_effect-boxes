@@ -84,14 +84,11 @@ const proto: Omit<Box.Box, "rows" | "content" | "cols" | "annotation"> = {
     );
   },
   [Hash.symbol]<A>(this: Box.Box<A>) {
-    return Hash.cached(
-      this,
-      pipe(
-        Hash.hash(this.rows),
-        Hash.combine(Hash.hash(this.cols)),
-        Hash.combine(contentHash(this)),
-        Hash.combine(Hash.hash(this.annotation))
-      )
+    return pipe(
+      Hash.hash(this.rows),
+      Hash.combine(Hash.hash(this.cols)),
+      Hash.combine(contentHash(this)),
+      Hash.combine(Hash.hash(this.annotation))
     );
   },
   [Inspectable.NodeInspectSymbol]<A>(this: Box.Box<A>): unknown {
@@ -127,7 +124,6 @@ const proto: Omit<Box.Box, "rows" | "content" | "cols" | "annotation"> = {
     };
   },
   pipe() {
-    // biome-ignore lint/correctness/noUndeclaredVariables: typescript does not recognize that this is a method on Box
     return pipeArguments(this, arguments);
   },
 };

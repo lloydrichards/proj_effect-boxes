@@ -1,4 +1,4 @@
-import { Array, Effect, Layer } from "effect";
+import { Array, Context, Effect, Layer } from "effect";
 import type * as Annotation from "../Annotation";
 import type * as Box from "../Box";
 import { match } from "../internal/box";
@@ -55,16 +55,22 @@ const wrapLinesInHtmlTag = (
     `${indent}</${element}>`,
   ];
 };
-export class HtmlRenderConfig extends Effect.Service<HtmlRenderConfig>()(
+export type HtmlRenderConfig = {
+  readonly indent: boolean;
+  readonly indentSize: number;
+  readonly preserveWhitespace: boolean;
+};
+
+export const HtmlRenderConfig = Context.Reference<HtmlRenderConfig>(
   "HtmlRenderConfig",
   {
-    sync: () => ({
+    defaultValue: () => ({
       indent: false,
       indentSize: 2,
       preserveWhitespace: false,
     }),
   }
-) {}
+);
 export const makeHtmlRenderer = Layer.effect(
   Renderer,
   Effect.gen(function* () {

@@ -1,17 +1,19 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
-  "extends": ["ultracite"],
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
     "includes": ["src/**/*.ts", "scratchpad/**/*.ts", "tests/**/*.ts"]
   },
+  "formatter": {
+    "indentStyle": "space",
+    "lineWidth": 80
+  },
+  "javascript": {
+    "formatter": {
+      "trailingCommas": "es5"
+    }
+  },
   "linter": {
     "rules": {
-      "nursery": {
-        "noShadow": "off",
-        "useMaxParams": "off",
-        "useConsistentTypeDefinitions": "off",
-        "useConsistentArrowReturn": "warn"
-      },
       "complexity": {
         "noArguments": "off"
       },
