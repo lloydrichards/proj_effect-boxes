@@ -11,6 +11,7 @@ import {
 } from "effect";
 import { dual } from "effect/Function";
 import { pipeArguments } from "effect/Pipeable";
+import { SingleShotGen } from "effect/Utils";
 import type * as Annotation from "../Annotation";
 import type * as Box from "../Box";
 import * as Renderer from "../Renderer";
@@ -125,6 +126,12 @@ const proto: Omit<Box.Box, "rows" | "content" | "cols" | "annotation"> = {
   },
   pipe() {
     return pipeArguments(this, arguments);
+  },
+  asEffect<A>(this: Box.Box<A>): Effect.Effect<Box.Box<A>> {
+    return Effect.succeed(this);
+  },
+  [Symbol.iterator]<A>(this: Box.Box<A>) {
+    return new SingleShotGen(this) as any;
   },
 };
 
