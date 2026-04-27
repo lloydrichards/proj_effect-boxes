@@ -154,9 +154,9 @@ const demo = Effect.gen(function* () {
 // Export for potential execution
 export {
   demo,
-  renderError,
-  simpleMessage,
   multiLineLayout,
   positionedContent,
+  renderError,
   screenSetup,
+  simpleMessage,
 };

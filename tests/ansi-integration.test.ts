@@ -41,10 +41,12 @@ describe("Ansi Annotation Integration", () => {
     });
 
     it("should maintain composability with existing Box functions", () => {
-      const styledBox = Box.text("Hello")
-        .pipe(Box.annotate(Ansi.red))
-        .pipe(Box.alignHoriz(Box.center1, 10))
-        .pipe(Box.moveRight(2));
+      const styledBox = Box.text("Hello").pipe(
+        Box.annotate(Ansi.red),
+        Box.alignHoriz(Box.center1, 10),
+        Box.moveRight(2)
+      );
+
       expect(styledBox.cols).toBe(12); // 10 + 2 movement
 
       const rendered = Box.renderPrettySync(styledBox);

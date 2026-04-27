@@ -56,24 +56,27 @@
   },
   "scripts": {
     "start": "bun run src/main.ts",
+    "clean": "git clean -xdf .cache dist node_modules tsconfig.tsbuildinfo",
     "lint": "biome lint",
     "type-check": "tsc --noEmit",
     "format": "biome check --write",
     "test": "vitest run",
     "scratch": "bun run scratchpad/index.ts",
     "benchmark": "vitest bench --run",
-    "benchmark:quick": "vitest bench benchmarks/quick.bench.ts --run"  },
+    "benchmark:quick": "vitest bench benchmarks/quick.bench.ts --run",
+"prepare": "effect-language-service patch"
+  },
   "dependencies": {
     "effect": "4.0.0-beta.57"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.0",
-    "@effect/language-service": "^0.74.0",
+    "@biomejs/biome": "2.4.13",
+    "@effect/language-service": "^0.85.1",
     "@effect/platform-bun": "4.0.0-beta.57",
-    "@types/bun": "^1.3.9",
-    "@vitest/coverage-v8": "4.0.18",
+    "@types/bun": "^1.3.13",
+    "@vitest/coverage-v8": "4.1.5",
     "tinybench": "^5.1.0",
     "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.5"
   }
 }
