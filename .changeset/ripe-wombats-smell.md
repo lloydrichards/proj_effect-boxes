@@ -1,5 +1,5 @@
 ---
-"effect-boxes": major
+"effect-boxes": minor
 ---
 
 publish on npm
