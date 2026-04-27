@@ -327,6 +327,79 @@ export const render: {
 } = internal.render;
 
 // -----------------------------------------------------------------------------
+// Tracked Rendering
+// -----------------------------------------------------------------------------
+
+/**
+ * Result of a tracked render pass containing rendered output and reactive positions.
+ *
+ * Combines the rendered string output with position metadata for all reactive
+ * boxes in the layout. Positions use logical terminal cell coordinates.
+ *
+ * @example
+ * ```typescript
+ * import * as Renderer from "effect-boxes/Renderer"
+ * import * as Reactive from "effect-boxes/Reactive"
+ * import * as Box from "effect-boxes/Box"
+ * import { Effect, pipe, HashMap } from "effect"
+ *
+ * const layout = Box.vcat([
+ *   Reactive.makeReactive(Box.text("Header"), "header"),
+ *   Box.text("Body"),
+ *   Reactive.makeReactive(Box.text("Footer"), "footer")
+ * ], Box.left)
+ *
+ * const program = pipe(
+ *   Renderer.tracked(layout),
+ *   Effect.provide(Renderer.PlainRendererLive)
+ * )
+ * // Result: { lines: [...], output: "Header\nBody\nFooter", positions: HashMap }
+ * ```
+ *
+ * @category models
+ */
+export type RenderFrame = internal.RenderFrame;
+
+/**
+ * Renders a box to a string and collects reactive position metadata in one operation.
+ *
+ * Combines rendering with reactive position tracking, returning a `RenderFrame`
+ * containing the rendered lines, joined output string, and a position map for
+ * all reactive annotations. Supports both data-first and data-last calling patterns.
+ *
+ * @example
+ * ```typescript
+ * import * as Renderer from "effect-boxes/Renderer"
+ * import * as Reactive from "effect-boxes/Reactive"
+ * import * as Box from "effect-boxes/Box"
+ * import { Effect, pipe, HashMap } from "effect"
+ *
+ * const layout = Box.vcat([
+ *   Reactive.makeReactive(Box.text("Title"), "title"),
+ *   Reactive.makeReactive(Box.text("Button"), "btn")
+ * ], Box.left)
+ *
+ * const program = Effect.gen(function* () {
+ *   const frame = yield* Renderer.tracked(layout)
+ *   console.log(frame.output)
+ *   const btnPos = HashMap.get(frame.positions, "btn")
+ *   return frame
+ * }).pipe(Effect.provide(Renderer.AnsiRendererLive))
+ * ```
+ *
+ * @category rendering
+ */
+export const tracked: {
+  <A>(
+    config?: RenderConfig
+  ): (box: Box.Box<A>) => Effect.Effect<RenderFrame, never, Renderer>;
+  <A>(
+    box: Box.Box<A>,
+    config?: RenderConfig
+  ): Effect.Effect<RenderFrame, never, Renderer>;
+} = internal.tracked;
+
+// -----------------------------------------------------------------------------
 // Renderer Layers
 // -----------------------------------------------------------------------------
 

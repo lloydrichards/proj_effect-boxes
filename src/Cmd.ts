@@ -130,7 +130,7 @@ export const cursorBackward: (columns?: number) => Box<AnsiStyle> =
  * ```typescript
  * import * as Cmd from "effect-boxes/Cmd"
  * import * as Box from "effect-boxes/Box"
- * import * as Ansi from "effect-boxes/Ansi"
+ * import * as Ansi from "effect-boxesi/Ansi"
  * import { pipe } from "effect"
  *
  * const statusAtPosition = pipe(

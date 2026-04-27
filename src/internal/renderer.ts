@@ -2,8 +2,10 @@ import { Array, Context, Effect, Option, pipe } from "effect";
 import { dual } from "effect/Function";
 import type * as Annotation from "../Annotation";
 import type * as Box from "../Box";
+import type * as Reactive from "../Reactive";
 import type * as R from "../Renderer";
 import { blanks, match, merge, takeP, takePA } from "./box";
+import { getPositions } from "./reactive";
 
 export class Renderer extends Context.Service<
   Renderer,
@@ -166,5 +168,34 @@ export const render = dual<
   Effect.gen(function* () {
     const lines = yield* renderBoxToLines(box);
     return renderLinesToString(lines, config);
+  })
+);
+
+// -----------------------------------------------------------------------------
+// Tracked Rendering
+// -----------------------------------------------------------------------------
+
+/** @internal */
+export interface RenderFrame {
+  readonly lines: ReadonlyArray<string>;
+  readonly output: string;
+  readonly positions: Reactive.PositionMap;
+}
+
+/** @internal */
+export const tracked = dual<
+  <A>(
+    config?: R.RenderConfig
+  ) => (box: Box.Box<A>) => Effect.Effect<RenderFrame, never, Renderer>,
+  <A>(
+    box: Box.Box<A>,
+    config?: R.RenderConfig
+  ) => Effect.Effect<RenderFrame, never, Renderer>
+>(2, (box, config) =>
+  Effect.gen(function* () {
+    const lines = yield* renderBoxToLines(box);
+    const output = renderLinesToString(lines, config);
+    const positions = getPositions(box);
+    return { lines, output, positions } as RenderFrame;
   })
 );
