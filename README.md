@@ -5,11 +5,14 @@ Create TUIs with composable boxes, ANSI styling, and reactive components.
 
 ## What is Effect Boxes?
 
-Effect Boxes is a TypeScript port of Haskell's `Text.PrettyPrint.Boxes` library,
-providing a flex-style layout system for terminal applications within the Effect
-ecosystem. Think of it as a CSS flexbox system, but built specifically for
-functional composition of elements in terminal UIs, ASCII art, and structured
-text output.
+Effect Boxes is a TypeScript library inspired by Haskell's
+`Text.PrettyPrint.Boxes`, providing a flex-style layout system for terminal
+applications within the Effect ecosystem. It started from the original box
+model and function naming, then grew into its own implementation with Effect
+integration, annotations, ANSI styling, and reactive rendering support. Think
+of it as a CSS flexbox system, but built specifically for functional
+composition of elements in terminal UIs, ASCII art, and structured text
+output.
 
 ## Key Features
 
@@ -148,3 +151,9 @@ bun format
 # Run examples
 bun run scratch
 ```
+
+## License
+
+BSD-3-Clause.
+
+This library is inspired by Haskell's `Text.PrettyPrint.Boxes` by Brent Yorgey.

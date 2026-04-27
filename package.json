@@ -50,6 +50,7 @@
     "url": "git+https://github.com/lloydrichards/proj_effect-boxes.git"
   },
   "homepage": "https://github.com/lloydrichards/proj_effect-boxes#readme",
+  "license": "BSD-3-Clause",
   "bugs": {
     "url": "https://github.com/lloydrichards/proj_effect-boxes/issues"
   },
