@@ -1,5 +1,5 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Testing runtime rather than build */
-import { String } from "effect";
+import { Effect, String } from "effect";
 import * as Equal from "effect/Equal";
 import * as Hash from "effect/Hash";
 import * as Inspectable from "effect/Inspectable";
@@ -1197,6 +1197,62 @@ describe("Annotation Functions", () => {
            |...`
         )
       );
+    });
+  });
+
+  describe("Yieldable", () => {
+    it("asEffect returns Effect.succeed(box)", () => {
+      const box = Box.text("hello");
+      const result = Effect.runSync(box.asEffect());
+      expect(Equal.equals(result, box)).toBe(true);
+    });
+
+    it("works with yield* inside Effect.gen", () => {
+      const box = Box.text("world");
+      const program = Effect.gen(function* () {
+        const yielded = yield* box;
+        return yielded;
+      });
+      const result = Effect.runSync(program);
+      expect(Equal.equals(result, box)).toBe(true);
+    });
+
+    it("works with pipe and yield*", () => {
+      const program = Effect.gen(function* () {
+        const layout = yield* Box.text("hello").pipe(
+          Box.moveRight(2),
+          Box.moveDown(1)
+        );
+        return layout;
+      });
+      const result = Effect.runSync(program);
+      expect(result.rows).toBe(2);
+      expect(result.cols).toBe(7);
+    });
+
+    it("preserves Equal and Hash after yielding", () => {
+      const box = Box.text("test");
+      const program = Effect.gen(function* () {
+        const yielded = yield* box;
+        return [
+          Equal.equals(yielded, box),
+          Hash.hash(yielded) === Hash.hash(box),
+        ] as const;
+      });
+      const [eq, hash] = Effect.runSync(program);
+      expect(eq).toBe(true);
+      expect(hash).toBe(true);
+    });
+
+    it("works with Effect.all", () => {
+      const program = Effect.all([
+        Box.text("a").asEffect(),
+        Box.text("b").asEffect(),
+      ]);
+      const results = Effect.runSync(program);
+      expect(results).toHaveLength(2);
+      expect(Box.renderPlainSync(results[0])).toBe("a");
+      expect(Box.renderPlainSync(results[1])).toBe("b");
     });
   });
 });
