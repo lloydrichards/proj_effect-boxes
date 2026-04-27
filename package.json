@@ -64,7 +64,7 @@
     "scratch": "bun run scratchpad/index.ts",
     "benchmark": "vitest bench --run",
     "benchmark:quick": "vitest bench benchmarks/quick.bench.ts --run",
-"prepare": "effect-language-service patch"
+    "prepare": "effect-language-service patch"
   },
   "dependencies": {
     "effect": "4.0.0-beta.57"
@@ -75,8 +75,8 @@
     "@effect/platform-bun": "4.0.0-beta.57",
     "@types/bun": "^1.3.13",
     "@vitest/coverage-v8": "4.1.5",
-    "tinybench": "^5.1.0",
-    "typescript": "^5.9.3",
+    "tinybench": "^6.0.0",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.5"
   }
 }

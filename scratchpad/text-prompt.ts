@@ -1,6 +1,15 @@
-import { Terminal } from "@effect/platform";
 import { BunTerminal } from "@effect/platform-bun";
-import { Array, Effect, Match, Option, pipe, Ref, Stream } from "effect";
+import {
+  Array,
+  Effect,
+  Match,
+  Option,
+  pipe,
+  Queue,
+  Ref,
+  Stream,
+  Terminal,
+} from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 import * as Cmd from "../src/Cmd";
@@ -194,9 +203,7 @@ const textPrompt = (message: string) =>
         const result = yield* Effect.ensuring(
           Stream.runFoldEffect(
             pipe(
-              Stream.fromEffectRepeat(
-                keyPress.take as Effect.Effect<Terminal.UserInput>
-              ),
+              Stream.fromEffectRepeat(Queue.take(keyPress)),
               Stream.scan<PromptState, Terminal.UserInput>(
                 initialState,
                 processInput
@@ -239,10 +246,7 @@ const swedishChefPrompt = Effect.gen(function* () {
       )
     )
   );
-}).pipe(
-  Effect.provide(BunTerminal.layer),
-  Effect.catch(() => display("Goodbye!"))
-) as Effect.Effect<void>;
+}).pipe(Effect.provide(BunTerminal.layer)) as Effect.Effect<void>;
 
 // Run the Swedish Chef example
 // Try pressing Ctrl+C to see the cursor cleanup in action
