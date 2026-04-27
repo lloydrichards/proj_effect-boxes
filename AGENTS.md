@@ -618,6 +618,19 @@ rg --files -g "*.ts"
 rg --files -g "*.test.ts"
 ```
 
+## Local Source References
+
+When answering questions about Effect, search these
+cloned source repos first. When updating dependencies, pull the latest
+commits in these repos to ensure the LLM references current code:
+
+- `.reference/effect/`
+
+If any of the folders are missing (they are git ignored), clone them into
+`reference/`:
+
+- `https://github.com/Effect-TS/effect-smol.git` -> `.reference/effect/`
+
 ---
 
 _This document is a living guide. Update it as the project evolves and new
