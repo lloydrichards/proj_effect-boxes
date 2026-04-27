@@ -24,30 +24,14 @@ output.
 
 ## Installation
 
-Install directly from GitHub as a TypeScript library:
-
 ```bash
-# Install with npm
-npm install git+https://github.com/lloydrichards/proj_effect-boxes.git
-
-# Install with yarn
-yarn add git+https://github.com/lloydrichards/proj_effect-boxes.git
-
-# Install with pnpm
-pnpm add git+https://github.com/lloydrichards/proj_effect-boxes.git
-
-# Install with bun
-bun add git+https://github.com/lloydrichards/proj_effect-boxes.git
-```
-
-Or add it directly in your `package.json`:
-
-```json
-{
-  "dependencies": {
-    "effect-boxes": "git+https://github.com/lloydrichards/proj_effect-boxes.git"
-  }
-}
+npm install effect-boxes
+# or
+bun add effect-boxes
+# or
+pnpm add effect-boxes
+# or
+yarn add effect-boxes
 ```
 
 ## Quick Start
@@ -151,6 +135,34 @@ bun format
 # Run examples
 bun run scratch
 ```
+
+### Releasing a New Version
+
+This project uses [changesets](https://github.com/changesets/changesets) to
+manage versioning, changelogs, and npm publishing.
+
+1. **Add a changeset** when making a noteworthy change:
+
+   ```bash
+   bunx changeset
+   ```
+
+   Follow the prompts to select a semver bump type (patch/minor/major) and
+   describe the change. This creates a markdown file in `.changeset/`.
+
+2. **Commit the changeset** along with your code changes and push to `main`.
+
+3. **Automated release PR**: The CI workflow detects pending changesets and
+   opens a "Version Packages" PR that bumps `package.json`, updates
+   `CHANGELOG.md`, and removes consumed changeset files.
+
+4. **Merge the release PR**: Once merged, the workflow automatically publishes
+   the new version to npm.
+
+5. **Verify the release**: Check the
+   [Actions tab](https://github.com/lloydrichards/proj_effect-boxes/actions) to
+   confirm the publish succeeded, then verify on
+   [npm](https://www.npmjs.com/package/effect-boxes).
 
 ## License
 
