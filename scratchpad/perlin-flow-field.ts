@@ -200,7 +200,8 @@ const main = Effect.gen(function* () {
   // Render the initial layout
   yield* display(
     Box.emptyBox(InnerH, InnerW).pipe(
-      Border, Box.vAppend(Box.text("Flow Field Walkers (Ctrl+C to exit)")),
+      Border,
+      Box.vAppend(Box.text("Flow Field Walkers (Ctrl+C to exit)")),
       Box.renderPrettySync
     )
   );
