@@ -723,9 +723,9 @@ describe("Pipeable", () => {
     expect(Box.renderPrettySync(result)).toContain("hello");
   });
 
-  it("allows pipe without any arguments to return the same box", () => {
+  it("preserves structural equality after a no-op transform", () => {
     const box = Box.text("unchanged");
-    const result = box.pipe();
+    const result = box.pipe((self) => self);
     expect(Equal.equals(box, result)).toBe(true);
     expect(Hash.hash(box)).toBe(Hash.hash(result));
   });

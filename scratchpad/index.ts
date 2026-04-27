@@ -136,7 +136,8 @@ const main = Effect.gen(function* () {
   };
 
   // Display the initial layout
-  const initialLayout = buildDisplayLayout(0, Date.now());
+  const initialTimestamp = yield* Clock.currentTimeMillis;
+  const initialLayout = buildDisplayLayout(0, initialTimestamp);
   yield* display(Box.renderPrettySync(initialLayout));
   const positionMap = Reactive.getPositions(initialLayout);
 

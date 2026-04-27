@@ -19,7 +19,16 @@
     "noPropertyAccessFromIndexSignature": false,
     "plugins": [
       {
-        "name": "@effect/language-service"
+        "name": "@effect/language-service",
+        "barrelImportPackages": ["effect"],
+        "includeSuggestionsInTsc": true,
+        "quickinfoMaximumLength": 1200,
+        "diagnosticSeverity": {
+          "cryptoRandomUUIDInEffect": "suggestion",
+          "globalDateInEffect": "suggestion",
+          "layerMergeAllWithDependencies": "warning",
+          "missingEffectServiceDependency": "warning"
+        }
       }
     ],
     "strictNullChecks": true
