@@ -5,6 +5,7 @@ import type * as Inspectable from "effect/Inspectable";
 import type { Pipeable } from "effect/Pipeable";
 import type { Annotation } from "./Annotation";
 import * as internal from "./internal/box";
+import * as internalRender from "./internal/box-render";
 import type * as Renderer from "./Renderer";
 
 export const BoxTypeId: unique symbol = internal.BoxTypeId;
@@ -935,7 +936,7 @@ export const moveRight: {
  * @category utilities
  */
 export const defaultRenderConfig: Renderer.RenderStyle =
-  internal.defaultRenderConfig;
+  internalRender.defaultRenderConfig;
 
 /**
  * Merges multiple arrays of rendered text lines into a single array.
@@ -1007,7 +1008,7 @@ export const resizeBoxAligned: (
  * @category utilities
  */
 export const renderPrettySync: <A>(self: Box<A>) => string =
-  internal.renderPrettySync;
+  internalRender.renderPrettySync;
 
 /**
  * Renders a box to a plain string without any special formatting.
@@ -1018,7 +1019,7 @@ export const renderPrettySync: <A>(self: Box<A>) => string =
  * @category utilities
  */
 export const renderPlainSync: <A>(self: Box<A>) => string =
-  internal.renderPlainSync;
+  internalRender.renderPlainSync;
 
 /** * Renders a box to a Renderer within an Effect context.
  *
@@ -1050,7 +1051,7 @@ export const render: {
     box: Box<A>,
     config?: Renderer.RenderConfig
   ): Effect.Effect<string, never, Renderer.Renderer>;
-} = internal.render;
+} = internalRender.render;
 
 /**
  * Prints a box to the console using the Effect Console.
@@ -1060,7 +1061,7 @@ export const render: {
  */
 export const printBox: <A>(
   b: Box<A>
-) => Effect.Effect<void, never, Renderer.Renderer> = internal.printBox;
+) => Effect.Effect<void, never, Renderer.Renderer> = internalRender.printBox;
 
 /*
  *  --------------------------------------------------------------------------------

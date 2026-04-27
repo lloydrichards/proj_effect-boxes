@@ -1,6 +1,5 @@
 import {
   Array,
-  Console,
   Effect,
   Equal,
   Hash,
@@ -14,7 +13,6 @@ import { pipeArguments } from "effect/Pipeable";
 import { SingleShotGen } from "effect/Utils";
 import type * as Annotation from "../Annotation";
 import type * as Box from "../Box";
-import * as Renderer from "../Renderer";
 import * as Width from "./width";
 
 /** @internal */
@@ -678,11 +676,6 @@ export const moveRight = dual<
 );
 
 /** @internal */
-export const defaultRenderConfig: Renderer.RenderStyle = {
-  _tag: "Plain",
-};
-
-/** @internal */
 export const merge = (renderedBoxes: string[][]): string[] => {
   if (renderedBoxes.length === 0) {
     return [];
@@ -782,34 +775,6 @@ export const resizeBoxAligned =
       blanks(c),
       r
     );
-
-/** @internal */
-export const render = Renderer.render;
-
-/** @internal */
-export const renderPrettySync = <A>(self: Box.Box<A>): string =>
-  pipe(
-    Renderer.render(self, { preserveWhitespace: false }),
-    Effect.provide(Renderer.AnsiRendererLive),
-    Effect.runSync
-  );
-
-/** @internal */
-export const renderPlainSync = <A>(self: Box.Box<A>): string =>
-  pipe(
-    Renderer.render(self, { preserveWhitespace: true }),
-    Effect.provide(Renderer.PlainRendererLive),
-    Effect.runSync
-  );
-
-/** @internal */
-export const printBox = (
-  box: Box.Box<unknown>
-): Effect.Effect<void, never, Renderer.Renderer> =>
-  Effect.gen(function* () {
-    const rendered = yield* render(box);
-    yield* Console.log(rendered);
-  });
 
 // -----------------------------------------------------------------------------
 // Utilities

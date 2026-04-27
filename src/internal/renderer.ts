@@ -4,7 +4,7 @@ import type * as Annotation from "../Annotation";
 import type * as Box from "../Box";
 import type * as Reactive from "../Reactive";
 import type * as R from "../Renderer";
-import { blanks, match, merge, takeP, takePA } from "./box";
+import { blanks, isBox, match, merge, takeP, takePA } from "./box";
 import { getPositions } from "./reactive";
 
 export class Renderer extends Context.Service<
@@ -191,7 +191,7 @@ export const tracked = dual<
     box: Box.Box<A>,
     config?: R.RenderConfig
   ) => Effect.Effect<RenderFrame, never, Renderer>
->(2, (box, config) =>
+>((args) => isBox(args[0]), (box, config) =>
   Effect.gen(function* () {
     const lines = yield* renderBoxToLines(box);
     const output = renderLinesToString(lines, config);
