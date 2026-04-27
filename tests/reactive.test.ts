@@ -1,7 +1,8 @@
-import { HashMap, Option } from "effect";
+import { Effect, HashMap, Option } from "effect";
 import { describe, expect, it } from "vitest";
 import * as Box from "../src/Box";
 import * as Reactive from "../src/Reactive";
+import * as Renderer from "../src/Renderer";
 
 describe("Reactive Annotations", () => {
   describe("ReactiveId", () => {
@@ -288,6 +289,86 @@ describe("Reactive Annotations", () => {
       expect(headerPos).toEqual({ row: 0, col: 0, rows: 1, cols: 6 });
       expect(okPos).toEqual({ row: 2, col: 0, rows: 1, cols: 4 });
       expect(cancelPos).toEqual({ row: 2, col: 5, rows: 1, cols: 8 }); // After [OK] + space
+    });
+  });
+
+  describe("renderTracked", () => {
+    it("returns lines, output, and positions", () => {
+      const layout = Box.vcat(
+        [
+          Reactive.makeReactive(Box.text("Header"), "header"),
+          Box.text("Body"),
+          Reactive.makeReactive(Box.text("Footer"), "footer"),
+        ],
+        Box.left
+      );
+
+      const frame = Effect.runSync(
+        Renderer.tracked(layout).pipe(
+          Effect.provide(Renderer.PlainRendererLive)
+        )
+      );
+
+      expect(frame.lines).toHaveLength(3);
+      expect(frame.output).toContain("Header");
+      expect(frame.output).toContain("Body");
+      expect(frame.output).toContain("Footer");
+
+      const headerPos = Option.getOrUndefined(
+        HashMap.get(frame.positions, "header")
+      );
+      const footerPos = Option.getOrUndefined(
+        HashMap.get(frame.positions, "footer")
+      );
+
+      expect(headerPos).toEqual({ row: 0, col: 0, rows: 1, cols: 6 });
+      expect(footerPos).toEqual({ row: 2, col: 0, rows: 1, cols: 6 });
+    });
+
+    it("works with data-last calling pattern", () => {
+      const layout = Reactive.makeReactive(Box.text("Test"), "test");
+
+      const frame = Effect.runSync(
+        layout.pipe(
+          Renderer.tracked(),
+          Effect.provide(Renderer.PlainRendererLive)
+        )
+      );
+
+      expect(frame.output).toContain("Test");
+      expect(Option.isSome(HashMap.get(frame.positions, "test"))).toBe(true);
+    });
+
+    it("returns empty positions for non-reactive boxes", () => {
+      const layout = Box.text("Plain");
+
+      const frame = Effect.runSync(
+        Renderer.tracked(layout).pipe(
+          Effect.provide(Renderer.PlainRendererLive)
+        )
+      );
+
+      expect(frame.output).toContain("Plain");
+      expect(HashMap.size(frame.positions)).toBe(0);
+    });
+
+    it("works with yield* inside Effect.gen", () => {
+      const layout = Box.vcat(
+        [
+          Reactive.makeReactive(Box.text("A"), "a"),
+          Reactive.makeReactive(Box.text("B"), "b"),
+        ],
+        Box.left
+      );
+
+      const program = Effect.gen(function* () {
+        const frame = yield* Renderer.tracked(layout);
+        return frame;
+      }).pipe(Effect.provide(Renderer.PlainRendererLive));
+
+      const frame = Effect.runSync(program);
+      expect(frame.output).toContain("A");
+      expect(HashMap.size(frame.positions)).toBe(2);
     });
   });
 });
