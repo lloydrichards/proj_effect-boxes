@@ -1,5 +1,11 @@
 # effect-boxes
 
+## 0.10.3
+
+### Patch Changes
+
+- [#28](https://github.com/lloydrichards/proj_effect-boxes/pull/28) [`a1b107f`](https://github.com/lloydrichards/proj_effect-boxes/commit/a1b107f9d48a3624e3847294095d7473ad2eadce) Thanks [@lloydrichards](https://github.com/lloydrichards)! - use bracket notation and RegExp constructor
+
 ## 0.10.2
 
 ### Patch Changes
