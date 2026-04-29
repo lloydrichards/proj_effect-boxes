@@ -128,7 +128,7 @@ export interface Box<A = never>
   readonly rows: number;
   readonly cols: number;
   readonly content: Content<A>;
-  readonly annotation?: Annotation<A>;
+  readonly annotation?: Annotation<A> | undefined;
 }
 
 // -----------------------------------------------------------------------------
@@ -431,7 +431,7 @@ export const make: <A>(b: {
   rows: number;
   cols: number;
   content: Content<A>;
-  annotation?: Annotation<A>;
+  annotation?: Annotation<A> | undefined;
 }) => Box<A> = internal.make;
 
 /**

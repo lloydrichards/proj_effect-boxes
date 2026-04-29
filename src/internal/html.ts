@@ -4,7 +4,7 @@ import { createAnnotation } from "./annotation";
 export interface HtmlAnnotationData {
   readonly _tag: "Html";
   readonly element: string;
-  readonly attributes?: Record<string, string>;
+  readonly attributes?: Record<string, string> | undefined;
 }
 
 export const isHtml = (data: unknown): data is HtmlAnnotationData =>

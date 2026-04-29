@@ -5,7 +5,7 @@ import type * as Renderer from "./Renderer";
 export interface HtmlAnnotationData {
   readonly _tag: "Html";
   readonly element: string;
-  readonly attributes?: Record<string, string>;
+  readonly attributes?: Record<string, string> | undefined;
 }
 
 export interface HtmlRenderConfig extends Renderer.RenderConfig {

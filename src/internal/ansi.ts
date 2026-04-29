@@ -400,7 +400,7 @@ export const renderAnnotatedBox = <A>({
     return [];
   }
 
-  const contentLines = match(make({ cols, content, rows, annotation }), {
+  const contentLines = match(make({ cols, content, rows, ...(annotation != null ? { annotation } : {}) }), {
     blank: () => resizeBox([""], rows, cols),
     text: (text) => resizeBox([text], rows, cols),
     row: (boxes) =>

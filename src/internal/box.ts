@@ -180,7 +180,7 @@ export const make = <A>(b: {
   rows: number;
   cols: number;
   content: Box.Content<A>;
-  annotation?: import("../Annotation").Annotation<A>;
+  annotation?: import("../Annotation").Annotation<A> | undefined;
 }): Box.Box<A> => {
   const box = Object.create(proto);
   box.rows = Math.max(0, b.rows);
