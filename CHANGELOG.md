@@ -1,5 +1,11 @@
 # effect-boxes
 
+## 0.10.2
+
+### Patch Changes
+
+- [#26](https://github.com/lloydrichards/proj_effect-boxes/pull/26) [`a780214`](https://github.com/lloydrichards/proj_effect-boxes/commit/a780214e1e699ac9a76100fa3389d975192e5b1b) Thanks [@lloydrichards](https://github.com/lloydrichards)! - explicitly mark optional properties as undefined
+
 ## 0.10.1
 
 ### Patch Changes
