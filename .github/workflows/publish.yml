@@ -37,8 +37,9 @@ jobs:
           bun-version: latest
       - uses: actions/setup-node@v4
         with:
-          node-version: "22.x"
+          node-version: "24.x"
           registry-url: "https://registry.npmjs.org"
+      - run: npm --version
       - run: bun install --frozen-lockfile
       - name: Create Release PR or Publish
         id: changesets
