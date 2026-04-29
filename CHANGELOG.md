@@ -1,5 +1,11 @@
 # effect-boxes
 
+## 0.10.1
+
+### Patch Changes
+
+- [#24](https://github.com/lloydrichards/proj_effect-boxes/pull/24) [`324f201`](https://github.com/lloydrichards/proj_effect-boxes/commit/324f2017069622f37a70320ece25af6eb52eca50) Thanks [@lloydrichards](https://github.com/lloydrichards)! - bump effect to v4.0.0-beta.59
+
 ## 0.10.0
 
 ### Minor Changes
