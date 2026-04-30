@@ -252,6 +252,30 @@ describe("CMD Module", () => {
         expect(cmd.annotation?.data[0]?.code).toBe("\x1b[0M");
       });
     });
+
+    describe("clearLines", () => {
+      it("should clear a single line", () => {
+        const cmd = Cmd.clearLines(1);
+        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[2K\x1b[G");
+      });
+
+      it("should clear multiple lines with cursor up between them", () => {
+        const cmd = Cmd.clearLines(3);
+        expect(cmd.annotation?.data[0]?.code).toBe(
+          "\x1b[2K\x1b[1A\x1b[2K\x1b[1A\x1b[2K\x1b[G"
+        );
+      });
+
+      it("should produce empty code for zero rows", () => {
+        const cmd = Cmd.clearLines(0);
+        expect(cmd.annotation?.data[0]?.code).toBe("");
+      });
+
+      it("should clamp negative values", () => {
+        const cmd = Cmd.clearLines(-3);
+        expect(cmd.annotation?.data[0]?.code).toBe("");
+      });
+    });
   });
 
   describe("Utility Commands", () => {
