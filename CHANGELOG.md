@@ -1,5 +1,11 @@
 # effect-boxes
 
+## 0.11.0
+
+### Minor Changes
+
+- [#30](https://github.com/lloydrichards/effect-boxes/pull/30) [`a157024`](https://github.com/lloydrichards/effect-boxes/commit/a1570242f6070f122123f6cec8a76bf177559d3f) Thanks [@lloydrichards](https://github.com/lloydrichards)! - add clearLines command for clearing lines
+
 ## 0.10.3
 
 ### Patch Changes
