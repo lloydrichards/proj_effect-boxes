@@ -156,6 +156,17 @@ export const eraseEndLine: Box.Box<Ansi.AnsiStyle> = createCmdBox(
 export const eraseLines = (rows: number): Box.Box<Ansi.AnsiStyle> =>
   createCmdBox("eraseLines", `${CSI}${clamp(rows)}M`);
 
+/** @internal */
+export const clearLines = (rows: number): Box.Box<Ansi.AnsiStyle> => {
+  const n = clamp(rows);
+  let code = "";
+  for (let i = 0; i < n; i++) {
+    code += `${CSI}2K` + (i < n - 1 ? `${CSI}1A` : "");
+  }
+  if (n > 0) code += `${CSI}G`;
+  return createCmdBox("clearLines", code);
+};
+
 /*
  *  --------------------------------------------------------------------------------
  *  --  Utility Commands  ----------------------------------------------------------

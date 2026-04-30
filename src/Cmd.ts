@@ -578,6 +578,35 @@ export const eraseEndLine: Box<AnsiStyle> = internalAnsi.eraseEndLine;
 export const eraseLines: (rows: number) => Box<AnsiStyle> =
   internalAnsi.eraseLines;
 
+/**
+ * Clears the content of the specified number of lines above the cursor
+ * without deleting them from the scroll buffer.
+ *
+ * Unlike {@link eraseLines} which uses the DL (Delete Line) escape to remove
+ * lines and scroll content upward, `clearLines` erases each line's content
+ * in place and repositions the cursor to the beginning of the topmost
+ * cleared line. This is the approach used by libraries like `ansi-escapes`
+ * for rewriting previous output (spinners, progress bars, etc.).
+ *
+ * @example
+ * ```typescript
+ * import * as Cmd from "effect-boxes/Cmd"
+ * import * as Box from "effect-boxes/Box"
+ *
+ * // Clear 3 lines of previous output and overwrite
+ * const update = Box.vcat([
+ *   Cmd.clearLines(3),
+ *   Box.text("Replaced line 1"),
+ *   Box.text("Replaced line 2"),
+ *   Box.text("Replaced line 3"),
+ * ], Box.left)
+ * ```
+ *
+ * @category erase
+ */
+export const clearLines: (rows: number) => Box<AnsiStyle> =
+  internalAnsi.clearLines;
+
 /*
  *  --------------------------------------------------------------------------------
  *  --  Utility Commands  ----------------------------------------------------------
