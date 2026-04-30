@@ -48,8 +48,11 @@ const clearDown = Cmd.eraseDown;
 // Clear the current line
 const clearLine = Cmd.eraseLine;
 
-// Clear multiple lines (erase 5 lines from cursor position)
+// Clear multiple lines (delete 5 lines from scroll region)
 const clearLines = Cmd.eraseLines(5);
+
+// Clear content of previous 5 lines in place (no scrolling)
+const clearInPlace = Cmd.clearLines(5);
 ```
 
 ### Cursor Visibility
@@ -87,6 +90,34 @@ const positionedText = pipe(
 
 // Render with ANSI commands enabled
 console.log(Box.render(positionedText, { style: "pretty" }));
+```
+
+## Practical Example: Rewriting Previous Output
+
+`clearLines` is useful for overwriting previously printed lines without
+affecting the rest of the terminal (e.g. spinners, progress bars):
+
+```typescript
+// Print 3 lines, then clear and replace them
+const initial = Box.vcat(
+  [
+    Box.text("Downloading..."),
+    Box.text("Progress: 50%"),
+    Box.text("ETA: 10s"),
+  ],
+  Box.left
+);
+
+// Later, clear those 3 lines and write new content
+const updated = Box.vcat(
+  [
+    Cmd.clearLines(3),
+    Box.text("Downloading..."),
+    Box.text("Progress: 100%"),
+    Box.text("Done!"),
+  ],
+  Box.left
+);
 ```
 
 ## Practical Example: Partial Screen Updates
