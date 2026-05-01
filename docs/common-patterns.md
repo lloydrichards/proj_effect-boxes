@@ -14,7 +14,7 @@ All box operations support both data-first and data-last styles:
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-boxes";
+import * as Box from "effect-boxes/Box";
 
 // Data-first style
 const box1 = Box.moveRight(Box.text("Hello"), 5);
@@ -32,7 +32,7 @@ Boxes implement Effect's `Equal` interface for structural equality:
 
 ```typescript
 import { Equal } from "effect";
-import * as Box from "effect-boxes";
+import * as Box from "effect-boxes/Box";
 
 const box1 = Box.text("hello");
 const box2 = Box.text("hello");
@@ -58,7 +58,7 @@ Most functions support both data-first and data-last parameter ordering:
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-boxes";
+import * as Box from "effect-boxes/Box";
 
 // Data-first: function(data, param)
 const box1 = Box.alignHoriz(Box.text("Hello"), Box.center1, 20);
@@ -72,11 +72,10 @@ const box2 = pipe(Box.text("Hello"), Box.alignHoriz(Box.center1, 20));
 ### Creating a Border
 
 ```typescript
-import { pipe } from "effect";
-import * as Box from "effect-boxes";
-import { Array } from "effect";
+import { pipe, Array } from "effect";
+import * as Box from "effect-boxes/Box";
 
-const Border = (self: Box.Box) => {
+const Border = (self: Box.Box<unknown>) => {
   const middleBorder = pipe(
     Array.makeBy(self.rows, () => Box.char("│")),
     Box.vcat(Box.left)
@@ -101,7 +100,7 @@ const Border = (self: Box.Box) => {
 };
 
 const bordered = Border(Box.text("Hello\nWorld"));
-console.log(Box.render(bordered));
+console.log(Box.renderPlainSync(bordered));
 /*
 ┌─────┐
 │Hello│
@@ -114,9 +113,9 @@ console.log(Box.render(bordered));
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-boxes";
+import * as Box from "effect-boxes/Box";
 
-const Padding = (width: number) => (self: Box.Box) =>
+const Padding = (width: number) => (self: Box.Box<unknown>) =>
   pipe(
     self,
     Box.moveUp(width),
@@ -126,21 +125,19 @@ const Padding = (width: number) => (self: Box.Box) =>
   );
 
 const padded = Padding(2)(Box.text("Hello"));
-console.log(Box.renderWith(padded, "."));
-/*
-.........
-.........
-..Hello..
-.........
-.........
-*/
+// Visualize with dots to show padding (rendered output has spaces)
+// .........
+// .........
+// ..Hello..
+// .........
+// .........
 ```
 
 ### Creating a Table
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-boxes";
+import * as Box from "effect-boxes/Box";
 
 const createTable = (headers: string[], rows: string[][]) => {
   const headerRow = Box.punctuateH(
@@ -176,8 +173,8 @@ const table = createTable(
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-boxes";
-import * as Ansi from "effect-boxes/ansi";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
 
 const createStatusBox = (status: "success" | "error" | "warning" | "info") => {
   const styles = {
@@ -201,7 +198,7 @@ const createStatusBox = (status: "success" | "error" | "warning" | "info") => {
 };
 
 const statusBox = createStatusBox("success");
-console.log(Box.render(statusBox, { style: "pretty" }));
+console.log(Box.renderPrettySync(statusBox));
 // Renders: "✓ SUCCESS" in bold green
 ```
 
@@ -209,8 +206,8 @@ console.log(Box.render(statusBox, { style: "pretty" }));
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-boxes";
-import * as Ansi from "effect-boxes/ansi";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
 
 const progressBar = (progress: number, total: number, width: number) => {
   const ratio = Math.min(Math.max(progress / total, 0), 1);
@@ -232,7 +229,7 @@ const progressBar = (progress: number, total: number, width: number) => {
 };
 
 const bar = progressBar(75, 100, 50);
-console.log(Box.render(bar, { style: "pretty" }));
+console.log(Box.renderPrettySync(bar));
 // Renders a progress bar that's 75% complete with color gradient
 ```
 
@@ -242,8 +239,8 @@ console.log(Box.render(bar, { style: "pretty" }));
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-boxes";
-import * as Ansi from "effect-boxes/ansi";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
 
 // Add ANSI color to a box
 const coloredBox = Box.annotate(Box.text("Error!"), Ansi.red);
@@ -259,8 +256,9 @@ const styledBox = pipe(
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-boxes";
-import * as Cmd from "effect-boxes/cmd";
+import * as Ansi from "effect-boxes/Ansi";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
 
 // Combine boxes and commands for complex layouts
 const complexLayout = pipe(
@@ -280,9 +278,9 @@ const complexLayout = pipe(
 
 ```typescript
 import { pipe, Option } from "effect";
-import * as Box from "effect-boxes";
-import * as Reactive from "effect-boxes/reactive";
-import * as Cmd from "effect-boxes/cmd";
+import * as Box from "effect-boxes/Box";
+import * as Reactive from "effect-boxes/Reactive";
+import * as Cmd from "effect-boxes/Cmd";
 
 // Create a layout with reactive elements
 const layout = Box.vcat(
@@ -301,17 +299,17 @@ const positions = Reactive.getPositions(layout);
 const moveToButton = Reactive.cursorToReactive(positions, "button");
 
 // Render the layout and then position cursor at the button
-const program = pipe(
+const combined = pipe(
   layout,
-  Box.combine(Option.getOrElse(moveToButton, () => Box.nullBox)),
-  Box.render({ style: "pretty" })
+  Box.combine(Option.getOrElse(moveToButton, () => Box.nullBox))
 );
+console.log(Box.renderPrettySync(combined));
 ```
 
 ## See Also
 
-- [Box Module](./box.md) - Core box creation and composition
-- [Annotation Module](./annotation.md) - Text annotation system
-- [ANSI Module](./ansi.md) - Terminal rendering with ANSI codes
-- [Cmd Module](./cmd.md) - Terminal control commands
-- [Reactive Module](./reactive.md) - Position tracking for interactive elements
+- [Box Module](./using-box.md) - Core box creation and composition
+- [Annotation Module](./using-annotation.md) - Text annotation system
+- [ANSI Module](./using-ansi.md) - Terminal rendering with ANSI codes
+- [Cmd Module](./using-cmd.md) - Terminal control commands
+- [Reactive Module](./using-reactive.md) - Position tracking for interactive elements
