@@ -8,6 +8,11 @@ import * as internal from "./internal/box";
 import * as internalRender from "./internal/box-render";
 import type * as Renderer from "./Renderer";
 
+/**
+ * Symbol used to identify Box values at runtime.
+ *
+ * @category models
+ */
 export const BoxTypeId: unique symbol = internal.BoxTypeId;
 
 /**
@@ -159,7 +164,7 @@ export const isBox: <A>(u: unknown) => u is Box<A> = internal.isBox;
  * const empty = Box.nullBox
  * console.log(`Dimensions: ${Box.rows(empty)} x ${Box.cols(empty)}`)
  * // Dimensions: 0 x 0
- * console.log(Box.render(empty))
+ * console.log(Box.renderPlainSync(empty))
  * // (empty string)
  * ```
  *
@@ -181,7 +186,7 @@ export const nullBox: Box<never> = internal.nullBox;
  * const spacer = Box.emptyBox(3, 10)
  * console.log(`Dimensions: ${Box.rows(spacer)} x ${Box.cols(spacer)}`)
  * // Dimensions: 3 x 10
- * console.log(Box.render(spacer))
+ * console.log(Box.renderPlainSync(spacer))
  * //
  * //
  * //
@@ -206,11 +211,11 @@ export const emptyBox: (rows?: number, cols?: number) => Box<never> =
  * const asterisk = Box.char("*")
  * console.log(`Dimensions: ${Box.rows(asterisk)} x ${Box.cols(asterisk)}`)
  * // Dimensions: 1 x 1
- * console.log(Box.render(asterisk))
+ * console.log(Box.renderPlainSync(asterisk))
  * // *
  *
  * const unicode = Box.char("🌟")
- * console.log(Box.render(unicode))
+ * console.log(Box.renderPlainSync(unicode))
  * // 🌟
  * ```
  *
@@ -232,7 +237,7 @@ export const char: (c: string) => Box<never> = internal.char;
  * const greeting = Box.text("Hello\nWorld")
  * console.log(`Dimensions: ${Box.rows(greeting)} x ${Box.cols(greeting)}`)
  * // Dimensions: 2 x 5
- * console.log(Box.render(greeting))
+ * console.log(Box.renderPlainSync(greeting))
  * // Hello
  * // World
  *
@@ -261,7 +266,7 @@ export const text: (s: string) => Box<never> = internal.text;
  * const singleLine = Box.line(multilineInput)
  * console.log(`Dimensions: ${Box.rows(singleLine)} x ${Box.cols(singleLine)}`)
  * // Dimensions: 1 x 19
- * console.log(Box.render(singleLine))
+ * console.log(Box.renderPlainSync(singleLine))
  * // Hello World Example
  * ```
  *
@@ -282,7 +287,7 @@ export const line: (s: string) => Box<never> = internal.line;
  *
  * const longText = "This is a very long sentence that needs to be wrapped to fit within a specific width"
  * const paragraph = Box.para(longText, Box.left, 20)
- * console.log(Box.render(paragraph))
+ * console.log(Box.renderPlainSync(paragraph))
  * // This is a very long
  * // sentence that needs to
  * // be wrapped to fit
@@ -315,7 +320,7 @@ export const para: {
  * const left = Box.text("Hello")
  * const right = Box.text("World")
  * const combined = Box.combine(left, right)
- * console.log(Box.render(combined))
+ * console.log(Box.renderPlainSync(combined))
  * // HelloWorld
  * ```
  *
@@ -349,7 +354,7 @@ export const combineMany: {
  *
  * const boxes = [Box.text("A"), Box.text("B"), Box.text("C")]
  * const combined = Box.combineAll(boxes)
- * console.log(Box.render(combined))
+ * console.log(Box.renderPlainSync(combined))
  * // ABC
  *
  * const empty = Box.combineAll([])
@@ -476,7 +481,7 @@ export const match: {
  *
  * const boxes = [Box.text("Left"), Box.text("Middle"), Box.text("Right")]
  * const horizontal = Box.hcat(boxes, Box.top)
- * console.log(Box.renderSync(horizontal, Box.plain))
+ * console.log(Box.renderPlainSync(horizontal))
  * // LeftMiddleRight
  * ```
  *
@@ -506,7 +511,7 @@ export const hcat: {
  *
  * const boxes = [Box.text("Top"), Box.text("Middle"), Box.text("Bottom")]
  * const vertical = Box.vcat(boxes, Box.left)
- * console.log(Box.renderSync(vertical, Box.plain))
+ * console.log(Box.renderPlainSync(vertical))
  * // Top
  * // Middle
  * // Bottom
@@ -539,7 +544,7 @@ export const vcat: {
  * const left = Box.text("Left")
  * const right = Box.text("Right")
  * const combined = Box.hAppend(left, right)
- * console.log(Box.renderSync(combined, Box.plain))
+ * console.log(Box.renderPlainSync(combined))
  * // LeftRight
  * ```
  *
@@ -565,12 +570,12 @@ export const hAppend: {
  * const left = Box.text("Hello")
  * const right = Box.text("World")
  * const spaced = Box.hcatWithSpace(left, right)
- * console.log(Box.renderSync(spaced, Box.plain))
+ * console.log(Box.renderPlainSync(spaced))
  * // Hello World
  *
  * // Compare with hAppend (no space)
  * const noSpace = Box.hAppend(left, right)
- * console.log(Box.renderSync(noSpace, Box.plain))
+ * console.log(Box.renderPlainSync(noSpace))
  * // HelloWorld
  * ```
  *
@@ -595,7 +600,7 @@ export const hcatWithSpace: {
  * const top = Box.text("Top")
  * const bottom = Box.text("Bottom")
  * const stacked = Box.vAppend(top, bottom)
- * console.log(Box.renderSync(stacked, Box.plain))
+ * console.log(Box.renderPlainSync(stacked))
  * // Top
  * // Bottom
  * ```
@@ -621,14 +626,14 @@ export const vAppend: {
  * const top = Box.text("First section")
  * const bottom = Box.text("Second section")
  * const spaced = Box.vcatWithSpace(top, bottom)
- * console.log(Box.renderSync(spaced, Box.plain))
+ * console.log(Box.renderPlainSync(spaced))
  * // First section
  * //
  * // Second section
  *
  * // Compare with vAppend (no space)
  * const noSpace = Box.vAppend(top, bottom)
- * console.log(Box.renderSync(noSpace, Box.plain))
+ * console.log(Box.renderPlainSync(noSpace))
  * // First section
  * // Second section
  * ```
@@ -655,7 +660,7 @@ export const vcatWithSpace: {
  * const items = [Box.text("Home"), Box.text("About"), Box.text("Contact")]
  * const separator = Box.text(" | ")
  * const navbar = Box.punctuateH(items, Box.center1, separator)
- * console.log(Box.renderSync(navbar, Box.plain))
+ * console.log(Box.renderPlainSync(navbar))
  * // Home | About | Contact
  * ```
  *
@@ -693,7 +698,7 @@ export const punctuateH: {
  * ]
  * const separator = Box.text("---")
  * const menu = Box.punctuateV(menuItems, Box.left, separator)
- * console.log(Box.renderSync(menu, Box.plain))
+ * console.log(Box.renderPlainSync(menu))
  * // File
  * // ---
  * // Edit
@@ -721,7 +726,18 @@ export const punctuateV: {
 /**
  * Arranges boxes horizontally with the specified amount of space between each.
  *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const items = [Box.text("A"), Box.text("B"), Box.text("C")]
+ * const row = Box.hsep(items, 2, Box.top)
+ * console.log(Box.renderPlainSync(row))
+ * // A  B  C
+ * ```
+ *
  * @note Haskell: `hsep :: Foldable f => Int -> Alignment -> f Box -> Box`
+ * @category combinators
  */
 export const hsep: {
   (sep: number, a: Alignment): <A>(self: readonly Box<A>[]) => Box<A>;
@@ -731,7 +747,22 @@ export const hsep: {
 /**
  * Arranges boxes vertically with the specified amount of space between each.
  *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const items = [Box.text("A"), Box.text("B"), Box.text("C")]
+ * const column = Box.vsep(items, 1, Box.left)
+ * console.log(Box.renderPlainSync(column))
+ * // A
+ * //
+ * // B
+ * //
+ * // C
+ * ```
+ *
  * @note Haskell: `vsep :: Foldable f => Int -> Alignment -> f Box -> Box`
+ * @category combinators
  */
 export const vsep: {
   (sep: number, a: Alignment): <A>(self: readonly Box<A>[]) => Box<A>;
@@ -747,7 +778,17 @@ export const vsep: {
 /**
  * Flows text into multiple columns of specified width and height.
  *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const text = "one two three four five six seven eight"
+ * const cols = Box.columns(text, Box.left, 10, 2)
+ * console.log(cols.length)
+ * ```
+ *
  * @note Haskell: `columns :: Alignment -> Int -> Int -> String -> [Box]`
+ * @category utilities
  */
 export const columns: {
   (a: Alignment, w: number, h: number): (self: string) => Box[];
@@ -763,7 +804,17 @@ export const columns: {
 /**
  * Horizontally aligns a box within a specified width.
  *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const value = Box.alignHoriz(Box.text("X"), Box.center1, 5)
+ * console.log(Box.renderPlainSync(value))
+ * //   X
+ * ```
+ *
  * @note Haskell: `alignHoriz :: Alignment -> Int -> Box -> Box`
+ * @category transformations
  */
 export const alignHoriz: {
   (a: Alignment, c: number): <A>(self: Box<A>) => Box<A>;
@@ -773,7 +824,17 @@ export const alignHoriz: {
 /**
  * Vertically aligns a box within a specified height.
  *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const value = Box.alignVert(Box.text("X"), Box.bottom, 3)
+ * console.log(Box.rows(value))
+ * // 3
+ * ```
+ *
  * @note Haskell: `alignVert :: Alignment -> Int -> Box -> Box`
+ * @category transformations
  */
 export const alignVert: {
   (a: Alignment, r: number): <A>(self: Box<A>) => Box<A>;
@@ -783,7 +844,17 @@ export const alignVert: {
 /**
  * Aligns a box within specified dimensions using both horizontal and vertical alignment.
  *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const value = Box.align(Box.text("X"), Box.center1, Box.center1, 3, 5)
+ * console.log(Box.rows(value), Box.cols(value))
+ * // 3 5
+ * ```
+ *
  * @note Haskell: `align :: Alignment -> Alignment -> Int -> Int -> Box -> Box`
+ * @category transformations
  */
 export const align: {
   (
@@ -807,7 +878,7 @@ export const align: {
  *
  * const box = Box.text("Hello\nWorld")
  * const leftAligned = Box.alignLeft(box)
- * console.log(Box.renderSync(leftAligned, Box.plain))
+ * console.log(Box.renderPlainSync(leftAligned))
  * // Hello
  * // World
  * ```
@@ -832,7 +903,7 @@ export const alignLeft: <A>(self: Box<A>) => Box<A> = internal.alignLeft;
  * // Original: 1 rows
  * console.log(`Moved: ${Box.rows(moved)} rows`)
  * // Moved: 3 rows
- * console.log(Box.renderSync(moved, Box.plain))
+ * console.log(Box.renderPlainSync(moved))
  * // Content
  * //
  * //
@@ -858,7 +929,7 @@ export const moveUp: {
  *
  * const content = Box.text("Main content")
  * const withSpacing = Box.moveDown(content, 2)
- * console.log(Box.renderSync(withSpacing, Box.plain))
+ * console.log(Box.renderPlainSync(withSpacing))
  * //
  * //
  * // Main content
@@ -888,7 +959,7 @@ export const moveDown: {
  * // Original: 5 cols
  * console.log(`Moved: ${Box.cols(moved)} cols`)
  * // Moved: 8 cols
- * console.log(`"${Box.renderSync(moved, Box.plain)}"`)
+ * console.log(`"${Box.renderPlainSync(moved)}"`)
  * // "Hello   "
  * ```
  *
@@ -912,7 +983,7 @@ export const moveLeft: {
  *
  * const text = Box.text("Indented content")
  * const indented = Box.moveRight(text, 4)
- * console.log(`"${Box.renderSync(indented, Box.plain)}"`)
+ * console.log(`"${Box.renderPlainSync(indented)}"`)
  * // "    Indented content"
  * ```
  *
@@ -990,7 +1061,18 @@ export const resizeBox: {
 /**
  * Adjusts the size of rendered text lines with alignment options.
  *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const lines = ["A", "B"]
+ * const resized = Box.resizeBoxAligned(3, 4, Box.center1, Box.center1)(lines)
+ * console.log(resized.length)
+ * // 3
+ * ```
+ *
  * @note Haskell: `resizeBoxAligned :: Int -> Int -> Alignment -> Alignment -> [String] -> [String]`
+ * @category utilities
  */
 export const resizeBoxAligned: (
   r: number,
@@ -1084,7 +1166,7 @@ export const printBox: <A>(
  *
  * const coloredBox = Box.annotate(
  *   Box.text("Hello World"),
- *   Annotation.color(Ansi.red)
+ *   Ansi.red
  * )
  * ```
  *
@@ -1109,7 +1191,7 @@ export const annotate: {
  *
  * const annotatedBox = Box.annotate(
  *   Box.text("Styled text"),
- *   Annotation.color(Ansi.red)
+ *   Ansi.red
  * )
  *
  * const plainBox = Box.unAnnotate(annotatedBox)
@@ -1135,12 +1217,12 @@ export const unAnnotate: <A>(self: Box<A>) => Box<never> = internal.unAnnotate;
  *
  * const redBox = Box.annotate(
  *   Box.text("Text"),
- *   Annotation.color(Ansi.red)
+ *   Ansi.red
  * )
  *
  * // Transform red to blue
  * const blueBox = Box.reAnnotate(redBox, (ann) =>
- *   Annotation.color(Ansi.blue)
+ *   Ansi.blue
  * )
  * ```
  *
@@ -1166,14 +1248,14 @@ export const reAnnotate: {
  *
  * const baseBox = Box.annotate(
  *   Box.text("Message"),
- *   Annotation.color(Ansi.red)
+ *   Ansi.red
  * )
  *
  * // Create multiple color variations
  * const variations = Box.alterAnnotation(baseBox, (ann) => [
- *   Annotation.color(Ansi.red),
- *   Annotation.color(Ansi.green),
- *   Annotation.color(Ansi.blue)
+ *   Ansi.red,
+ *   Ansi.green,
+ *   Ansi.blue
  * ])
  * // Returns array of 3 boxes with different colors
  * ```
