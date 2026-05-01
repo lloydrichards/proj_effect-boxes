@@ -44,15 +44,11 @@ export const segments = (str: string): readonly string[] => {
   return result;
 };
 
-const zeroWidthClusterRegex = new RegExp(
-  "^(?:\\p{Default_Ignorable_Code_Point}|\\p{Control}|\\p{Mark}|\\p{Surrogate})+$",
-  "v"
-); // zero-width clusters (control chars, marks, surrogates, etc.)
-const leadingNonPrintingRegex = new RegExp(
-  "^[\\p{Default_Ignorable_Code_Point}\\p{Control}\\p{Format}\\p{Mark}\\p{Surrogate}]+",
-  "v"
-); // leading non-printing characters in a cluster
-const rgiEmojiRegex = new RegExp("^\\p{RGI_Emoji}$", "v"); // RGI (Recommended for General Interchange) emoji sequences
+const zeroWidthClusterRegex =
+  /^(?:\p{Default_Ignorable_Code_Point}|\p{Control}|\p{Mark}|\p{Surrogate})+$/v; // zero-width clusters (control chars, marks, surrogates, etc.)
+const leadingNonPrintingRegex =
+  /^[\p{Default_Ignorable_Code_Point}\p{Control}\p{Format}\p{Mark}\p{Surrogate}]+/v; // leading non-printing characters in a cluster
+const rgiEmojiRegex = /^\p{RGI_Emoji}$/v; // RGI (Recommended for General Interchange) emoji sequences
 
 const WIDE_CHAR_RANGES = [
   // Hangul Jamo

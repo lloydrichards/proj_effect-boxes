@@ -400,19 +400,31 @@ export const renderAnnotatedBox = <A>({
     return [];
   }
 
-  const contentLines = match(make({ cols, content, rows, ...(annotation != null ? { annotation } : {}) }), {
-    blank: () => resizeBox([""], rows, cols),
-    text: (text) => resizeBox([text], rows, cols),
-    row: (boxes) =>
-      pipe(Array.map(boxes, renderAnnotatedBox), merge, resizeBox(rows, cols)),
-    col: (boxes) =>
-      pipe(Array.flatMap(boxes, renderAnnotatedBox), resizeBox(rows, cols)),
-    subBox: (box, xAlign, yAlign) =>
-      pipe(
-        renderAnnotatedBox(box),
-        resizeBoxAligned(rows, cols, xAlign, yAlign)
-      ),
-  });
+  const contentLines = match(
+    make({
+      cols,
+      content,
+      rows,
+      ...(annotation != null ? { annotation } : {}),
+    }),
+    {
+      blank: () => resizeBox([""], rows, cols),
+      text: (text) => resizeBox([text], rows, cols),
+      row: (boxes) =>
+        pipe(
+          Array.map(boxes, renderAnnotatedBox),
+          merge,
+          resizeBox(rows, cols)
+        ),
+      col: (boxes) =>
+        pipe(Array.flatMap(boxes, renderAnnotatedBox), resizeBox(rows, cols)),
+      subBox: (box, xAlign, yAlign) =>
+        pipe(
+          renderAnnotatedBox(box),
+          resizeBoxAligned(rows, cols, xAlign, yAlign)
+        ),
+    }
+  );
 
   if (annotation && isAnsi(annotation.data)) {
     const escapeSequence = getAnsiEscapeSequence(annotation.data);
