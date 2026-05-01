@@ -20,8 +20,8 @@ each box in the terminal output, making it possible to:
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-boxes";
-import * as Reactive from "effect-boxes/reactive";
+import * as Box from "effect-boxes/Box";
+import * as Reactive from "effect-boxes/Reactive";
 
 // Create a box with a reactive identifier
 const button = Reactive.makeReactive(Box.text("[ OK ]"), "ok-button");
@@ -61,6 +61,18 @@ const form = Box.vcat(
 ### Tracking Positions
 
 ```typescript
+import * as Box from "effect-boxes/Box";
+import * as Reactive from "effect-boxes/Reactive";
+
+// Create a form with reactive elements
+const form = Box.vcat(
+  [
+    Box.text("Login Form").pipe(Reactive.makeReactive("form-title")),
+    Box.text("Username: _________").pipe(Reactive.makeReactive("username-field")),
+  ],
+  Box.left
+);
+
 // Render the layout and get positions of all reactive elements
 const positions = Reactive.getPositions(form);
 
@@ -82,8 +94,20 @@ if (usernamePosition) {
 ### Moving Cursor to Reactive Elements
 
 ```typescript
-import * as Cmd from "effect-boxes/cmd";
 import { Option } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
+import * as Reactive from "effect-boxes/Reactive";
+
+// Assuming positions from previous example
+const form = Box.vcat(
+  [
+    Box.text("[ OK ]").pipe(Reactive.makeReactive("ok-button")),
+    Box.text("[ Cancel ]").pipe(Reactive.makeReactive("cancel-button")),
+  ],
+  Box.left
+);
+const positions = Reactive.getPositions(form);
 
 // Get a cursor movement command to a specific reactive element
 const moveToCancelButton = Reactive.cursorToReactive(
@@ -98,15 +122,17 @@ const cursorCommand = Option.getOrElse(
 );
 
 // Render the cursor movement
-console.log(Box.render(cursorCommand, { style: "pretty" }));
+console.log(Box.renderPrettySync(cursorCommand));
 ```
 
 ## Practical Example: Interactive Form Navigation
 
 ```typescript
 import { Effect, Option, pipe } from "effect";
-import * as Ansi from "effect-boxes/ansi";
-import * as Cmd from "effect-boxes/cmd";
+import * as Ansi from "effect-boxes/Ansi";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
+import * as Reactive from "effect-boxes/Reactive";
 
 // Create a form with multiple fields
 const createForm = (focusedField: string) => {
@@ -179,7 +205,7 @@ const formNavigation = Effect.gen(function* () {
   // Render initial form
   yield* Effect.sync(() =>
     console.log(
-      Box.render(pipe(Cmd.clearScreen, Box.combine(form)), { style: "pretty" })
+      Box.renderPrettySync(pipe(Cmd.clearScreen, Box.combine(form)))
     )
   );
 
@@ -203,13 +229,12 @@ const formNavigation = Effect.gen(function* () {
     // Render the updated form and move cursor to focused field
     yield* Effect.sync(() =>
       console.log(
-        Box.render(
+        Box.renderPrettySync(
           pipe(
             Cmd.cursorTo(0, 0),
             Box.combine(form),
             Box.combine(Option.getOrElse(moveToCurrent, () => Box.nullBox))
-          ),
-          { style: "pretty" }
+          )
         )
       )
     );
@@ -251,8 +276,8 @@ cursorToReactive(key: string): (positionMap: PositionMap) => Option.Option<Box<A
 
 ## See Also
 
-- [Box Module](./box.md) - Core box creation and composition
-- [Cmd Module](./cmd.md) - Terminal control commands
-- [ANSI Module](./ansi.md) - Terminal styling with ANSI codes
+- [Box Module](./using-box.md) - Core box creation and composition
+- [Cmd Module](./using-cmd.md) - Terminal control commands
+- [ANSI Module](./using-ansi.md) - Terminal styling with ANSI codes
 - [Common Patterns](./common-patterns.md) - For integration examples and
   reusable patterns

@@ -15,7 +15,7 @@ with others to create complex layouts through functional composition.
 ### Basic Box Creation
 
 ```typescript
-import * as Box from "effect-boxes";
+import * as Box from "effect-boxes/Box";
 
 // Create a box from text (automatically handles multi-line strings)
 const textBox = Box.text("Hello\nWorld");
@@ -29,14 +29,16 @@ const emptyBox = Box.emptyBox(3, 10);
 const charBox = Box.char("*");
 // Result: 1 row, 1 column
 
-// Create a single-line box (strips newlines)
+// Create a single-line box (strips newlines, joins into single line)
 const lineBox = Box.line("Hello\nWorld");
-// Result: 1 row, 11 columns
+// Result: 1 row, 10 columns ("HelloWorld")
 ```
 
 ### Text Flow and Paragraphs
 
 ```typescript
+import * as Box from "effect-boxes/Box";
+
 // Flow text into a paragraph with automatic wrapping
 const paragraph = Box.para(
   "This is a long text that will be automatically flowed into multiple lines based on the specified width.",
@@ -44,13 +46,15 @@ const paragraph = Box.para(
   30 // Width
 );
 
-// Create newspaper-style columns
-const columns = Box.columns(
+// Create newspaper-style columns (returns Box[])
+const columnBoxes = Box.columns(
   "Very long article text here that will be split into multiple columns...",
   Box.left, // Alignment
   20, // Column width
   10 // Column height
 );
+// Combine the columns horizontally
+const columnsLayout = Box.hcat(columnBoxes, Box.top);
 ```
 
 ## Box Composition
@@ -59,6 +63,7 @@ const columns = Box.columns(
 
 ```typescript
 import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
 
 // Combine boxes horizontally with alignment
 const row = Box.hcat(
@@ -84,6 +89,8 @@ const spacedRow = Box.hsep(
 ### Vertical Composition
 
 ```typescript
+import * as Box from "effect-boxes/Box";
+
 // Combine boxes vertically with alignment
 const column = Box.vcat(
   [Box.text("Top"), Box.text("Middle"), Box.text("Bottom")],
@@ -109,6 +116,7 @@ const spacedColumn = Box.vsep(
 
 ```typescript
 import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
 
 // Append boxes horizontally
 const combined1 = Box.hAppend(Box.text("Hello"), Box.text("World"));
@@ -134,6 +142,8 @@ const stackedWithSpace = Box.vcatWithSpace(Box.text("Top"), Box.text("Bottom"));
 ### Alignment
 
 ```typescript
+import * as Box from "effect-boxes/Box";
+
 // Align a box horizontally within a width
 const rightAligned = Box.alignHoriz(Box.text("Hello"), Box.right, 20);
 // Result: "               Hello"
@@ -156,6 +166,7 @@ const centered = Box.align(
 
 ```typescript
 import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
 
 // Move a box right by adding space to the left
 const movedRight = Box.moveRight(Box.text("Hello"), 5);
@@ -181,29 +192,33 @@ const positioned = pipe(Box.text("Hello"), Box.moveRight(5), Box.moveDown(2));
 ## Rendering
 
 ```typescript
-// Render a box to a string
-const rendered = Box.render(myBox);
+import * as Box from "effect-boxes/Box";
 
-// Render with custom options
-const renderedWithOptions = Box.render(myBox, {
-  style: "pretty", // "pretty" (with ANSI) or "plain"
-  preserveWhitespace: true, // Keep trailing spaces
-  partial: false, // Add final newline
-});
+const myBox = Box.text("Hello\nWorld");
 
-// Render with custom fill character
-const renderedWithDots = Box.renderWith(myBox, ".");
-// Replaces spaces with dots
+// Render to string synchronously (plain text, no ANSI)
+const plain = Box.renderPlainSync(myBox);
+
+// Render to string synchronously (with ANSI escape codes for styling)
+const pretty = Box.renderPrettySync(myBox);
+
+// Render using Effect (for async/effectful contexts)
+import { Effect } from "effect";
+import { PlainRendererLive } from "effect-boxes/Renderer";
+
+const program = Box.render(myBox).pipe(Effect.provide(PlainRendererLive));
+Effect.runPromise(program).then(console.log);
 
 // Print a box to the console using Effect
-import { Effect } from "effect";
-const program = Box.printBox(myBox);
-Effect.runPromise(program);
+const printProgram = Box.printBox(myBox).pipe(Effect.provide(PlainRendererLive));
+Effect.runPromise(printProgram);
 ```
 
 ## Working with Box Dimensions
 
 ```typescript
+import * as Box from "effect-boxes/Box";
+
 // Get box dimensions
 const myBox = Box.text("Hello\nWorld");
 console.log(myBox.rows); // 2
@@ -219,7 +234,8 @@ console.log(customBox.cols); // 10
 
 ```typescript
 import { pipe } from "effect";
-import * as Ansi from "effect-boxes/ansi";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
 
 // Add ANSI color to a box
 const coloredBox = Box.annotate(Box.text("Error!"), Ansi.red);
@@ -230,7 +246,7 @@ const coloredBox2 = pipe(Box.text("Success!"), Box.annotate(Ansi.green));
 
 ## See Also
 
-- [Annotation Module](./annotation.md) - For adding metadata to boxes
-- [ANSI Module](./ansi.md) - For terminal styling with colors and effects
+- [Annotation Module](./using-annotation.md) - For adding metadata to boxes
+- [ANSI Module](./using-ansi.md) - For terminal styling with colors and effects
 - [Common Patterns](./common-patterns.md) - For Effect.js integration and
   reusable patterns

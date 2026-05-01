@@ -16,8 +16,8 @@ influence rendering behavior or store application-specific data.
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-boxes";
-import * as Annotation from "effect-boxes/annotation";
+import * as Box from "effect-boxes/Box";
+import * as Annotation from "effect-boxes/Annotation";
 
 // Create a simple annotation with string data
 const myAnnotation = Annotation.createAnnotation("metadata");
@@ -35,6 +35,12 @@ const userAnnotation = Annotation.createAnnotation(userData);
 ### Attaching Annotations to Boxes
 
 ```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Annotation from "effect-boxes/Annotation";
+
+const myAnnotation = Annotation.createAnnotation("metadata");
+
 // Attach an annotation to a box
 const annotatedBox = Box.annotate(Box.text("Hello"), myAnnotation);
 
@@ -45,6 +51,13 @@ const annotatedBox2 = pipe(Box.text("Hello"), Box.annotate(myAnnotation));
 ### Working with Annotated Boxes
 
 ```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Annotation from "effect-boxes/Annotation";
+
+const myAnnotation = Annotation.createAnnotation("metadata");
+const annotatedBox = Box.annotate(Box.text("Hello"), myAnnotation);
+
 // Remove annotation from a box
 const plainBox = Box.unAnnotate(annotatedBox);
 
@@ -54,7 +67,7 @@ const updatedBox = Box.reAnnotate(annotatedBox, (data: string) =>
 );
 
 // Create multiple boxes with different annotations
-const boxes = Box.alterAnnotations(annotatedBox, (data: string) => [
+const boxes = Box.alterAnnotation(annotatedBox, (data: string) => [
   data + "1",
   data + "2",
   data + "3",
@@ -67,6 +80,8 @@ const boxes = Box.alterAnnotations(annotatedBox, (data: string) => [
 ### Type Guards
 
 ```typescript
+import * as Annotation from "effect-boxes/Annotation";
+
 // Check if a value is an Annotation
 const isAnnotation = Annotation.isAnnotation(value);
 
@@ -81,8 +96,11 @@ const isUserAnnotation = Annotation.isAnnotationWithData(
 ### Data Extraction and Manipulation
 
 ```typescript
+import * as Annotation from "effect-boxes/Annotation";
+
+const myAnnotation = Annotation.createAnnotation("metadata");
+
 // Extract data from an annotation
-const data = Annotation.getAnnotationData(myAnnotation);
 
 // Map annotation data to create a new annotation
 const uppercaseAnnotation = Annotation.mapAnnotationData(
@@ -109,6 +127,8 @@ const filteredAnnotation = Annotation.filterAnnotation(
 ### Batch Operations
 
 ```typescript
+import * as Annotation from "effect-boxes/Annotation";
+
 // Create multiple annotations from data array
 const dataArray = ["one", "two", "three"];
 const annotations = Annotation.createAnnotations(dataArray);
@@ -123,6 +143,10 @@ const extractedData = Annotation.extractAnnotationData(annotations);
 ### Custom Metadata
 
 ```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Annotation from "effect-boxes/Annotation";
+
 // Attach application-specific data to UI elements
 interface ButtonData {
   id: string;
@@ -144,7 +168,9 @@ const buttonBox = pipe(Box.text(" Submit "), Box.annotate(buttonAnnotation));
 The ANSI module uses annotations to apply terminal styling:
 
 ```typescript
-import * as Ansi from "effect-boxes/ansi";
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
 
 // The ANSI module creates specialized annotations
 const coloredBox = pipe(Box.text("Error!"), Box.annotate(Ansi.red));
@@ -161,8 +187,15 @@ const styledBox = pipe(
 ### Type-Level Utilities
 
 ```typescript
+import * as Annotation from "effect-boxes/Annotation";
+
 // Extract the data type from an Annotation type
-import { type AnnotationData } from "effect-boxes/annotation";
+import { type AnnotationData } from "effect-boxes/Annotation";
+
+interface UserData {
+  id: number;
+  name: string;
+}
 
 type MyAnnotation = Annotation.Annotation<UserData>;
 type ExtractedType = AnnotationData<MyAnnotation>;
@@ -175,6 +208,10 @@ When boxes with annotations are nested, the innermost annotation takes
 precedence during rendering:
 
 ```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+
 const nestedBox = pipe(
   Box.text("Outer").pipe(Box.annotate(Ansi.red)),
   Box.hAppend(Box.text("Inner").pipe(Box.annotate(Ansi.blue)))
@@ -184,7 +221,7 @@ const nestedBox = pipe(
 
 ## See Also
 
-- [Box Module](./box.md) - Core box creation and composition
-- [ANSI Module](./ansi.md) - Terminal styling with ANSI codes (uses annotations)
+- [Box Module](./using-box.md) - Core box creation and composition
+- [ANSI Module](./using-ansi.md) - Terminal styling with ANSI codes (uses annotations)
 - [Common Patterns](./common-patterns.md) - Reusable patterns and Effect.js
   integration

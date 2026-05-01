@@ -20,8 +20,8 @@ sequences control the terminal's behavior.
 
 ```typescript
 import { pipe } from "effect";
-import * as Box from "effect-boxes";
-import * as Cmd from "effect-boxes/cmd";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
 
 // Move cursor up 3 lines
 const moveUp = Cmd.cursorUp(3);
@@ -33,12 +33,14 @@ const moveTo = Cmd.cursorTo(10, 5);
 const moveRelative = Cmd.cursorMove(5, -2); // 5 right, 2 up
 
 // Print with cursor commands
-console.log(Box.render(moveUp, { style: "pretty" }));
+console.log(Box.renderPrettySync(moveUp));
 ```
 
 ### Screen Clearing
 
 ```typescript
+import * as Cmd from "effect-boxes/Cmd";
+
 // Clear the entire screen and move cursor to home position
 const clear = Cmd.clearScreen;
 
@@ -58,6 +60,10 @@ const clearInPlace = Cmd.clearLines(5);
 ### Cursor Visibility
 
 ```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
+
 // Hide the cursor (useful for animations)
 const hideCursor = Cmd.cursorHide;
 
@@ -78,6 +84,10 @@ The real power of the Cmd module comes from combining terminal commands with
 regular boxes:
 
 ```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
+
 // Create a box with text
 const textBox = Box.text("Hello, world!");
 
@@ -89,7 +99,7 @@ const positionedText = pipe(
 );
 
 // Render with ANSI commands enabled
-console.log(Box.render(positionedText, { style: "pretty" }));
+console.log(Box.renderPrettySync(positionedText));
 ```
 
 ## Practical Example: Rewriting Previous Output
@@ -98,6 +108,10 @@ console.log(Box.render(positionedText, { style: "pretty" }));
 affecting the rest of the terminal (e.g. spinners, progress bars):
 
 ```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
+
 // Print 3 lines, then clear and replace them
 const initial = Box.vcat(
   [
@@ -123,8 +137,10 @@ const updated = Box.vcat(
 ## Practical Example: Partial Screen Updates
 
 ```typescript
-import { Effect } from "effect";
-import * as Ansi from "effect-boxes/ansi";
+import { pipe, Effect } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
+import * as Ansi from "effect-boxes/Ansi";
 
 // Initial setup
 const setupScreen = pipe(Cmd.clearScreen, Box.combine(Cmd.cursorHide));
@@ -143,20 +159,20 @@ const cleanup = pipe(Cmd.cursorTo(0, 20), Box.combine(Cmd.cursorShow));
 const program = Effect.gen(function* () {
   // Setup screen once
   yield* Effect.sync(() =>
-    console.log(Box.render(setupScreen, { style: "pretty" }))
+    console.log(Box.renderPrettySync(setupScreen))
   );
 
   // Update counter 10 times
   for (let i = 0; i <= 10; i++) {
     yield* Effect.sync(() =>
-      console.log(Box.render(updateCounter(i), { style: "pretty" }))
+      console.log(Box.renderPrettySync(updateCounter(i)))
     );
     yield* Effect.sleep("200 millis");
   }
 
   // Cleanup when done
   yield* Effect.sync(() =>
-    console.log(Box.render(cleanup, { style: "pretty" }))
+    console.log(Box.renderPrettySync(cleanup))
   );
 });
 

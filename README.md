@@ -38,25 +38,28 @@ yarn add effect-boxes
 ## Quick Start
 
 ```typescript
-import { pipe } from "effect";
 import { Box, Ansi } from "effect-boxes";
 // Alternative import patterns:
 // import * as Box from "effect-boxes/Box";
 // import * as Ansi from "effect-boxes/Ansi";
 
 // Create a simple box with colored text and positioning
-const myBox = pipe(
-  Box.text("Hello, Effect Boxes!"),
-  Box.annotate(Ansi.blue),
-  Box.moveRight(2),
-  Box.moveDown(1)
+const myBox = Box.hsep(
+  [
+    Box.text("Hello").pipe(Box.annotate(Ansi.green)), 
+    Box.text("\nEffect").pipe(Box.annotate(Ansi.bold)),
+    Box.text("Boxes!").pipe(Box.annotate(Ansi.blue)),
+   ],
+  1,
+  Box.left
 );
 
 // Render to string (with ANSI colors)
 console.log(Box.renderPrettySync(myBox));
-//
-//   Hello, Effect Boxes!
-
+/**
+ *  Hello        Boxes!
+ *        Effect 
+ */
 ```
 
 ## Example: Creating a Table
@@ -96,12 +99,12 @@ const table = createTable(
 );
 
 console.log(Box.renderPlainSync(table));
-/*
-    Name     |     Age      |     City
-------------------------------------------
-Alice        | 30           | New York
-Bob          | 25           | London
-Charlie      | 35           | Tokyo
+/**
+*      Name     |     Age      |     City
+*  ------------------------------------------
+*  Alice        | 30           | New York
+*  Bob          | 25           | London
+*  Charlie      | 35           | Tokyo
 */
 ```
 
