@@ -489,6 +489,58 @@ describe("CMD Module", () => {
         expect(rendered).toContain("\x1b7"); // save position
         expect(rendered).toContain("\x1b8"); // restore position
       });
+
+      it("should render multiple combined zero-dim command boxes", () => {
+        const cmd1 = Cmd.cursorPrevLine(2);
+        const cmd2 = Cmd.cursorForward(5);
+        const combined = Box.combine(cmd1, cmd2);
+
+        expect(combined.rows).toBe(0);
+        expect(combined.cols).toBe(0);
+
+        const rendered = Box.renderPrettySync(combined);
+        expect(rendered).toBe("\x1b[2F\x1b[5C");
+      });
+
+      it("should render combineAll with multiple zero-dim command boxes", () => {
+        const commands = Box.combineAll([
+          Cmd.cursorNextLine(3),
+          Cmd.clearLines(2),
+        ]);
+
+        expect(commands.rows).toBe(0);
+        expect(commands.cols).toBe(0);
+
+        const rendered = Box.renderPrettySync(commands);
+        expect(rendered).toContain("\x1b[3E"); // cursorNextLine(3)
+        expect(rendered).toContain("\x1b[2K"); // clearLines includes eraseLine
+      });
+
+      it("should render hcat with only zero-dim command boxes", () => {
+        const layout = Box.hcat(
+          [Cmd.cursorSavePosition, Cmd.cursorUp(3), Cmd.cursorRestorePosition],
+          Box.left
+        );
+
+        expect(layout.rows).toBe(0);
+        expect(layout.cols).toBe(0);
+
+        const rendered = Box.renderPrettySync(layout);
+        expect(rendered).toBe("\x1b7\x1b[3A\x1b8");
+      });
+
+      it("should render vcat with only zero-dim command boxes", () => {
+        const layout = Box.vcat(
+          [Cmd.cursorHide, Cmd.home, Cmd.cursorShow],
+          Box.left
+        );
+
+        expect(layout.rows).toBe(0);
+        expect(layout.cols).toBe(0);
+
+        const rendered = Box.renderPrettySync(layout);
+        expect(rendered).toBe("\x1b[?25l\x1b[H\x1b[?25h");
+      });
     });
   });
 });
