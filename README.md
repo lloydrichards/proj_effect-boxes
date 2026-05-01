@@ -3,16 +3,17 @@
 A functional layout system for terminal applications built with Effect.js.
 Create TUIs with composable boxes, ANSI styling, and reactive components.
 
+![Effect Boxes Demo](media/demo.gif)
+
 ## What is Effect Boxes?
 
 Effect Boxes is a TypeScript library inspired by Haskell's
 `Text.PrettyPrint.Boxes`, providing a flex-style layout system for terminal
-applications within the Effect ecosystem. It started from the original box
-model and function naming, then grew into its own implementation with Effect
-integration, annotations, ANSI styling, and reactive rendering support. Think
-of it as a CSS flexbox system, but built specifically for functional
-composition of elements in terminal UIs, ASCII art, and structured text
-output.
+applications within the Effect ecosystem. It started from the original box model
+and function naming, then grew into its own implementation with Effect
+integration, annotations, ANSI styling, and reactive rendering support. Think of
+it as a CSS flexbox system, but built specifically for functional composition of
+elements in terminal UIs, ASCII art, and structured text output.
 
 ## Key Features
 
@@ -39,8 +40,11 @@ yarn add effect-boxes
 ```typescript
 import { pipe } from "effect";
 import { Box, Ansi } from "effect-boxes";
+// Alternative import patterns:
+// import * as Box from "effect-boxes/Box";
+// import * as Ansi from "effect-boxes/Ansi";
 
-// Create a simple bordered box with colored text
+// Create a simple box with colored text and positioning
 const myBox = pipe(
   Box.text("Hello, Effect Boxes!"),
   Box.annotate(Ansi.blue),
@@ -48,12 +52,11 @@ const myBox = pipe(
   Box.moveDown(1)
 );
 
-// Render to string
-console.log(Box.render(myBox));
+// Render to string (with ANSI colors)
+console.log(Box.renderPrettySync(myBox));
+//
+//   Hello, Effect Boxes!
 
-// Alternative import patterns:
-// import * as Box from "effect-boxes/Box";
-// import * as Ansi from "effect-boxes/Ansi";
 ```
 
 ## Example: Creating a Table
@@ -92,7 +95,7 @@ const table = createTable(
   ]
 );
 
-console.log(Box.render(table));
+console.log(Box.renderPlainSync(table));
 /*
     Name     |     Age      |     City
 ------------------------------------------
@@ -102,70 +105,33 @@ Charlie      | 35           | Tokyo
 */
 ```
 
-## Module Overview
+## Documentation
 
-| Module         |                                   Documentation | Description                                                                              |
-| -------------- | ----------------------------------------------: | ---------------------------------------------------------------------------------------- |
-| **Box**        |               [Box Module](./docs/using-box.md) | Core box creation and composition functions (`hcat`, `vcat`, `text`, `align`, `render`). |
-| **Annotation** | [Annotation Module](./docs/using-annotation.md) | Generic system for attaching metadata/annotations to boxes (styling, semantics).         |
-| **ANSI**       |             [ANSI Module](./docs/using-ansi.md) | ANSI styling and terminal rendering utilities (colors, attributes).                      |
-| **Cmd**        |               [Cmd Module](./docs/using-cmd.md) | Terminal control commands (cursor movement, screen clearing, etc.).                      |
-| **Reactive**   |     [Reactive Module](./docs/using-reactive.md) | Position tracking and primitives for interactive terminal interfaces.                    |
-| **Width**      |                                                 | Text width calculation utilities (unicode and ANSI-aware measurements).                  |
+| Module         | Description                                                               |
+| -------------- | ------------------------------------------------------------------------- |
+| **Box**        | Core box creation and composition (`hcat`, `vcat`, `text`, `align`, etc.) |
+| **Annotation** | Attach metadata/annotations to boxes for styling and semantics            |
+| **ANSI**       | Terminal styling with colors and text attributes                          |
+| **Cmd**        | Terminal control commands (cursor movement, screen clearing)              |
+| **Reactive**   | Position tracking for interactive terminal interfaces                     |
+| **Width**      | Unicode and ANSI-aware text width calculations                            |
 
-> Note: For reusable patterns, testing guidance, and Effect.js integration
-> examples, see Common Patterns — [Common Patterns](./docs/common-patterns.md).
+### Guides
 
-## Development
+- [Box Module](./docs/using-box.md) - Core layout primitives and composition
+- [Annotation Module](./docs/using-annotation.md) - Adding metadata to boxes
+- [ANSI Module](./docs/using-ansi.md) - Terminal colors and styling
+- [Cmd Module](./docs/using-cmd.md) - Terminal control sequences
+- [Reactive Module](./docs/using-reactive.md) - Building interactive UIs
+- [Common Patterns](./docs/common-patterns.md) - Reusable patterns and examples
 
-```bash
-# Install dependencies
-bun install
+## Contributing
 
-# Run tests
-bun test
-
-# Type check
-bun type-check
-
-# Lint and format
-bun lint
-bun format
-
-# Run examples
-bun run scratch
-```
-
-### Releasing a New Version
-
-This project uses [changesets](https://github.com/changesets/changesets) to
-manage versioning, changelogs, and npm publishing.
-
-1. **Add a changeset** when making a noteworthy change:
-
-   ```bash
-   bunx changeset
-   ```
-
-   Follow the prompts to select a semver bump type (patch/minor/major) and
-   describe the change. This creates a markdown file in `.changeset/`.
-
-2. **Commit the changeset** along with your code changes and push to `main`.
-
-3. **Automated release PR**: The CI workflow detects pending changesets and
-   opens a "Version Packages" PR that bumps `package.json`, updates
-   `CHANGELOG.md`, and removes consumed changeset files.
-
-4. **Merge the release PR**: Once merged, the workflow automatically publishes
-   the new version to npm.
-
-5. **Verify the release**: Check the
-   [Actions tab](https://github.com/lloydrichards/proj_effect-boxes/actions) to
-   confirm the publish succeeded, then verify on
-   [npm](https://www.npmjs.com/package/effect-boxes).
+Interested in contributing? See [CONTRIBUTING.md](./CONTRIBUTING.md) for
+development setup, commands, and release process.
 
 ## License
 
-BSD-3-Clause.
+BSD-3-Clause
 
 This library is inspired by Haskell's `Text.PrettyPrint.Boxes` by Brent Yorgey.
