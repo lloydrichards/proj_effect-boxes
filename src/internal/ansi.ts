@@ -396,8 +396,31 @@ export const renderAnnotatedBox = <A>({
     return seq ? [seq] : [];
   }
 
+  // Special case: zero-dim Row/Col boxes should still recurse into children
+  // to collect any command escape sequences
   if (rows === 0 || cols === 0) {
-    return [];
+    return match(
+      make({
+        cols,
+        content,
+        rows,
+        ...(annotation != null ? { annotation } : {}),
+      }),
+      {
+        blank: () => [],
+        text: () => [],
+        row: (boxes) => {
+          const childResults = Array.flatMap(boxes, renderAnnotatedBox);
+          // Join all child command sequences into a single string
+          return childResults.length > 0 ? [childResults.join("")] : [];
+        },
+        col: (boxes) => {
+          const childResults = Array.flatMap(boxes, renderAnnotatedBox);
+          return childResults.length > 0 ? [childResults.join("")] : [];
+        },
+        subBox: (box) => renderAnnotatedBox(box),
+      }
+    );
   }
 
   const contentLines = match(

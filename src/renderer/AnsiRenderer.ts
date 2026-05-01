@@ -1,4 +1,4 @@
-import { Effect, Layer } from "effect";
+import { Array as Arr, Effect, Layer } from "effect";
 import type * as Annotation from "../Annotation";
 import type * as Box from "../Box";
 import {
@@ -9,6 +9,7 @@ import {
   padPreservingAnsi,
   truncatePreservingAnsi,
 } from "../internal/ansi";
+import { match } from "../internal/box";
 import { Renderer, renderBox } from "../internal/renderer";
 import type * as R from "../Renderer";
 
@@ -42,12 +43,38 @@ export const makeAnsiRenderer = Layer.effect(
     };
 
     const renderContent = <A>(box: Box.Box<A>): Effect.Effect<string[]> => {
+      // Handle single command annotation on zero-dim box
       if (
         (box.rows === 0 || box.cols === 0) &&
         isCommandAnnotation(box.annotation?.data)
       ) {
         const seq = getAnsiEscapeSequence(box.annotation.data);
         return Effect.succeed(seq ? [seq] : []);
+      }
+
+      // Handle zero-dim Row/Col containers - recurse into children to collect commands
+      if (box.rows === 0 || box.cols === 0) {
+        return match(box, {
+          blank: () => Effect.succeed([]),
+          text: () => Effect.succeed([]),
+          row: (boxes) =>
+            Effect.map(
+              Effect.all(Arr.map(boxes, renderContent)),
+              (results) => {
+                const combined = Arr.flatten(results).join("");
+                return combined ? [combined] : [];
+              }
+            ),
+          col: (boxes) =>
+            Effect.map(
+              Effect.all(Arr.map(boxes, renderContent)),
+              (results) => {
+                const combined = Arr.flatten(results).join("");
+                return combined ? [combined] : [];
+              }
+            ),
+          subBox: (subBox) => renderContent(subBox),
+        });
       }
 
       return Effect.gen(function* () {
