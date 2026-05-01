@@ -506,6 +506,29 @@ export const HtmlRendererLive: Layer.Layer<Renderer> = makeHtmlRenderer.pipe(
   )
 );
 
+/**
+ * HTML renderer layer configured for pretty-formatted output.
+ *
+ * Uses indentation and whitespace preservation to produce readable HTML
+ * strings that are easier to inspect in logs, snapshots, and tests.
+ *
+ * @example
+ * ```typescript
+ * import * as Renderer from "effect-boxes/Renderer"
+ * import * as Box from "effect-boxes/Box"
+ * import * as Html from "effect-boxes/Html"
+ * import { Effect, pipe } from "effect"
+ *
+ * const box = Box.text("Hello").pipe(Box.annotate(Html.p()))
+ *
+ * const html = pipe(
+ *   Renderer.render(box),
+ *   Effect.provide(Renderer.HtmlPrettyRendererLive)
+ * )
+ * ```
+ *
+ * @category layers
+ */
 export const HtmlPrettyRendererLive: Layer.Layer<Renderer> =
   makeHtmlRenderer.pipe(
     Layer.provide(

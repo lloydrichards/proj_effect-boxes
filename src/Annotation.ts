@@ -267,7 +267,7 @@ export const createAnnotations: <A>(
  * import * as Annotation from "effect-boxes/Annotation"
  * import * as Ansi from "effect-boxes/Ansi"
  *
- * const annotations = [Ansi.red, Ansi.bold, Ansi.underline]
+ * const annotations = [Ansi.red, Ansi.bold, Ansi.underlined]
  * const allCommands = Annotation.extractAnnotationData(annotations)
  *
  * // Flatten all ANSI commands for processing
@@ -282,7 +282,9 @@ export const extractAnnotationData: <A>(
 ) => A[] = internal.extractAnnotationData;
 
 /**
- * Type-level utility to extract the data type from an Annotation type.
+ * Type-level utility to extract the data type from an `Annotation` type.
+ *
+ * @category models
  */
 export type AnnotationData<T> = T extends Annotation<infer A> ? A : never;
 

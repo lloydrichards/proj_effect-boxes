@@ -19,7 +19,7 @@ import * as internalAnsi from "./internal/cmd";
  * import * as Box from "effect-boxes/Box"
  *
  * const moveUp = Cmd.cursorUp(3)
- * const output = Box.render(moveUp)
+ * const output = Box.renderPrettySync(moveUp)
  * // Contains ANSI escape sequence to move cursor up 3 lines
  * ```
  *
@@ -130,7 +130,7 @@ export const cursorBackward: (columns?: number) => Box<AnsiStyle> =
  * ```typescript
  * import * as Cmd from "effect-boxes/Cmd"
  * import * as Box from "effect-boxes/Box"
- * import * as Ansi from "effect-boxesi/Ansi"
+ * import * as Ansi from "effect-boxes/Ansi"
  * import { pipe } from "effect"
  *
  * const statusAtPosition = pipe(

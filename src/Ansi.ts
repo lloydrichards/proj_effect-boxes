@@ -128,7 +128,7 @@ export const color256: (n: number) => AnsiAnnotation = internal.color256;
  * const styledText = Box.text("Custom purple").pipe(
  *   Box.annotate(customPurple)
  * )
- * console.log(Box.renderSync(styledText, Box.pretty))
+ * console.log(Box.renderPrettySync(styledText))
  * ```
  *
  * @category constructors
@@ -352,7 +352,7 @@ export const reset: AnsiAnnotation = internal.reset;
  * const styledText = Box.text("Important Warning").pipe(
  *   Box.annotate(Ansi.combine(Ansi.red, Ansi.bold, Ansi.underlined))
  * )
- * console.log(Box.renderSync(styledText, Box.pretty))
+ * console.log(Box.renderPrettySync(styledText))
  * // Outputs red, bold, underlined text
  * ```
  *
@@ -380,7 +380,7 @@ export const combine: (...annotations: AnsiAnnotation[]) => AnsiAnnotation =
  * import * as Ansi from "effect-boxes/Ansi"
  * import * as Annotation from "effect-boxes/Annotation"
  *
- * const redStyle = Annotation.get(Ansi.red)
+ * const redStyle = Annotation.getAnnotationData(Ansi.red)
  * const escapeSeq = Ansi.getAnsiEscapeSequence(redStyle)
  * console.log(escapeSeq)
  * // "\u001b[31m" (ANSI red foreground code)
@@ -399,6 +399,16 @@ export const getAnsiEscapeSequence: (data: AnsiStyle) => string | null =
  * terminal ANSI output.
  *
  * @note Haskell: `renderBox :: Box -> [String]`
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ * import * as Ansi from "effect-boxes/Ansi"
+ *
+ * const box = Box.text("Warning").pipe(Box.annotate(Ansi.red))
+ * const lines = Ansi.renderAnnotatedBox(box)
+ * console.log(lines[0])
+ * ```
+ *
  * @category utilities
  */
 export const renderAnnotatedBox: <A>({
