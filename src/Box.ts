@@ -335,6 +335,16 @@ export const combine: {
 /**
  * Combines multiple boxes with a starting box using the Semigroup operation.
  *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const boxes = [Box.text("B"), Box.text("C")]
+ * const result = Box.combineMany(boxes, Box.text("A"))
+ * console.log(Box.renderPlainSync(result))
+ * // ABC
+ * ```
+ *
  * @category combinators
  */
 export const combineMany: {
@@ -441,6 +451,22 @@ export const make: <A>(b: {
 
 /**
  * Pattern matching utility for Box content.
+ *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const box = Box.text("Hello")
+ * const result = Box.match(box, {
+ *   blank: () => "blank",
+ *   text: (t) => `text: ${t}`,
+ *   row: (boxes) => `row of ${boxes.length}`,
+ *   col: (boxes) => `col of ${boxes.length}`,
+ *   subBox: () => "subBox"
+ * })
+ * console.log(result)
+ * // text: Hello
+ * ```
  *
  * @category utilities
  */
@@ -1012,6 +1038,16 @@ export const defaultRenderConfig: Renderer.RenderStyle =
 /**
  * Merges multiple arrays of rendered text lines into a single array.
  *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const renderedBoxes = [["AB", "CD"], ["12", "34"]]
+ * const merged = Box.merge(renderedBoxes)
+ * console.log(merged)
+ * // ["AB12", "CD34"]
+ * ```
+ *
  * @note Haskell: `merge = foldr (zipWith (++)) (repeat [])`
  * @category utilities
  */
@@ -1019,6 +1055,16 @@ export const merge: (renderedBoxes: string[][]) => string[] = internal.merge;
 
 /**
  * Takes up to n elements from an array, padding with a default value if needed.
+ *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const arr = ["a", "b"]
+ * const result = Box.takeP(arr, "-", 4)
+ * console.log(result)
+ * // ["a", "b", "-", "-"]
+ * ```
  *
  * @note Haskell: `takeP :: a -> Int -> [a] -> [a]`
  * @category utilities
@@ -1031,6 +1077,16 @@ export const takeP: {
 /**
  * Takes elements from an array with alignment, padding as needed.
  *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const arr = ["a", "b"]
+ * const result = Box.takePA(arr, Box.center1, "-", 5)
+ * console.log(result)
+ * // ["-", "a", "b", "-", "-"]
+ * ```
+ *
  * @note Haskell: `takePA :: Alignment -> a -> Int -> [a] -> [a]`
  * @category utilities
  */
@@ -1042,6 +1098,15 @@ export const takePA: {
 /**
  * Creates a string of spaces with the specified length.
  *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const spaces = Box.blanks(5)
+ * console.log(`|${spaces}|`)
+ * // |     |
+ * ```
+ *
  * @note Haskell: `blanks :: Int -> String`
  * @category utilities
  */
@@ -1049,6 +1114,16 @@ export const blanks: (n: number) => string = internal.blanks;
 
 /**
  * Adjusts the size of rendered text lines to specific dimensions.
+ *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const lines = ["AB", "CD"]
+ * const resized = Box.resizeBox(lines, 3, 4)
+ * console.log(resized)
+ * // ["AB  ", "CD  ", "    "]
+ * ```
  *
  * @note Haskell: `resizeBox :: Int -> Int -> [String] -> [String]`
  * @category utilities
@@ -1086,6 +1161,17 @@ export const resizeBoxAligned: (
  *
  * Synchronous version of render for quick rendering without Effect.
  *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ * import * as Ansi from "effect-boxes/Ansi"
+ *
+ * const box = Box.annotate(Box.text("Hello"), Ansi.bold)
+ * const output = Box.renderPrettySync(box)
+ * console.log(output)
+ * // Outputs bold "Hello" with ANSI escape codes
+ * ```
+ *
  * @note Haskell: `renderPrettySync :: Box -> String`
  * @category utilities
  */
@@ -1096,6 +1182,17 @@ export const renderPrettySync: <A>(self: Box<A>) => string =
  * Renders a box to a plain string without any special formatting.
  *
  * Synchronous version of render for quick rendering without Effect.
+ *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const box = Box.text("Hello\nWorld")
+ * const output = Box.renderPlainSync(box)
+ * console.log(output)
+ * // Hello
+ * // World
+ * ```
  *
  * @note Haskell: `renderPlainSync :: Box -> String`
  * @category utilities
@@ -1137,6 +1234,18 @@ export const render: {
 
 /**
  * Prints a box to the console using the Effect Console.
+ *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ * import * as Effect from "effect/Effect"
+ * import { PlainRenderer } from "effect-boxes/Renderer"
+ *
+ * const box = Box.text("Hello, Box!")
+ * const program = Box.printBox(box).pipe(Effect.provide(PlainRenderer))
+ * Effect.runPromise(program)
+ * // Hello, Box!
+ * ```
  *
  * @note Haskell: `printBox :: Box -> IO ()`
  * @category utilities
