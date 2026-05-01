@@ -1,5 +1,15 @@
 # effect-boxes
 
+## 0.11.1
+
+### Patch Changes
+
+- [#35](https://github.com/lloydrichards/effect-boxes/pull/35) [`8bded20`](https://github.com/lloydrichards/effect-boxes/commit/8bded20dce68e1ef1989dee7565921dd1a50041b) Thanks [@lloydrichards](https://github.com/lloydrichards)! - improve documentation and fix example snippets
+
+- [#33](https://github.com/lloydrichards/effect-boxes/pull/33) [`28de02a`](https://github.com/lloydrichards/effect-boxes/commit/28de02a9931f487aefae92cf02f998da05f138d7) Thanks [@lloydrichards](https://github.com/lloydrichards)! - improve jsdocs for public facing APIs
+
+- [#33](https://github.com/lloydrichards/effect-boxes/pull/33) [`6f3d066`](https://github.com/lloydrichards/effect-boxes/commit/6f3d066fd84fdb6f718df320006cb3204659ac81) Thanks [@lloydrichards](https://github.com/lloydrichards)! - fixed JSDOCs and API references
+
 ## 0.11.0
 
 ### Minor Changes
