@@ -3,6 +3,7 @@
   "files": {
     "includes": [
       "src/**/*.ts",
+      "scripts/**/*.ts",
       "scratchpad/**/*.ts",
       "tests/**/*.ts",
       "*.json",

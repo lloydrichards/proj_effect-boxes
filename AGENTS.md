@@ -9,6 +9,7 @@
 - **Run all tests:** `bun run test`
 - **Type check:** `bun run type-check`
 - **Lint & format:** `bun run lint` / `bun run format`
+- **Validate docs:** `bun run docs:check`
 - **Run scratchpad:** `bun run scratch`
 - **Test a single file:** `bun run test tests/box.test.ts`
 - **Search code:** `rg "pattern"`
@@ -328,6 +329,7 @@ bun run type-check  # TypeScript compilation check
 # Code quality
 bun run lint        # Check for lint issues
 bun run format      # Auto-format code
+bun run docs:check  # Validate TSDoc/JSDoc syntax
 
 # Development playground
 bun run scratch     # Run scratchpad examples
@@ -583,6 +585,8 @@ documentation for all coding agents and future maintainers.
   Place them in the `tests/` directory, named `<module>.test.ts`
 - **How do I check formatting?**  
   Run `bun run lint` and `bun run format`
+- **How do I validate JSDoc/TSDoc comments?**  
+  Run `bun run docs:check`
 
 ---
 

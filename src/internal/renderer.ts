@@ -191,11 +191,13 @@ export const tracked = dual<
     box: Box.Box<A>,
     config?: R.RenderConfig
   ) => Effect.Effect<RenderFrame, never, Renderer>
->((args) => isBox(args[0]), (box, config) =>
-  Effect.gen(function* () {
-    const lines = yield* renderBoxToLines(box);
-    const output = renderLinesToString(lines, config);
-    const positions = getPositions(box);
-    return { lines, output, positions } as RenderFrame;
-  })
+>(
+  (args) => isBox(args[0]),
+  (box, config) =>
+    Effect.gen(function* () {
+      const lines = yield* renderBoxToLines(box);
+      const output = renderLinesToString(lines, config);
+      const positions = getPositions(box);
+      return { lines, output, positions } as RenderFrame;
+    })
 );
