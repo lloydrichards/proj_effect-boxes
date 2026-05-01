@@ -3,6 +3,8 @@
 The ANSI module provides terminal styling capabilities for boxes, allowing you
 to add colors, text formatting, and other terminal effects to your layouts.
 
+![ANSI Colors](../media/ansi-colors.png)
+
 ## Core Concepts
 
 The ANSI module uses the Annotation system to attach styling information to
