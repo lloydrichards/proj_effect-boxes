@@ -44,11 +44,37 @@ export const segments = (str: string): readonly string[] => {
   return result;
 };
 
+// NOTE: ES2022-compatible patterns using 'u' flag (ES2018 Unicode property escapes) instead of character class union since 'v' flag is ES2024+
 const zeroWidthClusterRegex =
-  /^(?:\p{Default_Ignorable_Code_Point}|\p{Control}|\p{Mark}|\p{Surrogate})+$/v; // zero-width clusters (control chars, marks, surrogates, etc.)
+  /^(?:\p{Default_Ignorable_Code_Point}|\p{Control}|\p{Mark}|\p{Surrogate})+$/u; // zero-width clusters (control chars, marks, surrogates, etc.)
 const leadingNonPrintingRegex =
-  /^[\p{Default_Ignorable_Code_Point}\p{Control}\p{Format}\p{Mark}\p{Surrogate}]+/v; // leading non-printing characters in a cluster
-const rgiEmojiRegex = /^\p{RGI_Emoji}$/v; // RGI (Recommended for General Interchange) emoji sequences
+  /^(?:\p{Default_Ignorable_Code_Point}|\p{Control}|\p{Format}|\p{Mark}|\p{Surrogate})+/u; // leading non-printing characters in a cluster
+
+// NOTE: Since \p{RGI_Emoji} requires the 'v' flag (ES2024), we check for emoji code point ranges instead
+const isEmoji = (segment: string): boolean => {
+  const codePoint = segment.codePointAt(0);
+  if (codePoint === undefined) return false;
+
+  // Common emoji ranges
+  return (
+    // Pictographs
+    (codePoint >= 0x1f300 && codePoint <= 0x1f5ff) ||
+    // Emoticons
+    (codePoint >= 0x1f600 && codePoint <= 0x1f64f) ||
+    // Symbols
+    (codePoint >= 0x1f680 && codePoint <= 0x1f6ff) ||
+    (codePoint >= 0x1f900 && codePoint <= 0x1f9ff) ||
+    (codePoint >= 0x1fa00 && codePoint <= 0x1fa6f) ||
+    (codePoint >= 0x1fa70 && codePoint <= 0x1faff) ||
+    // Dingbats
+    (codePoint >= 0x2700 && codePoint <= 0x27bf) ||
+    // Miscellaneous
+    (codePoint >= 0x2600 && codePoint <= 0x26ff) ||
+    (codePoint >= 0x1f1e0 && codePoint <= 0x1f1ff) ||
+    (codePoint >= 0xfe00 && codePoint <= 0xfe0f) ||
+    (codePoint >= 0x1f3fb && codePoint <= 0x1f3ff)
+  );
+};
 
 const WIDE_CHAR_RANGES = [
   // Hangul Jamo
@@ -170,8 +196,8 @@ export const ofString = (input: string): number => {
       if (isZeroWidthCluster(segment)) {
         return acc;
       }
-      // RGI emoji sequences are always double-width
-      if (rgiEmojiRegex.test(segment)) {
+      // Emoji sequences are always double-width
+      if (isEmoji(segment)) {
         return acc + 2;
       }
       // For other clusters, use East Asian Width of the first visible code point
