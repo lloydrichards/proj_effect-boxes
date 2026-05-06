@@ -1,5 +1,13 @@
 # effect-boxes
 
+## 0.11.2
+
+### Patch Changes
+
+- [#38](https://github.com/lloydrichards/effect-boxes/pull/38) [`e836567`](https://github.com/lloydrichards/effect-boxes/commit/e836567a7695f2af158dd932008c145e2ca90b5b) Thanks [@lloydrichards](https://github.com/lloydrichards)! - downgrade ts target to es2022 and replace RGI_Emoji with isEmoji predicate
+
+- [#36](https://github.com/lloydrichards/effect-boxes/pull/36) [`9bbe17a`](https://github.com/lloydrichards/effect-boxes/commit/9bbe17ac9f7ffae6e43247732e1ec7a08872a1dc) Thanks [@lloydrichards](https://github.com/lloydrichards)! - fix multiple cmd being combined, ansi still renders even with empty box
+
 ## 0.11.1
 
 ### Patch Changes
