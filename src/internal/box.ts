@@ -960,3 +960,147 @@ export const alterAnnotation = dual<
 
 /** @internal */
 export const alterAnnotate = alterAnnotation;
+
+// --------------------------------------------------------------------------------
+// --  Border  --------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+
+/** @internal */
+export interface BorderChars {
+  readonly topLeft: string;
+  readonly topRight: string;
+  readonly bottomLeft: string;
+  readonly bottomRight: string;
+  readonly horizontal: string;
+  readonly vertical: string;
+}
+
+/** @internal */
+export const singleBorder: BorderChars = {
+  topLeft: "┌",
+  topRight: "┐",
+  bottomLeft: "└",
+  bottomRight: "┘",
+  horizontal: "─",
+  vertical: "│",
+};
+
+/** @internal */
+export const doubleBorder: BorderChars = {
+  topLeft: "╔",
+  topRight: "╗",
+  bottomLeft: "╚",
+  bottomRight: "╝",
+  horizontal: "═",
+  vertical: "║",
+};
+
+/** @internal */
+export const roundedBorder: BorderChars = {
+  topLeft: "╭",
+  topRight: "╮",
+  bottomLeft: "╰",
+  bottomRight: "╯",
+  horizontal: "─",
+  vertical: "│",
+};
+
+/** @internal */
+export const thickBorder: BorderChars = {
+  topLeft: "┏",
+  topRight: "┓",
+  bottomLeft: "┗",
+  bottomRight: "┛",
+  horizontal: "━",
+  vertical: "┃",
+};
+
+/** @internal */
+export const asciiBorder: BorderChars = {
+  topLeft: "+",
+  topRight: "+",
+  bottomLeft: "+",
+  bottomRight: "+",
+  horizontal: "-",
+  vertical: "|",
+};
+
+/** @internal */
+export type BorderStyle = "single" | "double" | "rounded" | "thick" | "ascii";
+
+/** @internal */
+const borderStyleToChars = (style: BorderStyle): BorderChars => {
+  switch (style) {
+    case "single":
+      return singleBorder;
+    case "double":
+      return doubleBorder;
+    case "rounded":
+      return roundedBorder;
+    case "thick":
+      return thickBorder;
+    case "ascii":
+      return asciiBorder;
+  }
+};
+
+/** @internal */
+export interface BorderOptions<A> {
+  readonly annotation?: Annotation.Annotation<A>;
+}
+
+/** @internal */
+export const border = dual<
+  <A>(
+    style?: BorderStyle,
+    options?: BorderOptions<A>
+  ) => (self: Box.Box<A>) => Box.Box<A>,
+  <A>(
+    self: Box.Box<A>,
+    style?: BorderStyle,
+    options?: BorderOptions<A>
+  ) => Box.Box<A>
+>(
+  3,
+  <A>(
+    self: Box.Box<A>,
+    style: BorderStyle = "single",
+    options?: BorderOptions<A>
+  ): Box.Box<A> => {
+    const chars = borderStyleToChars(style);
+
+    const borderChar = (c: string): Box.Box<A> =>
+      options?.annotation ? annotate(char(c), options.annotation) : char(c);
+
+    const borderText = (s: string): Box.Box<A> =>
+      options?.annotation ? annotate(text(s), options.annotation) : text(s);
+
+    const sideCol = vcat(
+      Array.makeBy(self.rows, () => borderChar(chars.vertical)),
+      left
+    );
+
+    return vcat(
+      [
+        hcat(
+          [
+            borderChar(chars.topLeft),
+            borderText(chars.horizontal.repeat(self.cols)),
+            borderChar(chars.topRight),
+          ],
+          top
+        ),
+        hcat([sideCol, self, sideCol], top),
+        hcat(
+          [
+            borderChar(chars.bottomLeft),
+            borderText(chars.horizontal.repeat(self.cols)),
+            borderChar(chars.bottomRight),
+          ],
+          top
+        ),
+      ],
+      left
+    );
+  }
+);

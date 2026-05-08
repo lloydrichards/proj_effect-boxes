@@ -1375,3 +1375,111 @@ export const alterAnnotation: {
   <A, B>(alter: (annotation: A) => B[]): (self: Box<A>) => Box<B>[];
   <A, B>(self: Box<A>, alter: (annotation: A) => B[]): Box<B>[];
 } = internal.alterAnnotation;
+
+// --------------------------------------------------------------------------------
+// --  Border  --------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+
+/**
+ * Characters used to draw a border around a box.
+ *
+ * @category models
+ */
+export type BorderChars = internal.BorderChars;
+
+/**
+ * Named border style presets.
+ *
+ * - `"single"` — thin single-line border (`┌─┐│└┘`)
+ * - `"double"` — double-line border (`╔═╗║╚╝`)
+ * - `"rounded"` — rounded corners (`╭─╮│╰╯`)
+ * - `"thick"` — bold/thick lines (`┏━┓┃┗┛`)
+ * - `"ascii"` — ASCII-only (`+-+|`)
+ *
+ * @category models
+ */
+export type BorderStyle = internal.BorderStyle;
+
+/**
+ * Options for the `border` combinator.
+ *
+ * @category models
+ */
+export type BorderOptions<A> = internal.BorderOptions<A>;
+
+/**
+ * Single-line border character set.
+ *
+ * @category constructors
+ */
+export const singleBorder: BorderChars = internal.singleBorder;
+
+/**
+ * Double-line border character set.
+ *
+ * @category constructors
+ */
+export const doubleBorder: BorderChars = internal.doubleBorder;
+
+/**
+ * Rounded-corner border character set.
+ *
+ * @category constructors
+ */
+export const roundedBorder: BorderChars = internal.roundedBorder;
+
+/**
+ * Thick/bold border character set.
+ *
+ * @category constructors
+ */
+export const thickBorder: BorderChars = internal.thickBorder;
+
+/**
+ * ASCII-only border character set.
+ *
+ * @category constructors
+ */
+export const asciiBorder: BorderChars = internal.asciiBorder;
+
+/**
+ * Wraps a box with a border using the specified style.
+ *
+ * Draws a border around the box using Unicode box-drawing characters.
+ * Supports multiple preset styles and optional annotation (color) for
+ * the border characters.
+ *
+ * @example
+ * ```typescript
+ * import { pipe } from "effect"
+ * import * as Box from "effect-boxes/Box"
+ * import * as Ansi from "effect-boxes/Ansi"
+ *
+ * // Default single border
+ * const bordered = pipe(Box.text("Hello"), Box.border())
+ * console.log(Box.renderPlainSync(bordered))
+ * // ┌─────┐
+ * // │Hello│
+ * // └─────┘
+ *
+ * // Rounded border with color
+ * const fancy = pipe(
+ *   Box.text("Warning"),
+ *   Box.border("rounded", { annotation: Ansi.yellow })
+ * )
+ * console.log(Box.renderPrettySync(fancy))
+ * ```
+ *
+ * @category combinators
+ */
+export const border: {
+  <A>(
+    style?: BorderStyle,
+    options?: BorderOptions<A>
+  ): (self: Box<A>) => Box<A>;
+  <A>(
+    self: Box<A>,
+    style?: BorderStyle,
+    options?: BorderOptions<A>
+  ): Box<A>;
+} = internal.border;
