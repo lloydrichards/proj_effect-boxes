@@ -4,20 +4,23 @@
 
 Output media/demo.gif
 
+Set Shell "zsh"
 Set FontSize 16
-Set Width 750
-Set Height 380
-Set Theme "Catppuccin Frappe"
+Set Width 1000
+Set Height 620
+Set TypingSpeed 60ms
 Set WindowBar Colorful
 Set Padding 20
 
-# Show the command being typed
-Type "bun run scratchpad/demo.ts"
+
+# Run the demo
+Sleep 1s
+Type "bun run scratch -- --run 1"
 Sleep 300ms
 Enter
 
 # Wait for the demo to complete (~5 seconds for 100 iterations at 50ms)
-Sleep 8s
+Sleep 16s
 
 # Brief pause to show completion
 Sleep 800ms
