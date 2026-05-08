@@ -1,7 +1,7 @@
 /**
  * ANSI color showcase demo for documentation screenshot
  */
-import { pipe } from "effect";
+import { Effect, pipe } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 
@@ -62,11 +62,11 @@ const brightFgColors = [
 // Background
 const bgColors = [
   { name: "bgBlack", style: Ansi.combine(Ansi.white, Ansi.bgBlack) },
-  { name: "bgRed", style: Ansi.combine(Ansi.white, Ansi.bgRed) },
+  { name: "bgRed", style: Ansi.combine(Ansi.black, Ansi.bgRed) },
   { name: "bgGreen", style: Ansi.combine(Ansi.black, Ansi.bgGreen) },
   { name: "bgYellow", style: Ansi.combine(Ansi.black, Ansi.bgYellow) },
-  { name: "bgBlue", style: Ansi.combine(Ansi.white, Ansi.bgBlue) },
-  { name: "bgMagenta", style: Ansi.combine(Ansi.white, Ansi.bgMagenta) },
+  { name: "bgBlue", style: Ansi.combine(Ansi.black, Ansi.bgBlue) },
+  { name: "bgMagenta", style: Ansi.combine(Ansi.black, Ansi.bgMagenta) },
   { name: "bgCyan", style: Ansi.combine(Ansi.black, Ansi.bgCyan) },
   { name: "bgWhite", style: Ansi.combine(Ansi.black, Ansi.bgWhite) },
 ];
@@ -218,6 +218,6 @@ const demo = Box.vcat(
     coloredBorderRow,
   ],
   Box.left
-);
+).pipe(Box.pad(2));
 
-console.log(Box.renderPrettySync(demo));
+export const main = Effect.sync(() => console.log(Box.renderPrettySync(demo)));

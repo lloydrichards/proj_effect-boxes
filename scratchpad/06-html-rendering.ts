@@ -10,7 +10,7 @@ import * as Box from "../src/Box";
 import * as Html from "../src/Html";
 import * as Renderer from "../src/Renderer";
 
-const main = Effect.gen(function* () {
+export const main = Effect.gen(function* () {
   // Create blog header
   const blogTitle = Box.text("My Awesome Blog").pipe(
     Box.annotate(Html.h1({ class: "blog-title" }))
@@ -113,5 +113,3 @@ const main = Effect.gen(function* () {
   yield* Console.log(html);
   yield* Console.log("\n=== End of HTML ===");
 });
-
-Effect.runPromise(main);

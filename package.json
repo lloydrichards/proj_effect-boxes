@@ -73,7 +73,7 @@
     "type-check": "tsc --noEmit",
     "format": "biome check --write",
     "test": "vitest run",
-    "scratch": "bun run scratchpad/index.ts",
+    "scratch": "bun run scratchpad/00-index.ts",
     "benchmark": "vitest bench --run",
     "benchmark:quick": "vitest bench benchmarks/quick.bench.ts --run",
     "postinstall": "effect-language-service patch",

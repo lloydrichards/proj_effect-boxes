@@ -42,47 +42,12 @@ const ProgressBar = (progress: number, total: number, width: number) => {
   return pipe(filledBar, Box.hAppend<Ansi.AnsiStyle>(emptyBar));
 };
 
-const Padding =
-  <A>(width: number) =>
-  (self: Box.Box<A>) =>
-    pipe(
-      self,
-      Box.moveUp(width),
-      Box.moveDown(width),
-      Box.moveLeft(width),
-      Box.moveRight(width)
-    );
-
-const Border = <A>(self: Box.Box<A>) => {
-  const middleBorder = pipe(
-    Array.makeBy(self.rows, () => Box.char("│")),
-    Box.vcat(Box.left)
-  );
-
-  const topBorder = pipe(
-    [Box.char("┌"), Box.text("─".repeat(self.cols)), Box.char("┐")],
-    Box.hcat(Box.top)
-  );
-
-  const bottomBorder = pipe(
-    [Box.char("└"), Box.text("─".repeat(self.cols)), Box.char("┘")],
-    Box.hcat(Box.top)
-  );
-
-  const middleSection = pipe(
-    [middleBorder, self, middleBorder],
-    Box.hcat(Box.top)
-  );
-
-  return pipe([topBorder, middleSection, bottomBorder], Box.vcat(Box.left));
-};
-
 const formatTime = (timestamp: number): string => {
   const date = new Date(timestamp);
   return date.toLocaleTimeString();
 };
 
-const main = Effect.gen(function* () {
+export const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
   yield* display(Box.renderPrettySync(Cmd.clearScreen));
   yield* display(Box.renderPrettySync(Cmd.cursorHide));
@@ -103,23 +68,23 @@ const main = Effect.gen(function* () {
       [
         ProgressBar(counter, Complete, ProgressBarWidth).pipe(
           Reactive.makeReactive("progress-bar"),
-          Border
+          Box.border("single")
         ),
         Box.text(`${percentage.toString().padStart(3)}%`).pipe(
           Box.alignHoriz(Box.right, 5),
-          Reactive.makeReactive("percentage"),
           Box.annotate(percentage === 100 ? Ansi.green : Ansi.blue),
-          Border,
+          Reactive.makeReactive("percentage"),
+          Box.border("single"),
           Box.annotate(Ansi.green)
         ),
       ],
       Box.center1
-    ).pipe(Padding(1), Border);
+    ).pipe(Box.pad(1), Box.border("single"));
 
     const bottom = StatusBar(status, counter, timeStr).pipe(
       Box.alignHoriz(Box.center1, 79),
       Reactive.makeReactive("status-bar"),
-      Border
+      Box.border("single")
     );
 
     const footer = Box.punctuateH(
@@ -220,5 +185,3 @@ const main = Effect.gen(function* () {
     )
   );
 });
-
-Effect.runPromise(main);
