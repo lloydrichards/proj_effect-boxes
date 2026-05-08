@@ -1,105 +1,105 @@
-import { Array, pipe, String } from "effect";
+import { pipe, String } from "effect";
 import { describe, expect, it } from "vitest";
+import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 
-const Border = <A>(self: Box.Box<A>) => {
-  const middleBorder = pipe(
-    Array.makeBy(self.rows, () => Box.char("│")),
-    Box.vcat(Box.left)
-  );
-
-  const topBorder = pipe(
-    [Box.char("┌"), Box.text("─".repeat(self.cols)), Box.char("┐")],
-    Box.hcat(Box.top)
-  );
-
-  const bottomBorder = pipe(
-    [Box.char("└"), Box.text("─".repeat(self.cols)), Box.char("┘")],
-    Box.hcat(Box.top)
-  );
-
-  const middleSection = pipe(
-    [middleBorder, self, middleBorder],
-    Box.hcat(Box.top)
-  );
-
-  return pipe([topBorder, middleSection, bottomBorder], Box.vcat(Box.left));
-};
-
-describe("Border", () => {
-  it("should add a border around the box", () => {
-    const box = Box.text("Hello\nWorld");
-    const borderedBox = Border(box);
-    expect(Box.renderPrettySync(borderedBox)).toBe(
+describe("Box.border", () => {
+  it("wraps a single-line text with default (single) border", () => {
+    const result = pipe(Box.text("Hi"), Box.border());
+    expect(Box.renderPlainSync(result)).toBe(
       String.stripMargin(
-        `|┌─────┐
-         |│Hello│
-         |│World│
-         |└─────┘`
+        `|┌──┐
+         |│Hi│
+         |└──┘`
       )
     );
   });
-  it("should handle nested borders", () => {
-    const box = Box.text("Hello\nWorld");
-    const borderedBox = Border(Border(box));
-    expect(Box.renderPrettySync(borderedBox)).toBe(
+
+  it("wraps multi-line text", () => {
+    const result = pipe(Box.text("AB\nCD"), Box.border());
+    expect(Box.renderPlainSync(result)).toBe(
       String.stripMargin(
-        `|┌───────┐
-         |│┌─────┐│
-         |││Hello││
-         |││World││
-         |│└─────┘│
-         |└───────┘`
+        `|┌──┐
+         |│AB│
+         |│CD│
+         |└──┘`
       )
     );
   });
-  it("should handle emojis in a box", () => {
-    const box = Box.text("Hello 👋\nWorld 🌍");
-    const borderedBox = Border(box);
-    expect(Box.renderPrettySync(borderedBox)).toBe(
+
+  it("supports rounded style", () => {
+    const result = pipe(Box.text("X"), Box.border("rounded"));
+    expect(Box.renderPlainSync(result)).toBe(
       String.stripMargin(
-        `|┌────────┐
-         |│Hello 👋│
-         |│World 🌍│
-         |└────────┘`
+        `|╭─╮
+         |│X│
+         |╰─╯`
       )
     );
   });
-  it("should handle rows of boxes", () => {
-    const box1 = Box.text("Box 1");
-    const box2 = Box.text("Box 2");
-    const rowBox = pipe([box1, box2], Box.punctuateH(Box.left, Box.text(" ")));
-    const borderedBox = Border(rowBox);
-    expect(Box.renderPrettySync(borderedBox)).toBe(
+
+  it("supports double style", () => {
+    const result = pipe(Box.text("X"), Box.border("double"));
+    expect(Box.renderPlainSync(result)).toBe(
       String.stripMargin(
-        `|┌───────────┐
-         |│Box 1 Box 2│
-         |└───────────┘`
+        `|╔═╗
+         |║X║
+         |╚═╝`
       )
     );
   });
-  it("should handle rows of boxes", () => {
-    const box1 = Box.text("Box 1");
-    const box2 = Box.text("Box 🔥");
-    const rowBox = pipe([box1, box2], Box.punctuateH(Box.left, Box.text(" ")));
-    const borderedBox = Border(rowBox);
-    expect(Box.renderPrettySync(borderedBox)).toBe(
+
+  it("supports thick style", () => {
+    const result = pipe(Box.text("X"), Box.border("thick"));
+    expect(Box.renderPlainSync(result)).toBe(
       String.stripMargin(
-        `|┌────────────┐
-         |│Box 1 Box 🔥│
-         |└────────────┘`
+        `|┏━┓
+         |┃X┃
+         |┗━┛`
       )
     );
   });
-  it("should handle empty boxes", () => {
-    const box = Box.text(" ");
-    const borderedBox = Border(box);
-    expect(Box.renderPrettySync(borderedBox)).toBe(
+
+  it("supports ascii style", () => {
+    const result = pipe(Box.text("X"), Box.border("ascii"));
+    expect(Box.renderPlainSync(result)).toBe(
       String.stripMargin(
-        `|┌─┐
-         |│ │
-         |└─┘`
+        `|+-+
+         ||X|
+         |+-+`
       )
     );
+  });
+
+  it("data-first usage works", () => {
+    const result = Box.border(Box.text("Hi"), "single", {});
+    expect(Box.renderPlainSync(result)).toBe(
+      String.stripMargin(
+        `|┌──┐
+         |│Hi│
+         |└──┘`
+      )
+    );
+  });
+
+  it("dimensions are correct (content + 2 for border)", () => {
+    const content = Box.text("Hello");
+    const bordered = pipe(content, Box.border());
+    expect(bordered.rows).toBe(content.rows + 2);
+    expect(bordered.cols).toBe(content.cols + 2);
+  });
+
+  it("works with annotation for border color", () => {
+    const result = pipe(
+      Box.text("Hi"),
+      Box.border("rounded", { annotation: Ansi.red })
+    );
+    expect(result.rows).toBe(3);
+    expect(result.cols).toBe(4);
+  });
+
+  it("handles empty box", () => {
+    const result = pipe(Box.emptyBox(0, 0), Box.border());
+    expect(result.cols).toBe(2);
   });
 });
