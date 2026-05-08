@@ -1,5 +1,72 @@
 # effect-boxes
 
+## 0.12.0
+
+### Minor Changes
+
+- [#46](https://github.com/lloydrichards/effect-boxes/pull/46) [`367f161`](https://github.com/lloydrichards/effect-boxes/commit/367f161ebf20e26900ffca08c1b3f2d1da4834e7) Thanks [@lloydrichards](https://github.com/lloydrichards)! - Add bright ANSI color constants for both foreground (SGR 90-97) and background (SGR 100-107).
+
+  Provides the full 16-color ANSI palette that users expect from TUI libraries.
+
+  ```typescript
+  import { pipe } from "effect";
+  import * as Box from "effect-boxes/Box";
+  import * as Ansi from "effect-boxes/Ansi";
+  const alert = pipe(
+    Box.text("Deprecated"),
+    Box.annotate(Ansi.combine(Ansi.brightYellow, Ansi.bgBrightBlack))
+  );
+  console.log(Box.renderPrettySync(alert));
+  ```
+
+  New exports: `brightBlack`, `brightRed`, `brightGreen`, `brightYellow`, `brightBlue`, `brightMagenta`, `brightCyan`, `brightWhite`, `bgBrightBlack`, `bgBrightRed`, `bgBrightGreen`, `bgBrightYellow`, `bgBrightBlue`, `bgBrightMagenta`, `bgBrightCyan`, `bgBrightWhite`
+
+- [#46](https://github.com/lloydrichards/effect-boxes/pull/46) [`660f34f`](https://github.com/lloydrichards/effect-boxes/commit/660f34fc93a15bbe00c9adb15b6a3eb5a2b1e802) Thanks [@lloydrichards](https://github.com/lloydrichards)! - Add Box.border() combinator and Box.pad() for box-model styling
+
+  - `Box.border()` supports five preset styles (single, double, rounded, thick, ascii) with optional annotation for colored borders.
+  - `Box.pad()` provides CSS-like shorthand for adding space around content (uniform, vertical/horizontal, or per-side).
+
+  ```typescript
+  import { pipe } from "effect";
+  import * as Box from "effect-boxes/Box";
+  import * as Ansi from "effect-boxes/Ansi";
+
+  const panel = pipe(
+    Box.text("Hello"),
+    Box.pad(1, 2),
+    Box.border("rounded", { annotation: Ansi.cyan })
+  );
+
+  console.log(Box.renderPrettySync(panel));
+  // ╭─────────╮
+  // │         │
+  // │  Hello  │
+  // │         │
+  // ╰─────────╯
+  ```
+
+- [#46](https://github.com/lloydrichards/effect-boxes/pull/46) [`367f161`](https://github.com/lloydrichards/effect-boxes/commit/367f161ebf20e26900ffca08c1b3f2d1da4834e7) Thanks [@lloydrichards](https://github.com/lloydrichards)! - Add bright ANSI color constants for both foreground (SGR 90-97) and background (SGR 100-107). Provides the full 16-color ANSI palette that users expect from TUI libraries.
+
+  ```typescript
+  import { pipe } from "effect";
+  import * as Box from "effect-boxes/Box";
+  import * as Ansi from "effect-boxes/Ansi";
+
+  const alert = pipe(
+    Box.text("Deprecated"),
+    Box.annotate(Ansi.combine(Ansi.brightYellow, Ansi.bgBrightBlack))
+  );
+  console.log(Box.renderPrettySync(alert));
+  ```
+
+  New exports: `brightBlack`, `brightRed`, `brightGreen`, `brightYellow`, `brightBlue`, `brightMagenta`, `brightCyan`, `brightWhite`, `bgBrightBlack`, `bgBrightRed`, `bgBrightGreen`, `bgBrightYellow`, `bgBrightBlue`, `bgBrightMagenta`, `bgBrightCyan`, `bgBrightWhite`.
+
+### Patch Changes
+
+- [#39](https://github.com/lloydrichards/effect-boxes/pull/39) [`3ea3f8b`](https://github.com/lloydrichards/effect-boxes/commit/3ea3f8bd033b386413135357350e227c4404182e) Thanks [@lloydrichards](https://github.com/lloydrichards)! - revert changes to emoji detection to use RGI_Emoji
+
+- [#40](https://github.com/lloydrichards/effect-boxes/pull/40) [`ef7bae8`](https://github.com/lloydrichards/effect-boxes/commit/ef7bae82de1506b7719fb07e8468ca8032a9bfa7) Thanks [@lloydrichards](https://github.com/lloydrichards)! - make effect a peer dependency of effect-boxes
+
 ## 0.11.2
 
 ### Patch Changes
