@@ -22,7 +22,8 @@
   "linter": {
     "rules": {
       "complexity": {
-        "noArguments": "off"
+        "noArguments": "off",
+        "useRegexLiterals": "off"
       },
       "style": {
         "useDefaultSwitchClause": "off",
