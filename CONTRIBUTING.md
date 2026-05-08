@@ -5,19 +5,35 @@ everything you need to get started with development.
 
 ## Development Setup
 
-### Prerequisites
+### Option A: Nix (recommended)
 
-- [Bun](https://bun.sh/) runtime (recommended)
-- Node.js 18+ (alternative)
-
-### Installation
+The project includes a `flake.nix` that provides Bun, Node.js, and all other
+tools automatically. Nothing else to install.
 
 ```bash
-# Clone the repository
 git clone https://github.com/lloydrichards/proj_effect-boxes.git
 cd proj_effect-boxes
 
-# Install dependencies
+# If you use direnv (recommended alongside nix):
+direnv allow
+
+# Otherwise, enter the dev shell manually:
+nix develop
+
+# Then install dependencies
+bun install
+```
+
+### Option B: Manual setup
+
+Install these yourself:
+
+- [Bun](https://bun.sh/) runtime
+- Node.js 24+
+
+```bash
+git clone https://github.com/lloydrichards/proj_effect-boxes.git
+cd proj_effect-boxes
 bun install
 ```
 
@@ -48,7 +64,7 @@ bun run scratch
 
 ## Project Structure
 
-```
+```txt
 src/
 ├── Box.ts          # Core Box data type and operations
 ├── Annotation.ts   # Text annotation system
