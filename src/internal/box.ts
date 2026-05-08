@@ -1104,3 +1104,92 @@ export const border = dual<
     );
   }
 );
+
+// --------------------------------------------------------------------------------
+// --  Padding  -------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+
+/** @internal */
+const resolvePadding = (
+  args: readonly number[]
+): readonly [top: number, right: number, bottom: number, left: number] => {
+  const a = args[0] ?? 0;
+  const b = args[1] ?? a;
+  const c = args[2] ?? a;
+  const d = args[3] ?? b;
+  return Match.value(args.length).pipe(
+    Match.when(0, () => [0, 0, 0, 0] as const),
+    Match.when(1, () => [a, a, a, a] as const),
+    Match.when(2, () => [a, b, a, b] as const),
+    Match.when(4, () => [a, b, c, d] as const),
+    Match.orElse(() => [0, 0, 0, 0] as const)
+  );
+};
+
+// export const pad: {
+//   (all: number): <A>(self: Box.Box<A>) => Box.Box<A>;
+//   (vertical: number, horizontal: number): <A>(self: Box.Box<A>) => Box.Box<A>;
+//   (
+//     top: number,
+//     right: number,
+//     bottom: number,
+//     left: number
+//   ): <A>(self: Box.Box<A>) => Box.Box<A>;
+//   <A>(self: Box.Box<A>, all: number): Box.Box<A>;
+//   <A>(self: Box.Box<A>, vertical: number, horizontal: number): Box.Box<A>;
+//   <A>(
+//     self: Box.Box<A>,
+//     top: number,
+//     right: number,
+//     bottom: number,
+//     left: number
+//   ): Box.Box<A>;
+// } = <A>(5, <A>(
+//     self: Box.Box<A>,
+//     top: number,
+//     right: number,
+//     bottom: number,
+//     left: number
+//   ): Box.Box<A> => {
+
+/** @internal */
+export const pad = dual<
+  <A>(
+    first: number,
+    second?: number,
+    third?: number,
+    fourth?: number
+  ) => (self: Box.Box<A>) => Box.Box<A>,
+  <A>(
+    self: Box.Box<A>,
+    first: number,
+    second?: number,
+    third?: number,
+    fourth?: number
+  ) => Box.Box<A>
+>(
+  5,
+  <A>(
+    self: Box.Box<A>,
+    first: number,
+    second?: number,
+    third?: number,
+    fourth?: number
+  ): Box.Box<A> => {
+    const args = Array.filter(
+      [second, third, fourth],
+      (n): n is number => n !== undefined
+    );
+    const [t, r, b, l] = resolvePadding([first, ...args]);
+    const totalCols = l + self.cols + r;
+
+    return vcat(
+      [
+        emptyBox(t, totalCols),
+        hcat([emptyBox(self.rows, l), self, emptyBox(self.rows, r)], top),
+        emptyBox(b, totalCols),
+      ],
+      left
+    );
+  }
+);

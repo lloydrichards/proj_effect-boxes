@@ -1477,9 +1477,63 @@ export const border: {
     style?: BorderStyle,
     options?: BorderOptions<A>
   ): (self: Box<A>) => Box<A>;
+  <A>(self: Box<A>, style?: BorderStyle, options?: BorderOptions<A>): Box<A>;
+} = internal.border;
+
+// --------------------------------------------------------------------------------
+// --  Padding  -------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+
+/**
+ * Adds padding (empty space) around a box.
+ *
+ * Supports CSS-like shorthand for specifying padding per side.
+ * Padding adds space between the content and any surrounding border.
+ *
+ * - `pad(all)` — uniform padding on all sides
+ * - `pad(vertical, horizontal)` — vertical (top/bottom) and horizontal (left/right)
+ * - `pad(top, right, bottom, left)` — per-side, CSS order
+ *
+ * @example
+ * ```typescript
+ * import { pipe } from "effect"
+ * import * as Box from "effect-boxes/Box"
+ *
+ * // Uniform padding of 1 on all sides
+ * const padded = pipe(Box.text("Hi"), Box.pad(1))
+ * console.log(Box.renderPlainSync(padded).replaceAll(" ", "."))
+ * // ....
+ * // .Hi.
+ * // ....
+ *
+ * // Padding with border
+ * const panel = pipe(Box.text("Hi"), Box.pad(1, 2), Box.border("rounded"))
+ * console.log(Box.renderPlainSync(panel))
+ * // ╭──────╮
+ * // │      │
+ * // │  Hi  │
+ * // │      │
+ * // ╰──────╯
+ * ```
+ *
+ * @category transformations
+ */
+export const pad: {
+  (all: number): <A>(self: Box<A>) => Box<A>;
+  (vertical: number, horizontal: number): <A>(self: Box<A>) => Box<A>;
+  (
+    top: number,
+    right: number,
+    bottom: number,
+    left: number
+  ): <A>(self: Box<A>) => Box<A>;
+  <A>(self: Box<A>, all: number): Box<A>;
+  <A>(self: Box<A>, vertical: number, horizontal: number): Box<A>;
   <A>(
     self: Box<A>,
-    style?: BorderStyle,
-    options?: BorderOptions<A>
+    top: number,
+    right: number,
+    bottom: number,
+    left: number
   ): Box<A>;
-} = internal.border;
+} = internal.pad;
