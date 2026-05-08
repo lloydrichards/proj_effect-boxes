@@ -1,7 +1,7 @@
 /**
  * Static demo showcasing Effect Boxes features for screenshots
  */
-import { pipe } from "effect";
+import { Effect, pipe } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 
@@ -66,29 +66,12 @@ const createNestedBox = () => {
     Box.annotate(Ansi.combine(Ansi.bold, Ansi.colorRGB(255, 165, 0)))
   );
 
-  const withPadding = pipe(
+  return pipe(
     inner,
-    Box.moveUp(1),
-    Box.moveDown(1),
-    Box.moveLeft(2),
-    Box.moveRight(2)
+    Box.pad(1, 2),
+    Box.border("single"),
+    Box.annotate(Ansi.green)
   );
-
-  // Simple border
-  const addBorder = <A>(box: Box.Box<A>) => {
-    const top = Box.text(`\u250c${"\u2500".repeat(box.cols)}\u2510`);
-    const bottom = Box.text(`\u2514${"\u2500".repeat(box.cols)}\u2518`);
-    const side = pipe(
-      Array.from({ length: box.rows }, () => Box.char("\u2502")),
-      (arr) => Box.vcat(arr, Box.left)
-    );
-    return Box.vcat(
-      [top, Box.hcat([side, box, side], Box.top), bottom],
-      Box.left
-    );
-  };
-
-  return addBorder(withPadding).pipe(Box.annotate(Ansi.green));
 };
 
 // Combine all features
@@ -146,4 +129,4 @@ const demo = Box.vcat(
   Box.left
 );
 
-console.log(Box.renderPrettySync(demo));
+export const main = Effect.sync(() => console.log(Box.renderPrettySync(demo)));

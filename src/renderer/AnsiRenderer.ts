@@ -58,21 +58,15 @@ export const makeAnsiRenderer = Layer.effect(
           blank: () => Effect.succeed([]),
           text: () => Effect.succeed([]),
           row: (boxes) =>
-            Effect.map(
-              Effect.all(Arr.map(boxes, renderContent)),
-              (results) => {
-                const combined = Arr.flatten(results).join("");
-                return combined ? [combined] : [];
-              }
-            ),
+            Effect.map(Effect.all(Arr.map(boxes, renderContent)), (results) => {
+              const combined = Arr.flatten(results).join("");
+              return combined ? [combined] : [];
+            }),
           col: (boxes) =>
-            Effect.map(
-              Effect.all(Arr.map(boxes, renderContent)),
-              (results) => {
-                const combined = Arr.flatten(results).join("");
-                return combined ? [combined] : [];
-              }
-            ),
+            Effect.map(Effect.all(Arr.map(boxes, renderContent)), (results) => {
+              const combined = Arr.flatten(results).join("");
+              return combined ? [combined] : [];
+            }),
           subBox: (subBox) => renderContent(subBox),
         });
       }

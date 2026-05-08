@@ -77,31 +77,7 @@ type FlowFieldState = {
 const colors = [Ansi.cyan, Ansi.green, Ansi.magenta, Ansi.yellow, Ansi.blue];
 const directions = ["←", "↖", "↑", "↗", "→", "↘", "↓", "↙"];
 
-const Border = <A>(self: Box.Box<A>) => {
-  const middleBorder = pipe(
-    Array.from({ length: self.rows }, () => Box.char("│")),
-    Box.vcat(Box.left)
-  );
-
-  const topBorder = pipe(
-    [Box.char("┌"), Box.text("─".repeat(self.cols)), Box.char("┐")],
-    Box.hcat(Box.top)
-  );
-
-  const bottomBorder = pipe(
-    [Box.char("└"), Box.text("─".repeat(self.cols)), Box.char("┘")],
-    Box.hcat(Box.top)
-  );
-
-  const middleSection = pipe(
-    [middleBorder, self, middleBorder],
-    Box.hcat(Box.top)
-  );
-
-  return pipe([topBorder, middleSection, bottomBorder], Box.vcat(Box.left));
-};
-
-const main = Effect.gen(function* () {
+export const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
   yield* display(Box.renderPrettySync(Cmd.clearScreen));
   yield* display(Box.renderPrettySync(Cmd.cursorHide));
@@ -193,14 +169,14 @@ const main = Effect.gen(function* () {
       return { counter, timestamp: now };
     })
   ).pipe(
-    Stream.schedule(Schedule.spaced("100 milli"))
+    Stream.schedule(Schedule.spaced("5 milli"))
     // Stream.takeUntil(({ counter }) => counter >= COMPLETE) // leave for debugging
   );
 
   // Render the initial layout
   yield* display(
     Box.emptyBox(InnerH, InnerW).pipe(
-      Border,
+      Box.border("single"),
       Box.vAppend(Box.text("Flow Field Walkers (Ctrl+C to exit)")),
       Box.renderPrettySync
     )
@@ -247,12 +223,10 @@ const main = Effect.gen(function* () {
         Cmd.cursorShow,
         Box.combine(Cmd.home),
         Box.combine<Ansi.AnsiStyle>(
-          Box.emptyBox(InnerH * 2, InnerW).pipe(Border)
+          Box.emptyBox(InnerH * 2, InnerW).pipe(Box.border("single"))
         ),
         Box.renderPrettySync
       )
     );
   });
 }).pipe(Effect.scoped);
-
-Effect.runPromise(main);

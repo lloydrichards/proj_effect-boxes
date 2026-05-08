@@ -1,4 +1,4 @@
-import { Array, Console, Effect, pipe, Ref, Schedule, Stream } from "effect";
+import { Console, Effect, pipe, Ref, Schedule, Stream } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 import * as Cmd from "../src/Cmd";
@@ -21,41 +21,6 @@ const ProgressBar = (progress: number, total: number, width: number) => {
   return pipe(filledBar, Box.hAppend<Ansi.AnsiStyle>(emptyBar));
 };
 
-const Padding =
-  <A>(width: number) =>
-  (self: Box.Box<A>) =>
-    pipe(
-      self,
-      Box.moveUp(width),
-      Box.moveDown(width),
-      Box.moveLeft(width),
-      Box.moveRight(width)
-    );
-
-const Border = <A>(self: Box.Box<A>) => {
-  const middleBorder = pipe(
-    Array.makeBy(self.rows, () => Box.char("│")),
-    Box.vcat(Box.left)
-  );
-
-  const topBorder = pipe(
-    [Box.char("┌"), Box.text("─".repeat(self.cols)), Box.char("┐")],
-    Box.hcat(Box.top)
-  );
-
-  const bottomBorder = pipe(
-    [Box.char("└"), Box.text("─".repeat(self.cols)), Box.char("┘")],
-    Box.hcat(Box.top)
-  );
-
-  const middleSection = pipe(
-    [middleBorder, self, middleBorder],
-    Box.hcat(Box.top)
-  );
-
-  return pipe([topBorder, middleSection, bottomBorder], Box.vcat(Box.left));
-};
-
 /**
  * Demonstrates partial rerendering by updating specific parts of the UI
  * without clearing the entire screen.
@@ -73,7 +38,7 @@ const Border = <A>(self: Box.Box<A>) => {
  * - Combine cursor commands with styled text for precise placement
  * - Avoid full screen clears for better performance and less flicker
  */
-const main = Effect.gen(function* () {
+export const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
   yield* display(Ansi.renderAnnotatedBox(Cmd.clearScreen).join(""));
   yield* display(Ansi.renderAnnotatedBox(Cmd.cursorHide).join(""));
@@ -117,26 +82,28 @@ const main = Effect.gen(function* () {
     Box.renderPrettySync(
       Box.hcat(
         [
-          ProgressBar(0, Complete, ProgressBarWidth).pipe(Border),
+          ProgressBar(0, Complete, ProgressBarWidth).pipe(
+            Box.border("rounded")
+          ),
           Box.text(`${((0 / Complete) * 100).toFixed(0)}%`).pipe(
             Box.alignHoriz(Box.right, 5),
             Box.annotate(Ansi.blue),
-            Border,
+            Box.border("rounded"),
             Box.annotate(Ansi.green)
           ),
         ],
         Box.center1
-      ).pipe(Padding(1), Border)
+      ).pipe(Box.pad(0, 1), Box.border("rounded"))
     )
   );
   yield* Console.log(Box.renderPrettySync(footerBox));
 
   // Calculate positions for dynamic updates
-  const progressBarRow = 7; // Row where progress bar characters go
+  const progressBarRow = 6; // Row where progress bar characters go
   const progressBarStartCol = 3; // Column where '[' ends and bar begins
-  const percentageRow = 7; // Row where percentage is displayed
+  const percentageRow = 6; // Row where percentage is displayed
   const percentageCol = 6 + ProgressBarWidth; // Column after '] '
-  const counterRow = 11; // Row where counter is displayed
+  const counterRow = 9; // Row where counter is displayed
   const counterCol = 9; // Column after 'Counter: '
 
   // Create the animation stream
@@ -211,5 +178,3 @@ const main = Effect.gen(function* () {
     )
   );
 });
-
-Effect.runPromise(main);

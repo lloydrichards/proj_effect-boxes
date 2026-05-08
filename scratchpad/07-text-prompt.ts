@@ -1,14 +1,5 @@
-import { BunFileSystem, BunPath, BunTerminal } from "@effect/platform-bun";
-import {
-  Console,
-  Data,
-  Effect,
-  HashMap,
-  Layer,
-  Option,
-  pipe,
-  type Terminal,
-} from "effect";
+import { BunServices } from "@effect/platform-bun";
+import { Console, Data, Effect, HashMap, Option, type Terminal } from "effect";
 import { Prompt } from "effect/unstable/cli";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
@@ -53,36 +44,6 @@ const relativeCursorMove = <A>(
 // Rendering
 // ----------------------------------------------------------------------------
 
-const Border = <A>(self: Box.Box<A>): Box.Box<A> => {
-  const top = Box.hcat(
-    [Box.char("╭"), Box.text("─".repeat(self.cols)), Box.char("╮")],
-    Box.top
-  );
-  const bottom = Box.hcat(
-    [Box.char("╰"), Box.text("─".repeat(self.cols)), Box.char("╯")],
-    Box.top
-  );
-  const side = Box.vcat(
-    Array.from({ length: self.rows }, () => Box.char("│")),
-    Box.left
-  );
-  const middle = Box.hcat([side, self, side], Box.top);
-  return Box.vcat([top, middle, bottom], Box.left);
-};
-
-const Padding =
-  <A>(vertical: number, horizontal?: number) =>
-  (self: Box.Box<A>): Box.Box<A> => {
-    const h = horizontal ?? vertical;
-    return pipe(
-      self,
-      Box.moveUp(vertical),
-      Box.moveDown(vertical),
-      Box.moveLeft(h),
-      Box.moveRight(h)
-    );
-  };
-
 const renderLayout = (
   state: TextPromptState,
   message: string,
@@ -121,7 +82,11 @@ const renderLayout = (
         [Box.char(">"), valueDisplay],
         1,
         Box.top
-      ).pipe(Box.alignHoriz(Box.left, 60), Padding(0, 1), Border),
+      ).pipe(
+        Box.alignHoriz(Box.left, 60),
+        Box.pad(0, 1),
+        Box.border("rounded")
+      ),
     ],
 
     Box.left
@@ -156,20 +121,17 @@ export const BoxInput = (options: TextOptions): Prompt.Prompt<string> => {
             nextState.cursor
           );
 
-          return Effect.succeed(
-            Box.renderPrettySync(
-              Option.isSome(move)
-                ? Box.vcat(
-                    [
-                      layout,
-                      Cmd.cursorPrevLine(move.value.rowsUp),
-                      Cmd.cursorForward(move.value.col),
-                    ],
-                    Box.left
-                  )
-                : layout
-            )
-          );
+          const rendered = Box.renderPrettySync(layout);
+          if (Option.isSome(move)) {
+            const cursorReposition = Box.renderPrettySync(
+              Box.combine(
+                Cmd.cursorPrevLine(move.value.rowsUp),
+                Cmd.cursorForward(move.value.col)
+              )
+            );
+            return Effect.succeed(rendered + cursorReposition);
+          }
+          return Effect.succeed(rendered);
         },
 
         Submit: ({ value }) =>
@@ -256,13 +218,7 @@ export const BoxInput = (options: TextOptions): Prompt.Prompt<string> => {
 // Demo
 // ----------------------------------------------------------------------------
 
-const PromptLive = Layer.mergeAll(
-  BunTerminal.layer,
-  BunFileSystem.layer,
-  BunPath.layer
-);
-
-const main = Effect.gen(function* () {
+export const main = Effect.gen(function* () {
   const name = yield* BoxInput({ message: "What is your name?" });
   const food = yield* BoxInput({
     message: "What is your favorite food?",
@@ -276,9 +232,7 @@ const main = Effect.gen(function* () {
         Box.text(name).pipe(Box.annotate(Ansi.green)),
         Box.text("! Your favorite food is "),
         Box.text(food).pipe(Box.annotate(Ansi.green)),
-      ]).pipe(Padding(1, 2), Border)
+      ]).pipe(Box.pad(1, 2), Box.border("rounded"))
     )
   );
-}).pipe(Effect.provide(PromptLive));
-
-Effect.runPromise(main).catch(console.error);
+}).pipe(Effect.provide(BunServices.layer));
