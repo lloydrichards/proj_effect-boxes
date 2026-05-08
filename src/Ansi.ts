@@ -93,6 +93,62 @@ export const white: AnsiAnnotation = internal.white;
 export const fgDefault: AnsiAnnotation = internal.fgDefault;
 
 /**
+ * Bright black (gray) foreground color.
+ *
+ * @category constructors
+ */
+export const brightBlack: AnsiAnnotation = internal.brightBlack;
+
+/**
+ * Bright red foreground color.
+ *
+ * @category constructors
+ */
+export const brightRed: AnsiAnnotation = internal.brightRed;
+
+/**
+ * Bright green foreground color.
+ *
+ * @category constructors
+ */
+export const brightGreen: AnsiAnnotation = internal.brightGreen;
+
+/**
+ * Bright yellow foreground color.
+ *
+ * @category constructors
+ */
+export const brightYellow: AnsiAnnotation = internal.brightYellow;
+
+/**
+ * Bright blue foreground color.
+ *
+ * @category constructors
+ */
+export const brightBlue: AnsiAnnotation = internal.brightBlue;
+
+/**
+ * Bright magenta foreground color.
+ *
+ * @category constructors
+ */
+export const brightMagenta: AnsiAnnotation = internal.brightMagenta;
+
+/**
+ * Bright cyan foreground color.
+ *
+ * @category constructors
+ */
+export const brightCyan: AnsiAnnotation = internal.brightCyan;
+
+/**
+ * Bright white foreground color.
+ *
+ * @category constructors
+ */
+export const brightWhite: AnsiAnnotation = internal.brightWhite;
+
+/**
  * Creates a foreground color using 256-color palette.
  *
  * Uses the extended 256-color ANSI palette for more color options
@@ -198,6 +254,62 @@ export const bgWhite: AnsiAnnotation = internal.bgWhite;
  * @category constructors
  */
 export const bgDefault: AnsiAnnotation = internal.bgDefault;
+
+/**
+ * Bright black (gray) background color.
+ *
+ * @category constructors
+ */
+export const bgBrightBlack: AnsiAnnotation = internal.bgBrightBlack;
+
+/**
+ * Bright red background color.
+ *
+ * @category constructors
+ */
+export const bgBrightRed: AnsiAnnotation = internal.bgBrightRed;
+
+/**
+ * Bright green background color.
+ *
+ * @category constructors
+ */
+export const bgBrightGreen: AnsiAnnotation = internal.bgBrightGreen;
+
+/**
+ * Bright yellow background color.
+ *
+ * @category constructors
+ */
+export const bgBrightYellow: AnsiAnnotation = internal.bgBrightYellow;
+
+/**
+ * Bright blue background color.
+ *
+ * @category constructors
+ */
+export const bgBrightBlue: AnsiAnnotation = internal.bgBrightBlue;
+
+/**
+ * Bright magenta background color.
+ *
+ * @category constructors
+ */
+export const bgBrightMagenta: AnsiAnnotation = internal.bgBrightMagenta;
+
+/**
+ * Bright cyan background color.
+ *
+ * @category constructors
+ */
+export const bgBrightCyan: AnsiAnnotation = internal.bgBrightCyan;
+
+/**
+ * Bright white background color.
+ *
+ * @category constructors
+ */
+export const bgBrightWhite: AnsiAnnotation = internal.bgBrightWhite;
 
 /**
  * Creates a background color using 256-color palette.

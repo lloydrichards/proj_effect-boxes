@@ -1,11 +1,42 @@
 /**
  * ANSI color showcase demo for documentation screenshot
  */
+import { pipe } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 
-// Standard colors
-const standardColors = [
+const TABLE_WIDTH = 80;
+
+// Helper: create a row of evenly-sized cells
+const row = (
+  items: { name: string; style: Ansi.AnsiAnnotation }[]
+): Box.Box<Ansi.AnsiStyle> => {
+  const cellWidth = Math.floor(TABLE_WIDTH / items.length);
+  return Box.hcat(
+    items.map(({ name, style }) =>
+      pipe(
+        Box.text(name),
+        Box.annotate(style),
+        Box.alignHoriz(Box.center1, cellWidth)
+      )
+    ),
+    Box.top
+  );
+};
+
+// Helper: section header
+const header = (text: string): Box.Box<Ansi.AnsiStyle> =>
+  pipe(
+    Box.text(text),
+    Box.annotate(Ansi.combine(Ansi.bold, Ansi.brightCyan)),
+    Box.alignHoriz(Box.left, TABLE_WIDTH)
+  );
+
+// Helper: separator
+const sep = Box.text("─".repeat(TABLE_WIDTH));
+
+// Standard foreground
+const fgColors = [
   { name: "black", style: Ansi.black },
   { name: "red", style: Ansi.red },
   { name: "green", style: Ansi.green },
@@ -16,7 +47,19 @@ const standardColors = [
   { name: "white", style: Ansi.white },
 ];
 
-// Background colors
+// Bright foreground
+const brightFgColors = [
+  { name: "brBlack", style: Ansi.brightBlack },
+  { name: "brRed", style: Ansi.brightRed },
+  { name: "brGreen", style: Ansi.brightGreen },
+  { name: "brYellow", style: Ansi.brightYellow },
+  { name: "brBlue", style: Ansi.brightBlue },
+  { name: "brMagenta", style: Ansi.brightMagenta },
+  { name: "brCyan", style: Ansi.brightCyan },
+  { name: "brWhite", style: Ansi.brightWhite },
+];
+
+// Background
 const bgColors = [
   { name: "bgBlack", style: Ansi.combine(Ansi.white, Ansi.bgBlack) },
   { name: "bgRed", style: Ansi.combine(Ansi.white, Ansi.bgRed) },
@@ -28,8 +71,20 @@ const bgColors = [
   { name: "bgWhite", style: Ansi.combine(Ansi.black, Ansi.bgWhite) },
 ];
 
+// Bright background
+const bgBrightColors = [
+  { name: "bgBrBlk", style: Ansi.combine(Ansi.white, Ansi.bgBrightBlack) },
+  { name: "bgBrRed", style: Ansi.combine(Ansi.black, Ansi.bgBrightRed) },
+  { name: "bgBrGrn", style: Ansi.combine(Ansi.black, Ansi.bgBrightGreen) },
+  { name: "bgBrYlw", style: Ansi.combine(Ansi.black, Ansi.bgBrightYellow) },
+  { name: "bgBrBlu", style: Ansi.combine(Ansi.black, Ansi.bgBrightBlue) },
+  { name: "bgBrMag", style: Ansi.combine(Ansi.black, Ansi.bgBrightMagenta) },
+  { name: "bgBrCyn", style: Ansi.combine(Ansi.black, Ansi.bgBrightCyan) },
+  { name: "bgBrWht", style: Ansi.combine(Ansi.black, Ansi.bgBrightWhite) },
+];
+
 // Text attributes
-const textAttributes = [
+const textAttrs = [
   { name: "bold", style: Ansi.bold },
   { name: "dim", style: Ansi.dim },
   { name: "italic", style: Ansi.italic },
@@ -39,12 +94,6 @@ const textAttributes = [
 ];
 
 // RGB gradient
-const rgbGradient = Array.from({ length: 12 }, (_, i) => {
-  const hue = (i / 12) * 360;
-  const [r, g, b] = hslToRgb(hue, 1, 0.5);
-  return Box.text("\u2588\u2588").pipe(Box.annotate(Ansi.colorRGB(r, g, b)));
-});
-
 function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   const c = (1 - Math.abs(2 * l - 1)) * s;
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
@@ -78,107 +127,95 @@ function hslToRgb(h: number, s: number, l: number): [number, number, number] {
   ];
 }
 
-// Build sections
-const title = Box.text("ANSI Styling Examples").pipe(
+const rgbBlocks = Array.from({ length: TABLE_WIDTH / 2 }, (_, i) => {
+  const hue = (i / (TABLE_WIDTH / 2)) * 360;
+  const [r, g, b] = hslToRgb(hue, 1, 0.5);
+  return pipe(Box.text("\u2588\u2588"), Box.annotate(Ansi.colorRGB(r, g, b)));
+});
+
+const rgbRow = Box.hcat(rgbBlocks, Box.top);
+
+// Border styles
+const borderRow = Box.hcat(
+  [
+    pipe(Box.text("single"), Box.pad(0, 1), Box.border("single")),
+    Box.text(" "),
+    pipe(Box.text("rounded"), Box.pad(0, 1), Box.border("rounded")),
+    Box.text(" "),
+    pipe(Box.text("double"), Box.pad(0, 1), Box.border("double")),
+    Box.text(" "),
+    pipe(Box.text("thick"), Box.pad(0, 1), Box.border("thick")),
+    Box.text(" "),
+    pipe(Box.text("ascii"), Box.pad(0, 1), Box.border("ascii")),
+  ],
+  Box.top
+);
+
+// Colored borders
+const coloredBorderRow = Box.hcat(
+  [
+    pipe(
+      Box.text("Error"),
+      Box.pad(0, 1),
+      Box.border("rounded", { annotation: Ansi.red })
+    ),
+    Box.text(" "),
+    pipe(
+      Box.text("Success"),
+      Box.pad(0, 1),
+      Box.border("rounded", { annotation: Ansi.green })
+    ),
+    Box.text(" "),
+    pipe(
+      Box.text("Warning"),
+      Box.pad(0, 1),
+      Box.border("rounded", { annotation: Ansi.yellow })
+    ),
+    Box.text(" "),
+    pipe(
+      Box.text("Info"),
+      Box.pad(0, 1),
+      Box.border("rounded", { annotation: Ansi.brightBlue })
+    ),
+  ],
+  Box.top
+);
+
+// Title
+const title = pipe(
+  Box.text("ANSI Styling Examples"),
   Box.annotate(Ansi.combine(Ansi.bold, Ansi.underlined)),
-  Box.alignHoriz(Box.center1, 50)
+  Box.alignHoriz(Box.center1, TABLE_WIDTH)
 );
 
-const fgSection = Box.vcat(
-  [
-    Box.text("Foreground Colors").pipe(
-      Box.annotate(Ansi.combine(Ansi.bold, Ansi.cyan))
-    ),
-    Box.hcat(
-      standardColors.map(({ name, style }) =>
-        Box.text(` ${name.padEnd(9)}`).pipe(Box.annotate(style))
-      ),
-      Box.center1
-    ),
-  ],
-  Box.left
-);
-
-const bgSection = Box.vcat(
-  [
-    Box.text("Background Colors").pipe(
-      Box.annotate(Ansi.combine(Ansi.bold, Ansi.cyan))
-    ),
-    Box.hcat(
-      bgColors.map(({ name, style }) =>
-        Box.text(` ${name.padEnd(11)}`).pipe(Box.annotate(style))
-      ),
-      Box.center1
-    ),
-  ],
-  Box.left
-);
-
-const attrSection = Box.vcat(
-  [
-    Box.text("Text Attributes").pipe(
-      Box.annotate(Ansi.combine(Ansi.bold, Ansi.cyan))
-    ),
-    Box.hcat(
-      textAttributes.map(({ name, style }) =>
-        Box.text(` ${name.padEnd(14)}`).pipe(Box.annotate(style))
-      ),
-      Box.center1
-    ),
-  ],
-  Box.left
-);
-
-const rgbSection = Box.vcat(
-  [
-    Box.text("RGB True Color").pipe(
-      Box.annotate(Ansi.combine(Ansi.bold, Ansi.cyan))
-    ),
-    Box.hcat(rgbGradient, Box.center1),
-  ],
-  Box.left
-);
-
-// Combined example
-const combinedExample = Box.vcat(
-  [
-    Box.text("Combined Styles").pipe(
-      Box.annotate(Ansi.combine(Ansi.bold, Ansi.cyan))
-    ),
-    Box.hcat(
-      [
-        Box.text(" Bold + Red ").pipe(
-          Box.annotate(Ansi.combine(Ansi.bold, Ansi.red))
-        ),
-        Box.text(" Italic + Blue ").pipe(
-          Box.annotate(Ansi.combine(Ansi.italic, Ansi.blue))
-        ),
-        Box.text(" Underline + Green ").pipe(
-          Box.annotate(Ansi.combine(Ansi.underlined, Ansi.green))
-        ),
-        Box.text(" Bold + BgYellow ").pipe(
-          Box.annotate(Ansi.combine(Ansi.bold, Ansi.black, Ansi.bgYellow))
-        ),
-      ],
-      Box.center1
-    ),
-  ],
-  Box.left
-);
-
+// Assemble table
 const demo = Box.vcat(
   [
     title,
+    sep,
+    header("Foreground Colors"),
+    row(fgColors),
     Box.nullBox,
-    fgSection,
+    header("Bright Foreground Colors"),
+    row(brightFgColors),
+    sep,
+    header("Background Colors"),
+    row(bgColors),
     Box.nullBox,
-    bgSection,
+    header("Bright Background Colors"),
+    row(bgBrightColors),
+    sep,
+    header("Text Attributes"),
+    row(textAttrs),
+    sep,
+    header("RGB True Color"),
+    rgbRow,
+    sep,
+    header("Border Styles"),
+    borderRow,
     Box.nullBox,
-    attrSection,
-    Box.nullBox,
-    rgbSection,
-    Box.nullBox,
-    combinedExample,
+    header("Colored Borders"),
+    coloredBorderRow,
   ],
   Box.left
 );

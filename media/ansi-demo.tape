@@ -3,8 +3,7 @@
 
 Set FontSize 16
 Set Width 1100
-Set Height 380
-Set Theme "Catppuccin Frappe"
+Set Height 620
 Set WindowBar Colorful
 Set Padding 20
 

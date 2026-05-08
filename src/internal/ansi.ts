@@ -91,6 +91,26 @@ export const bgColorRGB = (
     `48;2;${clampColor(r)};${clampColor(g)};${clampColor(b)}`
   );
 
+// Bright foreground colors (SGR 90-97)
+export const brightBlack = makeForegroundColor("brightBlack", "90");
+export const brightRed = makeForegroundColor("brightRed", "91");
+export const brightGreen = makeForegroundColor("brightGreen", "92");
+export const brightYellow = makeForegroundColor("brightYellow", "93");
+export const brightBlue = makeForegroundColor("brightBlue", "94");
+export const brightMagenta = makeForegroundColor("brightMagenta", "95");
+export const brightCyan = makeForegroundColor("brightCyan", "96");
+export const brightWhite = makeForegroundColor("brightWhite", "97");
+
+// Bright background colors (SGR 100-107)
+export const bgBrightBlack = makeBackgroundColor("brightBlack", "100");
+export const bgBrightRed = makeBackgroundColor("brightRed", "101");
+export const bgBrightGreen = makeBackgroundColor("brightGreen", "102");
+export const bgBrightYellow = makeBackgroundColor("brightYellow", "103");
+export const bgBrightBlue = makeBackgroundColor("brightBlue", "104");
+export const bgBrightMagenta = makeBackgroundColor("brightMagenta", "105");
+export const bgBrightCyan = makeBackgroundColor("brightCyan", "106");
+export const bgBrightWhite = makeBackgroundColor("brightWhite", "107");
+
 //
 // --------------------------------------------------------------------------------
 // --  Standard ANSI text attributes  ---------------------------------------------
