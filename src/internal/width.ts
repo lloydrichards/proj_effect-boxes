@@ -50,31 +50,9 @@ const zeroWidthClusterRegex =
 const leadingNonPrintingRegex =
   /^(?:\p{Default_Ignorable_Code_Point}|\p{Control}|\p{Format}|\p{Mark}|\p{Surrogate})+/u; // leading non-printing characters in a cluster
 
-// NOTE: Since \p{RGI_Emoji} requires the 'v' flag (ES2024), we check for emoji code point ranges instead
-const isEmoji = (segment: string): boolean => {
-  const codePoint = segment.codePointAt(0);
-  if (codePoint === undefined) return false;
-
-  // Common emoji ranges
-  return (
-    // Pictographs
-    (codePoint >= 0x1f300 && codePoint <= 0x1f5ff) ||
-    // Emoticons
-    (codePoint >= 0x1f600 && codePoint <= 0x1f64f) ||
-    // Symbols
-    (codePoint >= 0x1f680 && codePoint <= 0x1f6ff) ||
-    (codePoint >= 0x1f900 && codePoint <= 0x1f9ff) ||
-    (codePoint >= 0x1fa00 && codePoint <= 0x1fa6f) ||
-    (codePoint >= 0x1fa70 && codePoint <= 0x1faff) ||
-    // Dingbats
-    (codePoint >= 0x2700 && codePoint <= 0x27bf) ||
-    // Miscellaneous
-    (codePoint >= 0x2600 && codePoint <= 0x26ff) ||
-    (codePoint >= 0x1f1e0 && codePoint <= 0x1f1ff) ||
-    (codePoint >= 0xfe00 && codePoint <= 0xfe0f) ||
-    (codePoint >= 0x1f3fb && codePoint <= 0x1f3ff)
-  );
-};
+// Use RGI_Emoji with the 'v' flag via dynamic constructor to avoid TS type errors (target is ES2022, but runtime supports 'v' flag)
+const emojiRegex = new RegExp("\\p{RGI_Emoji}", "v");
+const isEmoji = (segment: string): boolean => emojiRegex.test(segment);
 
 const WIDE_CHAR_RANGES = [
   // Hangul Jamo
