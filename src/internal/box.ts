@@ -1206,13 +1206,58 @@ export const pad = dual<
 // --------------------------------------------------------------------------------
 
 /** @internal */
+const truncateWidth = <A>(
+  self: Box.Box<A>,
+  width: number,
+  onText: (text: string) => Box.Box<A>
+): Box.Box<A> => {
+  if (self.cols <= width) return self;
+
+  const go = (box: Box.Box<A>): Box.Box<A> =>
+    match(box, {
+      blank: () => emptyBox(box.rows, width),
+      text: (t) => onText(t),
+      row: () =>
+        go(
+          make({
+            rows: box.rows,
+            cols: box.cols,
+            content: { _tag: "SubBox", xAlign: left, yAlign: top, box },
+          })
+        ),
+      col: (boxes) =>
+        make({
+          rows: box.rows,
+          cols: width,
+          content: { _tag: "Col", boxes: boxes.map(go) },
+          annotation: box.annotation,
+        }),
+      subBox: (inner, xAlign, yAlign) =>
+        make({
+          rows: box.rows,
+          cols: width,
+          content: { _tag: "SubBox", xAlign, yAlign, box: go(inner) },
+          annotation: box.annotation,
+        }),
+    });
+
+  const result = go(self);
+  if (self.annotation && !result.annotation) {
+    return make({
+      rows: result.rows,
+      cols: result.cols,
+      content: result.content,
+      annotation: self.annotation,
+    });
+  }
+  return result;
+};
+
+/** @internal */
 export const truncate = dual<
   (width: number, pos: Box.Alignment) => <A>(self: Box.Box<A>) => Box.Box<A>,
   <A>(self: Box.Box<A>, width: number, pos: Box.Alignment) => Box.Box<A>
 >(3, <A>(self: Box.Box<A>, width: number, pos: Box.Alignment): Box.Box<A> => {
-  // No truncation needed
-  if (self.cols <= width) return self;
-
   const ellipsis = "…";
 
   const truncateLine = (text: string): Box.Box<A> => {
@@ -1254,48 +1299,52 @@ export const truncate = dual<
     );
   };
 
-  const go = (box: Box.Box<A>): Box.Box<A> =>
-    match(box, {
-      blank: () => box,
-      text: (t) => truncateLine(t),
-      row: () =>
-        go(
-          make({
-            rows: box.rows,
-            cols: box.cols,
-            content: { _tag: "SubBox", xAlign: left, yAlign: top, box },
-          })
-        ),
-      col: (boxes) =>
-        make({
-          rows: box.rows,
-          cols: width,
-          content: { _tag: "Col", boxes: boxes.map(go) },
-          annotation: box.annotation,
-        }),
-      subBox: (inner, xAlign, yAlign) =>
-        make({
-          rows: box.rows,
-          cols: width,
-          content: {
-            _tag: "SubBox",
-            xAlign,
-            yAlign,
-            box: go(inner),
-          },
-          annotation: box.annotation,
-        }),
-    });
+  return truncateWidth(self, width, truncateLine);
+});
 
-  const result = go(self);
-  // Preserve top-level annotation
-  if (self.annotation && !result.annotation) {
-    return make({
-      rows: result.rows,
-      cols: result.cols,
-      content: result.content,
-      annotation: self.annotation,
-    });
-  }
-  return result;
+/** @internal */
+export const minWidth = dual<
+  (n: number) => <A>(self: Box.Box<A>) => Box.Box<A>,
+  <A>(self: Box.Box<A>, n: number) => Box.Box<A>
+>(
+  2,
+  <A>(self: Box.Box<A>, n: number): Box.Box<A> =>
+    self.cols >= n ? self : alignHoriz(self, left, n)
+);
+
+/** @internal */
+export const maxWidth = dual<
+  (n: number) => <A>(self: Box.Box<A>) => Box.Box<A>,
+  <A>(self: Box.Box<A>, n: number) => Box.Box<A>
+>(
+  2,
+  <A>(self: Box.Box<A>, n: number): Box.Box<A> =>
+    truncateWidth(self, n, (t) =>
+      unsafeLine(Width.segments(t).slice(0, n).join(""))
+    )
+);
+
+/** @internal */
+export const minHeight = dual<
+  (n: number) => <A>(self: Box.Box<A>) => Box.Box<A>,
+  <A>(self: Box.Box<A>, n: number) => Box.Box<A>
+>(
+  2,
+  <A>(self: Box.Box<A>, n: number): Box.Box<A> =>
+    self.rows >= n ? self : alignVert(self, top, n)
+);
+
+/** @internal */
+export const maxHeight = dual<
+  (n: number) => <A>(self: Box.Box<A>) => Box.Box<A>,
+  <A>(self: Box.Box<A>, n: number) => Box.Box<A>
+>(2, <A>(self: Box.Box<A>, n: number): Box.Box<A> => {
+  if (self.rows <= n) return self;
+
+  return make({
+    rows: n,
+    cols: self.cols,
+    content: { _tag: "SubBox", xAlign: left, yAlign: top, box: self },
+    annotation: self.annotation,
+  });
 });
