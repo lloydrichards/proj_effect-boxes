@@ -1586,3 +1586,89 @@ export const pad: {
     left: number
   ): Box<A>;
 } = internal.pad;
+
+/**
+ * Ensures a box is at least `n` columns wide, padding with spaces on the right
+ * if the box is narrower.
+ *
+ * **Example**
+ *
+ * ```typescript
+ * import { pipe } from "effect"
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const result = pipe(Box.text("Hi"), Box.minWidth(10))
+ * console.log(Box.cols(result))
+ * // 10
+ * ```
+ *
+ * @category transformations
+ */
+export const minWidth: {
+  (n: number): <A>(self: Box<A>) => Box<A>;
+  <A>(self: Box<A>, n: number): Box<A>;
+} = internal.minWidth;
+
+/**
+ * Caps a box at `n` columns wide, truncating lines that exceed the limit.
+ *
+ * **Example**
+ *
+ * ```typescript
+ * import { pipe } from "effect"
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const result = pipe(Box.text("Hello World"), Box.maxWidth(5))
+ * console.log(Box.cols(result))
+ * // 5
+ * ```
+ *
+ * @category transformations
+ */
+export const maxWidth: {
+  (n: number): <A>(self: Box<A>) => Box<A>;
+  <A>(self: Box<A>, n: number): Box<A>;
+} = internal.maxWidth;
+
+/**
+ * Ensures a box is at least `n` rows tall, padding with blank rows at the
+ * bottom if the box is shorter.
+ *
+ * **Example**
+ *
+ * ```typescript
+ * import { pipe } from "effect"
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const result = pipe(Box.text("X"), Box.minHeight(5))
+ * console.log(Box.rows(result))
+ * // 5
+ * ```
+ *
+ * @category transformations
+ */
+export const minHeight: {
+  (n: number): <A>(self: Box<A>) => Box<A>;
+  <A>(self: Box<A>, n: number): Box<A>;
+} = internal.minHeight;
+
+/**
+ * Caps a box at `n` rows tall, keeping only the first `n` rows.
+ *
+ * **Example**
+ *
+ * ```typescript
+ * import { pipe } from "effect"
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const result = pipe(Box.text("A\nB\nC\nD\nE"), Box.maxHeight(3))
+ * console.log(Box.rows(result))
+ * // 3
+ * ```
+ *
+ * @category transformations
+ */
+export const maxHeight: {
+  (n: number): <A>(self: Box<A>) => Box<A>;
+  <A>(self: Box<A>, n: number): Box<A>;
+} = internal.maxHeight;
