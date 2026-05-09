@@ -418,6 +418,45 @@ const result = pipe(
 );
 ```
 
+### API Consistency Standards
+
+These rules ensure a predictable, learnable public API (see Issue #14):
+
+1. **Primary parameter naming**: Always use `self` for the primary data
+   parameter in all public functions. Never use `b`, `box`, or other names.
+
+2. **Secondary parameter naming**: Use descriptive names for other parameters,
+   not single-letter abbreviations. For binary box operations, use `that` for
+   the second operand (not `l`, `t`, etc.).
+
+3. **Return type annotations**: All public functions must have explicit return
+   type annotations. Never rely on inference for exports.
+
+4. **Generic naming conventions**:
+   - `A` for the primary type parameter (the annotation type on `self`)
+   - `B` for a secondary type parameter (e.g., the other box's annotation)
+   - In data-first dual overloads, `self`'s type parameter should be `A`
+
+5. **Parameter ordering in dual functions**:
+   - Data-first: `(self: Box<A>, ...options)`
+   - Data-last: `(...options) => (self: Box<A>) => Box<A>`
+
+6. **Dual function template**:
+
+```typescript
+// ✅ Correct dual function pattern
+export const functionName = dual<
+  (param: Type) => <A>(self: Box<A>) => Box<A>,
+  <A>(self: Box<A>, param: Type) => Box<A>
+>(arity, (self, param) => /* implementation */)
+
+// ✅ Binary box operation
+export const append = dual<
+  <B>(that: Box<B>) => <A>(self: Box<A>) => Box<A | B>,
+  <A, B>(self: Box<A>, that: Box<B>) => Box<A | B>
+>(2, (self, that) => /* implementation */)
+```
+
 ## 🚨 Error Handling
 
 ### Pure Functions with Option/Either
