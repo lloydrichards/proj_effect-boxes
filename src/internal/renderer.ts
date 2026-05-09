@@ -159,14 +159,14 @@ export const renderLinesToString = dual<
 export const render = dual<
   <A>(
     config?: R.RenderConfig
-  ) => (box: Box.Box<A>) => Effect.Effect<string, never, Renderer>,
+  ) => (self: Box.Box<A>) => Effect.Effect<string, never, Renderer>,
   <A>(
-    box: Box.Box<A>,
+    self: Box.Box<A>,
     config?: R.RenderConfig
   ) => Effect.Effect<string, never, Renderer>
->(2, (box, config) =>
+>(2, (self, config) =>
   Effect.gen(function* () {
-    const lines = yield* renderBoxToLines(box);
+    const lines = yield* renderBoxToLines(self);
     return renderLinesToString(lines, config);
   })
 );
@@ -186,18 +186,18 @@ export interface RenderFrame {
 export const tracked = dual<
   <A>(
     config?: R.RenderConfig
-  ) => (box: Box.Box<A>) => Effect.Effect<RenderFrame, never, Renderer>,
+  ) => (self: Box.Box<A>) => Effect.Effect<RenderFrame, never, Renderer>,
   <A>(
-    box: Box.Box<A>,
+    self: Box.Box<A>,
     config?: R.RenderConfig
   ) => Effect.Effect<RenderFrame, never, Renderer>
 >(
   (args) => isBox(args[0]),
-  (box, config) =>
+  (self, config) =>
     Effect.gen(function* () {
-      const lines = yield* renderBoxToLines(box);
+      const lines = yield* renderBoxToLines(self);
       const output = renderLinesToString(lines, config);
-      const positions = getPositions(box);
+      const positions = getPositions(self);
       return { lines, output, positions } as RenderFrame;
     })
 );

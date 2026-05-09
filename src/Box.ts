@@ -328,8 +328,8 @@ export const para: {
  * @category combinators
  */
 export const combine: {
-  <B>(l: Box<B>): <A>(self: Box<A>) => Box<A | B>;
-  <A, B>(self: Box<A>, l: Box<B>): Box<A | B>;
+  <B>(that: Box<B>): <A>(self: Box<A>) => Box<A | B>;
+  <A, B>(self: Box<A>, that: Box<B>): Box<A | B>;
 } = internal.combine;
 
 /**
@@ -403,7 +403,7 @@ export const combineAll: <T extends readonly Box<unknown>[]>(
  * @note Haskell: `rows :: Box -> Int`
  * @category utilities
  */
-export const rows: <A>(b: Box<A>) => number = internal.rows;
+export const rows: <A>(self: Box<A>) => number = internal.rows;
 
 /**
  * Gets the number of columns in a box.
@@ -431,7 +431,7 @@ export const rows: <A>(b: Box<A>) => number = internal.rows;
  * @note Haskell: `cols :: Box -> Int`
  * @category utilities
  */
-export const cols: <A>(b: Box<A>) => number = internal.cols;
+export const cols: <A>(self: Box<A>) => number = internal.cols;
 
 // -----------------------------------------------------------------------------
 // Utilities
@@ -442,7 +442,7 @@ export const cols: <A>(b: Box<A>) => number = internal.cols;
  *
  * @category constructors
  */
-export const make: <A>(b: {
+export const make: <A>(self: {
   rows: number;
   cols: number;
   content: Content<A>;
@@ -578,8 +578,8 @@ export const vcat: {
  * @category combinators
  */
 export const hAppend: {
-  <A>(l: Box<A>): (self: Box<A>) => Box<A>;
-  <A>(self: Box<A>, l: Box<A>): Box<A>;
+  <A>(that: Box<A>): (self: Box<A>) => Box<A>;
+  <A>(self: Box<A>, that: Box<A>): Box<A>;
 } = internal.hAppend;
 
 /**
@@ -609,8 +609,8 @@ export const hAppend: {
  * @category combinators
  */
 export const hcatWithSpace: {
-  <A>(l: Box<A>): (self: Box<A>) => Box<A>;
-  <A>(self: Box<A>, l: Box<A>): Box<A>;
+  <A>(that: Box<A>): (self: Box<A>) => Box<A>;
+  <A>(self: Box<A>, that: Box<A>): Box<A>;
 } = internal.hcatWithSpace;
 
 /**
@@ -635,8 +635,8 @@ export const hcatWithSpace: {
  * @category combinators
  */
 export const vAppend: {
-  <A>(t: Box<A>): (self: Box<A>) => Box<A>;
-  <A>(self: Box<A>, t: Box<A>): Box<A>;
+  <A>(that: Box<A>): (self: Box<A>) => Box<A>;
+  <A>(self: Box<A>, that: Box<A>): Box<A>;
 } = internal.vAppend;
 
 /**
@@ -668,8 +668,8 @@ export const vAppend: {
  * @category combinators
  */
 export const vcatWithSpace: {
-  <A>(t: Box<A>): (self: Box<A>) => Box<A>;
-  <A>(self: Box<A>, t: Box<A>): Box<A>;
+  <A>(that: Box<A>): (self: Box<A>) => Box<A>;
+  <A>(self: Box<A>, that: Box<A>): Box<A>;
 } = internal.vcatWithSpace;
 
 /**
@@ -1225,9 +1225,9 @@ export const renderPlainSync: <A>(self: Box<A>) => string =
 export const render: {
   <A>(
     config?: Renderer.RenderConfig | undefined
-  ): (box: Box<A>) => Effect.Effect<string, never, Renderer.Renderer>;
+  ): (self: Box<A>) => Effect.Effect<string, never, Renderer.Renderer>;
   <A>(
-    box: Box<A>,
+    self: Box<A>,
     config?: Renderer.RenderConfig
   ): Effect.Effect<string, never, Renderer.Renderer>;
 } = internalRender.render;
@@ -1251,7 +1251,7 @@ export const render: {
  * @category utilities
  */
 export const printBox: <A>(
-  b: Box<A>
+  self: Box<A>
 ) => Effect.Effect<void, never, Renderer.Renderer> = internalRender.printBox;
 
 /*
@@ -1282,8 +1282,8 @@ export const printBox: <A>(
  * @category transformations
  */
 export const annotate: {
-  <A>(annotation: Annotation<A>): <B>(self: Box<B>) => Box<A>;
-  <B, A>(self: Box<B>, annotation: Annotation<A>): Box<A>;
+  <B>(annotation: Annotation<B>): <A>(self: Box<A>) => Box<B>;
+  <A, B>(self: Box<A>, annotation: Annotation<B>): Box<B>;
 } = internal.annotate;
 
 /**

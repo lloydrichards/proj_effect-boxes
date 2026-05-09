@@ -129,7 +129,7 @@ const proto: Omit<Box.Box, "rows" | "content" | "cols" | "annotation"> = {
     return Effect.succeed(this);
   },
   [Symbol.iterator]<A>(this: Box.Box<A>) {
-    return new SingleShotGen(this) as any;
+    return new SingleShotGen(this);
   },
 };
 
@@ -176,18 +176,18 @@ export const center2: Box.Alignment = "AlignCenter2";
 
 /** @internal */
 
-export const make = <A>(b: {
+export const make = <A>(self: {
   rows: number;
   cols: number;
   content: Box.Content<A>;
   annotation?: import("../Annotation").Annotation<A> | undefined;
 }): Box.Box<A> => {
   const box = Object.create(proto);
-  box.rows = Math.max(0, b.rows);
-  box.cols = Math.max(0, b.cols);
-  box.content = b.content;
-  if (b.annotation) {
-    box.annotation = b.annotation;
+  box.rows = Math.max(0, self.rows);
+  box.cols = Math.max(0, self.cols);
+  box.content = self.content;
+  if (self.annotation) {
+    box.annotation = self.annotation;
   }
 
   return box;
@@ -249,12 +249,12 @@ export const para = dual<
 /** @internal */
 
 export const combine = dual<
-  <B>(l: Box.Box<B>) => <A>(self: Box.Box<A>) => Box.Box<A | B>,
-  <A, B>(self: Box.Box<A>, l: Box.Box<B>) => Box.Box<A | B>
+  <B>(that: Box.Box<B>) => <A>(self: Box.Box<A>) => Box.Box<A | B>,
+  <A, B>(self: Box.Box<A>, that: Box.Box<B>) => Box.Box<A | B>
 >(
   2,
-  <A, B>(self: Box.Box<A>, l: Box.Box<B>): Box.Box<A | B> =>
-    hcat([self, l], top)
+  <A, B>(self: Box.Box<A>, that: Box.Box<B>): Box.Box<A | B> =>
+    hcat([self, that], top)
 );
 
 /** @internal */
@@ -276,10 +276,10 @@ export const combineAll = <T extends readonly Box.Box<unknown>[]>(
 };
 
 /** @internal */
-export const rows = <A>(b: Box.Box<A>): number => b.rows;
+export const rows = <A>(self: Box.Box<A>): number => self.rows;
 
 /** @internal */
-export const cols = <A>(b: Box.Box<A>): number => b.cols;
+export const cols = <A>(self: Box.Box<A>): number => self.cols;
 
 const sumMax = <A>(
   f: (a: A) => number,
@@ -354,34 +354,41 @@ export const vcat = dual<
 
 /** @internal */
 export const hAppend = dual<
-  <A>(l: Box.Box<A>) => (self: Box.Box<A>) => Box.Box<A>,
-  <A>(self: Box.Box<A>, l: Box.Box<A>) => Box.Box<A>
->(2, <A>(self: Box.Box<A>, l: Box.Box<A>): Box.Box<A> => hcat([self, l], top));
+  <A>(that: Box.Box<A>) => (self: Box.Box<A>) => Box.Box<A>,
+  <A>(self: Box.Box<A>, that: Box.Box<A>) => Box.Box<A>
+>(
+  2,
+  <A>(self: Box.Box<A>, that: Box.Box<A>): Box.Box<A> => hcat([self, that], top)
+);
 
 /** @internal */
 export const hcatWithSpace = dual<
-  <A>(l: Box.Box<A>) => (self: Box.Box<A>) => Box.Box<A>,
-  <A>(self: Box.Box<A>, l: Box.Box<A>) => Box.Box<A>
+  <A>(that: Box.Box<A>) => (self: Box.Box<A>) => Box.Box<A>,
+  <A>(self: Box.Box<A>, that: Box.Box<A>) => Box.Box<A>
 >(
   2,
-  <A>(self: Box.Box<A>, l: Box.Box<A>): Box.Box<A> =>
-    hcat([self, emptyBox(0, 1), l], top)
+  <A>(self: Box.Box<A>, that: Box.Box<A>): Box.Box<A> =>
+    hcat([self, emptyBox(0, 1), that], top)
 );
 
 /** @internal */
 export const vAppend = dual<
-  <A>(t: Box.Box<A>) => (self: Box.Box<A>) => Box.Box<A>,
-  <A>(self: Box.Box<A>, t: Box.Box<A>) => Box.Box<A>
->(2, <A>(self: Box.Box<A>, t: Box.Box<A>): Box.Box<A> => vcat([self, t], left));
+  <A>(that: Box.Box<A>) => (self: Box.Box<A>) => Box.Box<A>,
+  <A>(self: Box.Box<A>, that: Box.Box<A>) => Box.Box<A>
+>(
+  2,
+  <A>(self: Box.Box<A>, that: Box.Box<A>): Box.Box<A> =>
+    vcat([self, that], left)
+);
 
 /** @internal */
 export const vcatWithSpace = dual<
-  <A>(t: Box.Box<A>) => (self: Box.Box<A>) => Box.Box<A>,
-  <A>(self: Box.Box<A>, t: Box.Box<A>) => Box.Box<A>
+  <A>(that: Box.Box<A>) => (self: Box.Box<A>) => Box.Box<A>,
+  <A>(self: Box.Box<A>, that: Box.Box<A>) => Box.Box<A>
 >(
   2,
-  <A>(self: Box.Box<A>, t: Box.Box<A>): Box.Box<A> =>
-    vcat([self, emptyBox(1, 0), t], left)
+  <A>(self: Box.Box<A>, that: Box.Box<A>): Box.Box<A> =>
+    vcat([self, emptyBox(1, 0), that], left)
 );
 
 /** @internal */
