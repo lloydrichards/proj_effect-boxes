@@ -1159,32 +1159,6 @@ const resolvePadding = (
   );
 };
 
-// export const pad: {
-//   (all: number): <A>(self: Box.Box<A>) => Box.Box<A>;
-//   (vertical: number, horizontal: number): <A>(self: Box.Box<A>) => Box.Box<A>;
-//   (
-//     top: number,
-//     right: number,
-//     bottom: number,
-//     left: number
-//   ): <A>(self: Box.Box<A>) => Box.Box<A>;
-//   <A>(self: Box.Box<A>, all: number): Box.Box<A>;
-//   <A>(self: Box.Box<A>, vertical: number, horizontal: number): Box.Box<A>;
-//   <A>(
-//     self: Box.Box<A>,
-//     top: number,
-//     right: number,
-//     bottom: number,
-//     left: number
-//   ): Box.Box<A>;
-// } = <A>(5, <A>(
-//     self: Box.Box<A>,
-//     top: number,
-//     right: number,
-//     bottom: number,
-//     left: number
-//   ): Box.Box<A> => {
-
 /** @internal */
 export const pad = dual<
   <A>(
@@ -1226,3 +1200,102 @@ export const pad = dual<
     );
   }
 );
+
+// --------------------------------------------------------------------------------
+// --  Truncation  ----------------------------------------------------------------
+// --------------------------------------------------------------------------------
+
+/** @internal */
+export const truncate = dual<
+  (width: number, pos: Box.Alignment) => <A>(self: Box.Box<A>) => Box.Box<A>,
+  <A>(self: Box.Box<A>, width: number, pos: Box.Alignment) => Box.Box<A>
+>(3, <A>(self: Box.Box<A>, width: number, pos: Box.Alignment): Box.Box<A> => {
+  // No truncation needed
+  if (self.cols <= width) return self;
+
+  const ellipsis = "…";
+
+  const truncateLine = (text: string): Box.Box<A> => {
+    const segs = Width.segments(text);
+    const textWidth = Width.ofString(text);
+
+    if (textWidth <= width) {
+      return unsafeLine(text);
+    }
+
+    if (width <= 1) {
+      return unsafeLine(ellipsis);
+    }
+
+    const available = width - 1; // reserve 1 column for ellipsis
+
+    return Match.value(pos).pipe(
+      Match.when("AlignFirst", () =>
+        unsafeLine(segs.slice(0, available).join("") + ellipsis)
+      ),
+      Match.when("AlignLast", () =>
+        unsafeLine(ellipsis + segs.slice(segs.length - available).join(""))
+      ),
+      Match.when("AlignCenter1", () =>
+        unsafeLine(
+          segs.slice(0, Math.ceil(available / 2)).join("") +
+            ellipsis +
+            segs.slice(segs.length - Math.floor(available / 2)).join("")
+        )
+      ),
+      Match.when("AlignCenter2", () =>
+        unsafeLine(
+          segs.slice(0, Math.floor(available / 2)).join("") +
+            ellipsis +
+            segs.slice(segs.length - Math.ceil(available / 2)).join("")
+        )
+      ),
+      Match.exhaustive
+    );
+  };
+
+  const go = (box: Box.Box<A>): Box.Box<A> =>
+    match(box, {
+      blank: () => box,
+      text: (t) => truncateLine(t),
+      row: () =>
+        go(
+          make({
+            rows: box.rows,
+            cols: box.cols,
+            content: { _tag: "SubBox", xAlign: left, yAlign: top, box },
+          })
+        ),
+      col: (boxes) =>
+        make({
+          rows: box.rows,
+          cols: width,
+          content: { _tag: "Col", boxes: boxes.map(go) },
+          annotation: box.annotation,
+        }),
+      subBox: (inner, xAlign, yAlign) =>
+        make({
+          rows: box.rows,
+          cols: width,
+          content: {
+            _tag: "SubBox",
+            xAlign,
+            yAlign,
+            box: go(inner),
+          },
+          annotation: box.annotation,
+        }),
+    });
+
+  const result = go(self);
+  // Preserve top-level annotation
+  if (self.annotation && !result.annotation) {
+    return make({
+      rows: result.rows,
+      cols: result.cols,
+      content: result.content,
+      annotation: self.annotation,
+    });
+  }
+  return result;
+});

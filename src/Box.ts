@@ -1021,6 +1021,55 @@ export const moveRight: {
   <A>(self: Box<A>, n: number): Box<A>;
 } = internal.moveRight;
 
+// =============================================================================
+// Truncation
+// =============================================================================
+
+/**
+ * Truncates each line of a box to a maximum width, inserting an ellipsis
+ * character (`…`) where content was removed.
+ *
+ * The `position` parameter uses the existing {@link Alignment} type to control
+ * where content is preserved:
+ *
+ * - `AlignFirst` / `left` — keep the beginning, truncate the end (default)
+ * - `AlignLast` / `right` — keep the end, truncate the beginning
+ * - `AlignCenter1` / `AlignCenter2` — keep both ends, truncate the middle
+ *
+ * When the box's width is already within the target width, the box is
+ * returned unchanged. The ellipsis counts as one column toward the width.
+ *
+ * **Example**
+ *
+ * ```typescript
+ * import { pipe } from "effect"
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const long = Box.text("This is a very long piece of text")
+ *
+ * // Truncate from end (default)
+ * const end = pipe(long, Box.truncate(15))
+ * console.log(Box.renderPlainSync(end))
+ * // "This is a very…"
+ *
+ * // Truncate from start
+ * const start = pipe(long, Box.truncate(15, Box.right))
+ * console.log(Box.renderPlainSync(start))
+ * // "…piece of text"
+ *
+ * // Truncate from middle
+ * const middle = pipe(long, Box.truncate(15, Box.center1))
+ * console.log(Box.renderPlainSync(middle))
+ * // "This is…of text"
+ * ```
+ *
+ * @category transformations
+ */
+export const truncate: {
+  (width: number, position: Alignment): <A>(self: Box<A>) => Box<A>;
+  <A>(self: Box<A>, width: number, position: Alignment): Box<A>;
+} = internal.truncate;
+
 /*
  *  --------------------------------------------------------------------------------
  *  --  Implementation  ------------------------------------------------------------
