@@ -225,6 +225,81 @@ const positionDemo = (() => {
 })();
 
 // ---------------------------------------------------------------------------
+// 7. Per-Side Border Toggles
+// ---------------------------------------------------------------------------
+
+const borderSidesDemo = (() => {
+  // Tabbed interface (Lip Gloss style): all tabs skip the bottom border,
+  // a connector line joins them to the content panel using junction chars.
+  const labels = ["Overview", "Details", "Settings"];
+  const activeIndex = 2;
+
+  const tabBoxes = labels.map((label, i) =>
+    Box.text(label).pipe(
+      Box.pad(0, 1),
+      Box.border("rounded", {
+        sides: { bottom: false },
+        annotation: i === activeIndex ? Ansi.cyan : Ansi.dim,
+      }),
+      i === activeIndex
+        ? Box.annotate(Ansi.combine(Ansi.bold, Ansi.cyan))
+        : (x) => x
+    )
+  );
+
+  const tabs = Box.hcat(tabBoxes, Box.top);
+
+  // Active tab gets a gap (spaces), inactive tabs get ─ with ┴ at junctions
+  let connector = "";
+  for (let i = 0; i < labels.length; i++) {
+    const innerWidth = tabBoxes[i]!.cols - 2;
+    const isActive = i === activeIndex;
+
+    // Left edge or junction
+    if (i === 0) {
+      connector += isActive ? "│" : "├";
+    } else {
+      // Two chars for the junction (replacing ││ from adjacent tab borders)
+      const prevActive = i - 1 === activeIndex;
+      if (prevActive) {
+        // active → inactive: close active's corner, tee for inactive
+        connector += "╰┴";
+      } else if (isActive) {
+        // inactive → active: tee for inactive, close corner into active
+        connector += "┴╯";
+      } else {
+        // both inactive
+        connector += "┴┴";
+      }
+    }
+
+    connector += isActive ? " ".repeat(innerWidth) : "─".repeat(innerWidth);
+  }
+  // Right edge
+  connector += activeIndex === labels.length - 1 ? "│" : "┤";
+
+  const connectorLine = Box.text(connector).pipe(Box.annotate(Ansi.cyan));
+
+  // Content panel: width matches tabs
+  const tabContent = Box.para(
+    "This panel joins seamlessly with the active tab above " +
+      "because the tab's bottom border is disabled.",
+    Box.left,
+    tabs.cols - 4 // -2 border -2 padding
+  ).pipe(
+    Box.pad(0, 1),
+    Box.border("rounded", {
+      sides: { top: false },
+      annotation: Ansi.cyan,
+    })
+  );
+
+  const tabSection = Box.vcat([tabs, connectorLine, tabContent], Box.left);
+
+  return Box.vcat([sectionLabel("Border Layouts"), tabSection], Box.left);
+})();
+
+// ---------------------------------------------------------------------------
 // Assemble
 // ---------------------------------------------------------------------------
 
@@ -237,6 +312,7 @@ const demo = Box.vsep(
     alignmentDemo,
     barChartDemo,
     positionDemo,
+    borderSidesDemo,
   ],
   1,
   Box.left

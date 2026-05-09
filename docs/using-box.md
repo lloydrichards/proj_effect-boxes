@@ -189,6 +189,92 @@ const positioned = pipe(Box.text("Hello"), Box.moveRight(5), Box.moveDown(2));
 // Result: 2 empty rows, then "     Hello"
 ```
 
+## Borders and Padding
+
+### Borders
+
+Add a border around a box using Unicode box-drawing characters. The default
+style is `"single"`.
+
+```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+
+// Default single border
+const bordered = pipe(Box.text("Hello"), Box.border());
+// ┌─────┐
+// │Hello│
+// └─────┘
+
+// Double border
+const doubleBordered = pipe(Box.text("Hello"), Box.border("double"));
+// ╔═════╗
+// ║Hello║
+// ╚═════╝
+
+// Rounded border
+const rounded = pipe(Box.text("Hello"), Box.border("rounded"));
+// ╭─────╮
+// │Hello│
+// ╰─────╯
+```
+
+Available border styles: `"single"`, `"double"`, `"rounded"`, `"thick"`,
+`"ascii"`.
+
+#### Colored Borders
+
+Use the `annotation` option to color the border characters:
+
+```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+
+const warning = pipe(
+  Box.text("Warning!"),
+  Box.border("rounded", { annotation: Ansi.yellow })
+);
+console.log(Box.renderPrettySync(warning));
+```
+
+### Padding
+
+Add empty space around a box's content. Supports CSS-like shorthand for
+specifying padding per side.
+
+```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+
+// Uniform padding of 1 on all sides
+const padded1 = pipe(Box.text("Hi"), Box.pad(1));
+
+// Vertical and horizontal padding (1 row top/bottom, 2 cols left/right)
+const padded2 = pipe(Box.text("Hi"), Box.pad(1, 2));
+
+// Per-side padding: top, right, bottom, left (CSS order)
+const padded3 = pipe(Box.text("Hi"), Box.pad(0, 2, 1, 2));
+```
+
+### Combining Padding and Borders
+
+Padding and borders compose naturally with `pipe`:
+
+```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+
+const panel = pipe(Box.text("Hi"), Box.pad(1, 2), Box.border("rounded"));
+console.log(Box.renderPlainSync(panel));
+// ╭──────╮
+// │      │
+// │  Hi  │
+// │      │
+// ╰──────╯
+```
+
+
 ## Rendering
 
 ```typescript

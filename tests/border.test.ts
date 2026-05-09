@@ -165,11 +165,7 @@ describe("Box.border", () => {
           sides: { top: false, right: false, bottom: false },
         })
       );
-      expect(Box.renderPlainSync(result)).toBe(
-        String.stripMargin(
-          `|┃Quote`
-        )
-      );
+      expect(Box.renderPlainSync(result)).toBe(String.stripMargin(`|┃Quote`));
     });
 
     it("top and bottom only (horizontal rule style)", () => {
