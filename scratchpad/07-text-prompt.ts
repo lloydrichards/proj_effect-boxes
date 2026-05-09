@@ -87,6 +87,11 @@ const renderLayout = (
         Box.pad(0, 1),
         Box.border("rounded")
       ),
+      Box.punctuateH(
+        [Box.text("←/→ cursor"), Box.text("enter to submit")],
+        Box.left,
+        Box.text(" • ")
+      ).pipe(Box.moveRight(2), Box.annotate(Ansi.dim)),
     ],
 
     Box.left

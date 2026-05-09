@@ -189,6 +189,36 @@ const positioned = pipe(Box.text("Hello"), Box.moveRight(5), Box.moveDown(2));
 // Result: 2 empty rows, then "     Hello"
 ```
 
+## Truncation
+
+Truncate each line of a box to a maximum width, inserting an ellipsis (`…`)
+where content was removed. The `position` parameter controls which part of the
+text is preserved.
+
+```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+
+const long = Box.text("This is a very long piece of text");
+
+// Truncate from end (default) — keeps the beginning
+const end = pipe(long, Box.truncate(15, Box.left));
+console.log(Box.renderPlainSync(end));
+// "This is a very…"
+
+// Truncate from start — keeps the end
+const start = pipe(long, Box.truncate(15, Box.right));
+console.log(Box.renderPlainSync(start));
+// "…piece of text"
+
+// Truncate from middle — keeps both ends
+const middle = pipe(long, Box.truncate(15, Box.center1));
+console.log(Box.renderPlainSync(middle));
+// "This is…of text"
+```
+
+If the box is already within the target width, it is returned unchanged.
+
 ## Borders and Padding
 
 ### Borders

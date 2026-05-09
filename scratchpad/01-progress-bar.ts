@@ -39,7 +39,11 @@ const ProgressBar = (progress: number, total: number, width: number) => {
     Box.annotate(progressColor)
   );
   const emptyBar = Box.text("░".repeat(emptyLength));
-  return pipe(filledBar, Box.hAppend<Ansi.AnsiStyle>(emptyBar));
+  return pipe(
+    filledBar,
+    Box.hAppend<Ansi.AnsiStyle>(emptyBar),
+    Box.truncate(width, Box.left)
+  );
 };
 
 const formatTime = (timestamp: number): string => {
@@ -142,6 +146,7 @@ export const main = Effect.gen(function* () {
             Option.map((cursorCmd) => [
               cursorCmd,
               Box.text(`${percentage.toString().padStart(3)}%`).pipe(
+                Box.truncate(5, Box.right),
                 Box.alignHoriz(Box.right, 5),
                 Box.annotate(percentage === 100 ? Ansi.green : Ansi.blue)
               ),
@@ -153,6 +158,7 @@ export const main = Effect.gen(function* () {
             Option.map((cursorCmd) => [
               cursorCmd,
               StatusBar(status, counter, timeStr).pipe(
+                Box.truncate(79, Box.center1),
                 Box.alignHoriz(Box.center1, 79)
               ),
             ])

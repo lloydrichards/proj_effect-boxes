@@ -16,6 +16,7 @@ const TOTAL_WIDTH = 76;
 
 const sectionLabel = (label: string) =>
   Box.text(` ${label} `).pipe(
+    Box.truncate(TOTAL_WIDTH, Box.left),
     Box.annotate(
       Ansi.combine(Ansi.bold, Ansi.bgColorRGB(45, 85, 155), Ansi.white)
     )
@@ -183,7 +184,10 @@ const barChartDemo = (() => {
     const barWidth = Math.round((value / maxVal) * barMaxWidth);
     return Box.hsep(
       [
-        Box.text(label).pipe(Box.alignHoriz(Box.right, 12)),
+        Box.text(label).pipe(
+          Box.truncate(12, Box.left),
+          Box.alignHoriz(Box.right, 12)
+        ),
         Box.text("█".repeat(barWidth)).pipe(Box.annotate(barColors[i]!)),
         Box.text(`${value}`).pipe(Box.annotate(Ansi.dim)),
       ],
