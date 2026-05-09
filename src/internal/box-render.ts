@@ -28,9 +28,9 @@ export const renderPlainSync = <A>(self: Box.Box<A>): string =>
 
 /** @internal */
 export const printBox = (
-  box: Box.Box<unknown>
+  self: Box.Box<unknown>
 ): Effect.Effect<void, never, Renderer.Renderer> =>
   Effect.gen(function* () {
-    const rendered = yield* render(box);
+    const rendered = yield* render(self);
     yield* Console.log(rendered);
   });
