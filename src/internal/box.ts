@@ -1054,6 +1054,12 @@ const borderStyleToChars = (style: BorderStyle): BorderChars => {
 /** @internal */
 export interface BorderOptions<A> {
   readonly annotation?: Annotation.Annotation<A>;
+  readonly sides?: {
+    readonly top?: boolean; // default: true
+    readonly right?: boolean; // default: true
+    readonly bottom?: boolean; // default: true
+    readonly left?: boolean; // default: true
+  };
 }
 
 /** @internal */
@@ -1082,30 +1088,50 @@ export const border = dual<
     const borderText = (s: string): Box.Box<A> =>
       options?.annotation ? annotate(text(s), options.annotation) : text(s);
 
+    const when = (cond: boolean, box: Box.Box<A>): Box.Box<A> =>
+      cond ? box : nullBox;
+
     const sideCol = vcat(
       Array.makeBy(self.rows, () => borderChar(chars.vertical)),
       left
     );
 
+    const {
+      top: wTop = true,
+      right: wRight = true,
+      bottom: wBottom = true,
+      left: wLeft = true,
+    } = options?.sides ?? {};
+
+    const topBorder = when(
+      wTop,
+      hcat(
+        [
+          when(wLeft, borderChar(chars.topLeft)),
+          borderText(chars.horizontal.repeat(self.cols)),
+          when(wRight, borderChar(chars.topRight)),
+        ],
+        top
+      )
+    );
+
+    const bottomBorder = when(
+      wBottom,
+      hcat(
+        [
+          when(wLeft, borderChar(chars.bottomLeft)),
+          borderText(chars.horizontal.repeat(self.cols)),
+          when(wRight, borderChar(chars.bottomRight)),
+        ],
+        top
+      )
+    );
+
     return vcat(
       [
-        hcat(
-          [
-            borderChar(chars.topLeft),
-            borderText(chars.horizontal.repeat(self.cols)),
-            borderChar(chars.topRight),
-          ],
-          top
-        ),
-        hcat([sideCol, self, sideCol], top),
-        hcat(
-          [
-            borderChar(chars.bottomLeft),
-            borderText(chars.horizontal.repeat(self.cols)),
-            borderChar(chars.bottomRight),
-          ],
-          top
-        ),
+        topBorder,
+        hcat([when(wLeft, sideCol), self, when(wRight, sideCol)], top),
+        bottomBorder,
       ],
       left
     );
