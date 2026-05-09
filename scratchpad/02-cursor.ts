@@ -99,11 +99,11 @@ export const main = Effect.gen(function* () {
   yield* Console.log(Box.renderPrettySync(footerBox));
 
   // Calculate positions for dynamic updates
-  const progressBarRow = 6; // Row where progress bar characters go
-  const progressBarStartCol = 3; // Column where '[' ends and bar begins
-  const percentageRow = 6; // Row where percentage is displayed
-  const percentageCol = 6 + ProgressBarWidth; // Column after '] '
-  const counterRow = 9; // Row where counter is displayed
+  const progressBarRow = 5; // Row where progress bar characters go
+  const progressBarStartCol = 3; // Column where bar content begins (after '│ │')
+  const percentageRow = 5; // Row where percentage is displayed (same as bar)
+  const percentageCol = 46; // Column where percentage text starts
+  const counterRow = 8; // Row where counter is displayed
   const counterCol = 9; // Column after 'Counter: '
 
   // Create the animation stream

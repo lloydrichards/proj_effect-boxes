@@ -16,6 +16,7 @@ const row = (
     items.map(({ name, style }) =>
       pipe(
         Box.text(name),
+        Box.truncate(cellWidth, Box.left),
         Box.annotate(style),
         Box.alignHoriz(Box.center1, cellWidth)
       )
@@ -73,14 +74,14 @@ const bgColors = [
 
 // Bright background
 const bgBrightColors = [
-  { name: "bgBrBlk", style: Ansi.combine(Ansi.white, Ansi.bgBrightBlack) },
-  { name: "bgBrRed", style: Ansi.combine(Ansi.black, Ansi.bgBrightRed) },
-  { name: "bgBrGrn", style: Ansi.combine(Ansi.black, Ansi.bgBrightGreen) },
-  { name: "bgBrYlw", style: Ansi.combine(Ansi.black, Ansi.bgBrightYellow) },
-  { name: "bgBrBlu", style: Ansi.combine(Ansi.black, Ansi.bgBrightBlue) },
-  { name: "bgBrMag", style: Ansi.combine(Ansi.black, Ansi.bgBrightMagenta) },
-  { name: "bgBrCyn", style: Ansi.combine(Ansi.black, Ansi.bgBrightCyan) },
-  { name: "bgBrWht", style: Ansi.combine(Ansi.black, Ansi.bgBrightWhite) },
+  { name: "bgBrightBlack", style: Ansi.combine(Ansi.white, Ansi.bgBrightBlack) },
+  { name: "bgBrightRed", style: Ansi.combine(Ansi.black, Ansi.bgBrightRed) },
+  { name: "bgBrightGreen", style: Ansi.combine(Ansi.black, Ansi.bgBrightGreen) },
+  { name: "bgBrightYellow", style: Ansi.combine(Ansi.black, Ansi.bgBrightYellow) },
+  { name: "bgBrightBlue", style: Ansi.combine(Ansi.black, Ansi.bgBrightBlue) },
+  { name: "bgBrightMagenta", style: Ansi.combine(Ansi.black, Ansi.bgBrightMagenta) },
+  { name: "bgBrightCyan", style: Ansi.combine(Ansi.black, Ansi.bgBrightCyan) },
+  { name: "bgBrightWhite", style: Ansi.combine(Ansi.black, Ansi.bgBrightWhite) },
 ];
 
 // Text attributes
