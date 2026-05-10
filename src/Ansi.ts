@@ -192,6 +192,26 @@ export const color256: (n: number) => AnsiAnnotation = internal.color256;
 export const colorRGB: (r: number, g: number, b: number) => AnsiAnnotation =
   internal.colorRGB;
 
+/**
+ * Creates a foreground color from a hex color string.
+ *
+ * Accepts hex strings with or without a leading `#`, in 3-digit or 6-digit
+ * format (e.g. `"#ff00ff"`, `"ff00ff"`, `"#f0f"`, `"f0f"`).
+ *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ * import * as Ansi from "effect-boxes/Ansi"
+ *
+ * const coral = Ansi.colorHex("#FF6B6B")
+ * const styledText = Box.text("Coral text").pipe(
+ *   Box.annotate(coral)
+ * )
+ * console.log(Box.renderPrettySync(styledText))
+ * ```
+ *
+ * @category constructors
+ */
 export const colorHex: (hex: string) => AnsiAnnotation = internal.colorHex;
 
 /**
@@ -349,6 +369,26 @@ export const bgColor256: (n: number) => AnsiAnnotation = internal.bgColor256;
 export const bgColorRGB: (r: number, g: number, b: number) => AnsiAnnotation =
   internal.bgColorRGB;
 
+/**
+ * Creates a background color from a hex color string.
+ *
+ * Accepts hex strings with or without a leading `#`, in 3-digit or 6-digit
+ * format (e.g. `"#ff00ff"`, `"ff00ff"`, `"#f0f"`, `"f0f"`).
+ *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ * import * as Ansi from "effect-boxes/Ansi"
+ *
+ * const warmBg = Ansi.bgColorHex("#FFE4B5")
+ * const styledText = Box.text("Warm background").pipe(
+ *   Box.annotate(warmBg)
+ * )
+ * console.log(Box.renderPrettySync(styledText))
+ * ```
+ *
+ * @category constructors
+ */
 export const bgColorHex: (hex: string) => AnsiAnnotation = internal.bgColorHex;
 
 //

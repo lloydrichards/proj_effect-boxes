@@ -1039,8 +1039,7 @@ export const moveRight: {
  * When the box's width is already within the target width, the box is
  * returned unchanged. The ellipsis counts as one column toward the width.
  *
- * **Example**
- *
+ * @example
  * ```typescript
  * import { pipe } from "effect"
  * import * as Box from "effect-boxes/Box"
@@ -1591,8 +1590,7 @@ export const pad: {
  * Ensures a box is at least `n` columns wide, padding with spaces on the right
  * if the box is narrower.
  *
- * **Example**
- *
+ * @example
  * ```typescript
  * import { pipe } from "effect"
  * import * as Box from "effect-boxes/Box"
@@ -1612,8 +1610,7 @@ export const minWidth: {
 /**
  * Caps a box at `n` columns wide, truncating lines that exceed the limit.
  *
- * **Example**
- *
+ * @example
  * ```typescript
  * import { pipe } from "effect"
  * import * as Box from "effect-boxes/Box"
@@ -1634,8 +1631,7 @@ export const maxWidth: {
  * Ensures a box is at least `n` rows tall, padding with blank rows at the
  * bottom if the box is shorter.
  *
- * **Example**
- *
+ * @example
  * ```typescript
  * import { pipe } from "effect"
  * import * as Box from "effect-boxes/Box"
@@ -1655,8 +1651,7 @@ export const minHeight: {
 /**
  * Caps a box at `n` rows tall, keeping only the first `n` rows.
  *
- * **Example**
- *
+ * @example
  * ```typescript
  * import { pipe } from "effect"
  * import * as Box from "effect-boxes/Box"
