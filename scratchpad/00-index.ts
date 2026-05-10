@@ -10,6 +10,7 @@ import { main as compositionDemo } from "./05-composition-demo";
 import { main as htmlDemo } from "./06-html-rendering";
 import { main as textPromptDemo } from "./07-text-prompt";
 import { main as perlinDemo } from "./08-perlin-flow-field";
+import { main as logViewerDemo } from "./09-log-viewer";
 
 const demos = [
   {
@@ -53,6 +54,12 @@ const demos = [
     value: "perlin",
     description: "Animated noise-driven walkers with cursor positioning",
   },
+  {
+    title: "9. Log Viewer",
+    value: "log-viewer",
+    description:
+      "Scrollable stream log viewer with truncate, minWidth, maxWidth, maxHeight",
+  },
 ] as const;
 
 type DemoId = (typeof demos)[number]["value"];
@@ -75,6 +82,8 @@ const runDemo = (id: DemoId) => {
       return textPromptDemo;
     case "perlin":
       return perlinDemo;
+    case "log-viewer":
+      return logViewerDemo;
   }
 };
 
@@ -83,7 +92,7 @@ const root = Command.make(
   {
     run: Flag.integer("run").pipe(
       Flag.optional,
-      Flag.withDescription("Run a demo by number (1-8)")
+      Flag.withDescription("Run a demo by number (1-9)")
     ),
   },
   ({ run }) =>
