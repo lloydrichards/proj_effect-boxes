@@ -74,14 +74,29 @@ const bgColors = [
 
 // Bright background
 const bgBrightColors = [
-  { name: "bgBrightBlack", style: Ansi.combine(Ansi.white, Ansi.bgBrightBlack) },
+  {
+    name: "bgBrightBlack",
+    style: Ansi.combine(Ansi.white, Ansi.bgBrightBlack),
+  },
   { name: "bgBrightRed", style: Ansi.combine(Ansi.black, Ansi.bgBrightRed) },
-  { name: "bgBrightGreen", style: Ansi.combine(Ansi.black, Ansi.bgBrightGreen) },
-  { name: "bgBrightYellow", style: Ansi.combine(Ansi.black, Ansi.bgBrightYellow) },
+  {
+    name: "bgBrightGreen",
+    style: Ansi.combine(Ansi.black, Ansi.bgBrightGreen),
+  },
+  {
+    name: "bgBrightYellow",
+    style: Ansi.combine(Ansi.black, Ansi.bgBrightYellow),
+  },
   { name: "bgBrightBlue", style: Ansi.combine(Ansi.black, Ansi.bgBrightBlue) },
-  { name: "bgBrightMagenta", style: Ansi.combine(Ansi.black, Ansi.bgBrightMagenta) },
+  {
+    name: "bgBrightMagenta",
+    style: Ansi.combine(Ansi.black, Ansi.bgBrightMagenta),
+  },
   { name: "bgBrightCyan", style: Ansi.combine(Ansi.black, Ansi.bgBrightCyan) },
-  { name: "bgBrightWhite", style: Ansi.combine(Ansi.black, Ansi.bgBrightWhite) },
+  {
+    name: "bgBrightWhite",
+    style: Ansi.combine(Ansi.black, Ansi.bgBrightWhite),
+  },
 ];
 
 // Text attributes
