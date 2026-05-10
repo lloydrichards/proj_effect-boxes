@@ -192,6 +192,8 @@ export const color256: (n: number) => AnsiAnnotation = internal.color256;
 export const colorRGB: (r: number, g: number, b: number) => AnsiAnnotation =
   internal.colorRGB;
 
+export const colorHex: (hex: string) => AnsiAnnotation = internal.colorHex;
+
 /**
  * Black background color.
  *
@@ -346,6 +348,8 @@ export const bgColor256: (n: number) => AnsiAnnotation = internal.bgColor256;
  */
 export const bgColorRGB: (r: number, g: number, b: number) => AnsiAnnotation =
   internal.bgColorRGB;
+
+export const bgColorHex: (hex: string) => AnsiAnnotation = internal.bgColorHex;
 
 //
 // --------------------------------------------------------------------------------

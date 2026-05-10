@@ -107,7 +107,7 @@ describe("Ansi Module", () => {
     });
   });
 
-  describe("256 and RGB Colors", () => {
+  describe("256, RGB and Hex Colors", () => {
     it("should generate correct escape sequence for color256", () => {
       const color = Ansi.color256(100);
       const styledBox = Box.text("test").pipe(Box.annotate(color));
@@ -148,6 +148,70 @@ describe("Ansi Module", () => {
       const styledBox = Box.text("test").pipe(Box.annotate(color));
       const rendered = Ansi.renderAnnotatedBox(styledBox);
       expect(rendered.join("")).toContain("\u001b[38;2;255;0;255m");
+    });
+
+    it("should generate correct escape sequence for bgColorHex", () => {
+      const color = Ansi.bgColorHex("#FF00FF");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[48;2;255;0;255m");
+    });
+
+    it("should generate correct escape sequence for colorHex", () => {
+      const color = Ansi.colorHex("#00FF00");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[38;2;0;255;0m");
+    });
+
+    it("should handle short hex codes for bgColorHex", () => {
+      const color = Ansi.bgColorHex("#0F0");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[48;2;0;255;0m");
+    });
+
+    it("should handle short hex codes for colorHex", () => {
+      const color = Ansi.colorHex("#F0F");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[38;2;255;0;255m");
+    });
+
+    it("should handle hex without # prefix", () => {
+      const color = Ansi.colorHex("FF8800");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[38;2;255;136;0m");
+    });
+
+    it("should handle lowercase hex", () => {
+      const color = Ansi.colorHex("#ff00ff");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[38;2;255;0;255m");
+    });
+
+    it("should parse #000000 as all zeros", () => {
+      const color = Ansi.colorHex("#000000");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[38;2;0;0;0m");
+    });
+
+    it("should parse #FFFFFF as all 255s", () => {
+      const color = Ansi.colorHex("#FFFFFF");
+      const styledBox = Box.text("test").pipe(Box.annotate(color));
+      const rendered = Ansi.renderAnnotatedBox(styledBox);
+      expect(rendered.join("")).toContain("\u001b[38;2;255;255;255m");
+    });
+
+    it("should throw on invalid hex string", () => {
+      expect(() => Ansi.colorHex("xyz")).toThrow("Invalid hex color: xyz");
+    });
+
+    it("should throw on empty string", () => {
+      expect(() => Ansi.colorHex("")).toThrow("Invalid hex color: ");
     });
   });
 

@@ -180,6 +180,17 @@ const styledBox = pipe(
   Box.text("Important"),
   Box.annotate(Ansi.combine(Ansi.bold, Ansi.underlined, Ansi.red))
 );
+
+// Use hex colors for foreground and background
+const hexColoredBox = pipe(
+  Box.text("Custom Color"),
+  Box.annotate(Ansi.colorHex("#ff6600"))
+);
+
+const hexBgBox = pipe(
+  Box.text("Highlighted"),
+  Box.annotate(Ansi.combine(Ansi.colorHex("#ffffff"), Ansi.bgColorHex("#333333")))
+);
 ```
 
 ## Advanced Usage
