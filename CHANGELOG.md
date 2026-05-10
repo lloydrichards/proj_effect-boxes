@@ -1,5 +1,109 @@
 # effect-boxes
 
+## 0.13.0
+
+### Minor Changes
+
+- [#52](https://github.com/lloydrichards/effect-boxes/pull/52) [`70ebe56`](https://github.com/lloydrichards/effect-boxes/commit/70ebe56c616d4a507f236c9fe06cc550670b2100) Thanks [@lloydrichards](https://github.com/lloydrichards)! - add truncate to the Box module, closes [#43](https://github.com/lloydrichards/proj_effect-boxes/issues/43)
+
+  The `truncate` function allows you to shorten a box's content to fit within a specified width, with options for how the truncation is applied (e.g., left, right, or center). This is useful for ensuring that text or layouts do not exceed certain dimensions while still conveying as much information as possible.
+
+  ```typescript
+  import { pipe } from "effect";
+  import * as Box from "effect-boxes/Box";
+
+  const long = Box.text("This is a very long piece of text");
+
+  pipe(long, Box.truncate(15, Box.left)); // "This is a very…"
+  pipe(long, Box.truncate(15, Box.right)); // "… piece of text"
+  pipe(long, Box.truncate(15, Box.center1)); // "This is…of text"
+  ```
+
+- [#53](https://github.com/lloydrichards/effect-boxes/pull/53) [`98229e8`](https://github.com/lloydrichards/effect-boxes/commit/98229e890385047f80b1db08aecf900df275f0f5) Thanks [@lloydrichards](https://github.com/lloydrichards)! - add width and height constraint combinators for responsive terminal layouts, closes [#44](https://github.com/lloydrichards/proj_effect-boxes/issues/44)
+
+  Four new functions enforce minimum and maximum dimensions on a box:
+
+  - Box.minWidth(n) -- pads with spaces to ensure at least n columns
+  - Box.maxWidth(n) -- hard-truncates lines exceeding n columns
+  - Box.minHeight(n) -- pads with blank rows to ensure at least n rows
+  - Box.maxHeight(n) -- keeps only the first n rows
+
+  All support both data-first and data-last (pipe) usage via dual.
+
+  ```typescript
+  import { pipe } from "effect";
+  import * as Box from "effect-boxes/Box";
+
+  // Clamp a box to fit a 40x10 panel
+  const panel = pipe(
+    Box.text("Hello World"),
+    Box.minWidth(40),
+    Box.maxHeight(10)
+  );
+  // Combine with truncate for ellipsis on overflow
+  const capped = pipe(
+    Box.text("A".repeat(80)),
+    Box.truncate(40, Box.left),
+    Box.minWidth(60)
+  );
+  ```
+
+  Internally, maxWidth and Box.truncate now share a truncateWidth helper that handles the recursive box tree-walk, reducing code duplication.
+
+- [#54](https://github.com/lloydrichards/effect-boxes/pull/54) [`b5fb7d5`](https://github.com/lloydrichards/effect-boxes/commit/b5fb7d536a45dd6dd00b3c1a86e8c31f6357e0b3) Thanks [@lloydrichards](https://github.com/lloydrichards)! - Add `Ansi.colorHex` and `Ansi.bgColorHex` for building colors from hex strings, closes [#45](https://github.com/lloydrichards/proj_effect-boxes/issues/45)
+
+  Supports 3-digit shorthand, 6-digit, with or without `#` prefix, and is case-insensitive. Throws on invalid input.
+
+  ```typescript
+  import { pipe } from "effect";
+  import * as Box from "effect-boxes/Box";
+  import * as Ansi from "effect-boxes/Ansi";
+
+  // Foreground from hex
+  const branded = pipe(
+    Box.text("Acme Corp"),
+    Box.annotate(Ansi.colorHex("#ff6600"))
+  );
+
+  // Background from hex
+  const highlight = pipe(
+    Box.text("Important"),
+    Box.annotate(
+      Ansi.combine(Ansi.colorHex("#ffffff"), Ansi.bgColorHex("#8b5cf6"))
+    )
+  );
+
+  // Short-form hex
+  const short = Ansi.colorHex("#f60"); // equivalent to #ff6600
+  ```
+
+- [#50](https://github.com/lloydrichards/effect-boxes/pull/50) [`2fb2ddd`](https://github.com/lloydrichards/effect-boxes/commit/2fb2dddaafec6c632becba3634b3ed1569ae9b30) Thanks [@lloydrichards](https://github.com/lloydrichards)! - add selective border sides via `sides` option on `Box.border()` closes [#42](https://github.com/lloydrichards/proj_effect-boxes/issues/42)
+
+  Control which sides of the border are drawn by passing a `sides` object with `top`, `right`, `bottom`, and `left` booleans (all default to `true`).
+
+  ```typescript
+  import { pipe } from "effect";
+  import * as Box from "effect-boxes/Box";
+
+  const tab = pipe(
+    Box.text("Tab"),
+    Box.pad(0, 1),
+    Box.border("rounded", { sides: { bottom: false } })
+  );
+  console.log(Box.renderPlainSync(tab));
+  // ╭─────╮
+  // │ Tab │
+
+  const ruled = pipe(
+    Box.text("Section"),
+    Box.border("single", { sides: { left: false, right: false } })
+  );
+  console.log(Box.renderPlainSync(ruled));
+  // ───────
+  // Section
+  // ───────
+  ```
+
 ## 0.12.0
 
 ### Minor Changes
