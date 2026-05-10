@@ -54,6 +54,24 @@ export const cyan = makeForegroundColor("cyan", "36");
 export const white = makeForegroundColor("white", "37");
 export const fgDefault = makeForegroundColor("default", "39");
 const clampColor = (n: number): number => Math.min(255, Math.max(0, n));
+const makeHexColor = (hex: string): [number, number, number] => {
+  // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+  const shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  const fullHex = hex.replace(
+    shorthandRegex,
+    (_, r, g, b) => r + r + g + g + b + b
+  );
+  const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(fullHex);
+  const rs = result?.[1];
+  const gs = result?.[2];
+  const bs = result?.[3];
+
+  if (rs === undefined || gs === undefined || bs === undefined) {
+    throw new Error(`Invalid hex color: ${hex}`);
+  }
+
+  return [parseInt(rs, 16), parseInt(gs, 16), parseInt(bs, 16)];
+};
 export const color256 = (n: number): Ansi.AnsiAnnotation =>
   makeForegroundColor(`color256(${clampColor(n)})`, `38;5;${clampColor(n)}`);
 export const colorRGB = (
@@ -65,6 +83,11 @@ export const colorRGB = (
     `rgb(${clampColor(r)},${clampColor(g)},${clampColor(b)})`,
     `38;2;${clampColor(r)};${clampColor(g)};${clampColor(b)}`
   );
+
+export const colorHex = (hex: string): Ansi.AnsiAnnotation => {
+  const [r, g, b] = makeHexColor(hex);
+  return colorRGB(r, g, b);
+};
 
 //
 // Background color constants - aliases to the main color constants
@@ -90,6 +113,11 @@ export const bgColorRGB = (
     `rgb(${clampColor(r)},${clampColor(g)},${clampColor(b)})`,
     `48;2;${clampColor(r)};${clampColor(g)};${clampColor(b)}`
   );
+
+export const bgColorHex = (hex: string): Ansi.AnsiAnnotation => {
+  const [r, g, b] = makeHexColor(hex);
+  return bgColorRGB(r, g, b);
+};
 
 // Bright foreground colors (SGR 90-97)
 export const brightBlack = makeForegroundColor("brightBlack", "90");
