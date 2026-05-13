@@ -1,4 +1,4 @@
-import { Clock, Effect, pipe, Ref, Schedule, Stream } from "effect";
+import { Clock, Effect, pipe, Ref, Schedule, Stream, Terminal } from "effect";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 import * as Cmd from "../src/Cmd";
@@ -29,44 +29,103 @@ const wrap = (pos: Vec2, width: number, height: number): Vec2 => ({
 });
 
 // --------------------------
-// Simplified noise function
+// Gradient noise (proper Perlin-style)
 // --------------------------
-const simpleNoise = (x: number, y: number): number => {
-  const hash = (n: number) => {
-    const a = Math.sin(n * 12.9898) * 43_758.5453;
-    return a - Math.floor(a);
-  };
 
-  // Get integer coordinates
-  const ix = Math.floor(x);
-  const iy = Math.floor(y);
+// Permutation table (shuffled 0-255, doubled to avoid wrapping)
+const perm = (() => {
+  const p = [
+    151, 160, 137, 91, 90, 15, 131, 13, 201, 95, 96, 53, 194, 233, 7, 225, 140,
+    36, 103, 30, 69, 142, 8, 99, 37, 240, 21, 10, 23, 190, 6, 148, 247, 120,
+    234, 75, 0, 26, 197, 62, 94, 252, 219, 203, 117, 35, 11, 32, 57, 177, 33,
+    88, 237, 149, 56, 87, 174, 20, 125, 136, 171, 168, 68, 175, 74, 165, 71,
+    134, 139, 48, 27, 166, 77, 146, 158, 231, 83, 111, 229, 122, 60, 211, 133,
+    230, 220, 105, 92, 41, 55, 46, 245, 40, 244, 102, 143, 54, 65, 25, 63, 161,
+    1, 216, 80, 73, 209, 76, 132, 187, 208, 89, 18, 169, 200, 196, 135, 130,
+    116, 188, 159, 86, 164, 100, 109, 198, 173, 186, 3, 64, 52, 217, 226, 250,
+    124, 123, 5, 202, 38, 147, 118, 126, 255, 82, 85, 212, 207, 206, 59, 227,
+    47, 16, 58, 17, 182, 189, 28, 42, 223, 183, 170, 213, 119, 248, 152, 2, 44,
+    154, 163, 70, 221, 153, 101, 155, 167, 43, 172, 9, 129, 22, 39, 253, 19, 98,
+    108, 110, 79, 113, 224, 232, 178, 185, 112, 104, 218, 246, 97, 228, 251, 34,
+    242, 193, 238, 210, 144, 12, 191, 179, 162, 241, 81, 51, 145, 235, 249, 14,
+    239, 107, 49, 192, 214, 31, 181, 199, 106, 157, 184, 84, 204, 176, 115, 121,
+    50, 45, 127, 4, 150, 254, 138, 236, 205, 93, 222, 114, 67, 29, 24, 72, 243,
+    141, 128, 195, 78, 66, 215, 61, 156, 180,
+  ];
+  return [...p, ...p];
+})();
 
-  // Get fractional parts
-  const fx = x - ix;
-  const fy = y - iy;
+// 2D gradient vectors (8 directions)
+const grad2 = [
+  [1, 1],
+  [-1, 1],
+  [1, -1],
+  [-1, -1],
+  [1, 0],
+  [-1, 0],
+  [0, 1],
+  [0, -1],
+] as const;
 
-  // Smooth interpolation function
-  const smooth = (t: number) => t * t * (3 - 2 * t);
+const fade = (t: number): number => t * t * t * (t * (t * 6 - 15) + 10);
 
-  // Hash the four corners
-  const a = hash(ix + iy * 57);
-  const b = hash(ix + 1 + iy * 57);
-  const c = hash(ix + (iy + 1) * 57);
-  const d = hash(ix + 1 + (iy + 1) * 57);
+const lerp = (a: number, b: number, t: number): number => a + t * (b - a);
 
-  // Interpolate
-  const u = smooth(fx);
-  const v = smooth(fy);
-  const i1 = a + (b - a) * u;
-  const i2 = c + (d - c) * u;
+const dot2 = (g: (typeof grad2)[number], x: number, y: number): number =>
+  g[0] * x + g[1] * y;
 
-  return (i1 + (i2 - i1) * v) * 2 - 1; // Convert to [-1, 1]
+const perlinNoise = (x: number, y: number): number => {
+  const xi = Math.floor(x) & 255;
+  const yi = Math.floor(y) & 255;
+  const xf = x - Math.floor(x);
+  const yf = y - Math.floor(y);
+
+  const u = fade(xf);
+  const v = fade(yf);
+
+  // Hash coordinates to gradient indices
+  const aa = perm[perm[xi]! + yi]! & 7;
+  const ba = perm[perm[xi + 1]! + yi]! & 7;
+  const ab = perm[perm[xi]! + yi + 1]! & 7;
+  const bb = perm[perm[xi + 1]! + yi + 1]! & 7;
+
+  // Dot products with distance vectors
+  const x1 = lerp(dot2(grad2[aa]!, xf, yf), dot2(grad2[ba]!, xf - 1, yf), u);
+  const x2 = lerp(
+    dot2(grad2[ab]!, xf, yf - 1),
+    dot2(grad2[bb]!, xf - 1, yf - 1),
+    u
+  );
+
+  return lerp(x1, x2, v);
 };
+
+// --------------------------
+// Trail system
+// --------------------------
+const trailChars = [
+  "█",
+  "█",
+  "▓",
+  "▓",
+  "▒",
+  "▒",
+  "░",
+  "░",
+  "·",
+  "·",
+  "·",
+  "·",
+  "·",
+];
+const TrailLength = trailChars.length;
+
+type TrailPoint = { pos: Vec2; age: number };
 
 type Walker = {
   pos: Vec2;
   vel: Vec2;
-  symbol: string;
+  trail: TrailPoint[];
   color: Ansi.AnsiAnnotation;
 };
 
@@ -74,159 +133,159 @@ type FlowFieldState = {
   walkers: Walker[];
 };
 
-const colors = [Ansi.cyan, Ansi.green, Ansi.magenta, Ansi.yellow, Ansi.blue];
-const directions = ["←", "↖", "↑", "↗", "→", "↘", "↓", "↙"];
+const colors = [
+  Ansi.cyan,
+  Ansi.green,
+  Ansi.magenta,
+  Ansi.yellow,
+  Ansi.blue,
+  Ansi.red,
+  Ansi.white,
+];
 
 export const main = Effect.gen(function* () {
-  // Clear screen and hide cursor for cleaner output
-  yield* display(Box.renderPrettySync(Cmd.clearScreen));
-  yield* display(Box.renderPrettySync(Cmd.cursorHide));
+  const terminal = yield* Terminal.Terminal;
+  const termWidth = yield* terminal.columns;
+  const termHeight = process.stdout.rows ?? 24;
 
-  // Terminal size and inner canvas
-  const InnerW = 100;
-  const InnerH = 16;
+  // Reserve space for border (2) and title line (1)
+  // Each grid cell is 2 columns wide to approximate a square aspect ratio
+  const InnerW = Math.floor((termWidth - 2) / 2);
+  const InnerH = termHeight - 3;
 
-  // Flow field & walkers config
-  const noise = simpleNoise;
-  const noiseScale = 0.06;
-  const timeSpeed = 0.0009;
-  const strength = 0.25;
-  const Walkers = 10;
-  const MaxSpeed = 1;
+  // Scale walker count to grid area (roughly 1 per 60 cells, min 10)
+  const Walkers = Math.max(10, Math.floor((InnerW * InnerH) / 60));
 
-  // Convert velocity to directional arrow
-  const velocityToArrow = (vel: Vec2): string => {
-    // If velocity is very small, use a dot
-    if (Math.hypot(vel.x, vel.y) < 0.1) {
-      return "·";
-    }
+  // Enter alternate screen and hide cursor
+  yield* display(
+    Box.renderPrettySync(Box.combineAll([Cmd.altScreenEnter, Cmd.cursorHide]))
+  );
 
-    // Calculate angle in radians
-    const angle = Math.atan2(vel.y, vel.x);
+  // Flow field config
+  const noiseScale = 0.08;
+  const timeSpeed = 0.00015;
+  const strength = 0.3;
+  const MaxSpeed = 0.9;
 
-    // Convert to 8 directions (45-degree increments)
-    const index = Math.round((angle + Math.PI) / (Math.PI / 4)) % 8;
-
-    return directions[index] ?? "·";
-  };
-
-  // Initialize the initial state
+  // Initialize walkers with empty trails
   const initialWalkers: Walker[] = Array.from({ length: Walkers }, (_, i) => ({
     pos: v(Math.random() * InnerW, Math.random() * InnerH),
     vel: v(0, 0),
-    symbol: "·", // Will be updated to arrow based on velocity
+    trail: [],
     color: colors[i % colors.length] ?? Ansi.cyan,
   }));
 
-  // Create Refs for state management
   const stateRef = yield* Ref.make<FlowFieldState>({
     walkers: initialWalkers,
   });
 
-  // Pure function that creates a new state from the current state
   const stepWalkers = (ms: number, state: FlowFieldState): FlowFieldState => {
     const t = ms * timeSpeed;
 
-    // Create new walkers array with updated positions and arrows
     const newWalkers = state.walkers.map((walker) => {
-      // Get noise-based force
-      const nx = (walker.pos.x + t * 1000) * noiseScale;
-      const ny = (walker.pos.y + t * 777) * noiseScale;
-      const angle = (noise(nx, ny) + 1) * Math.PI; // Convert [-1,1] to [0,2π]
+      // Sample noise at walker position with slow time evolution
+      const nx = walker.pos.x * noiseScale;
+      const ny = walker.pos.y * noiseScale;
+      const timeOffset = t;
+      const angle = perlinNoise(nx + timeOffset, ny + timeOffset) * Math.PI * 2;
 
-      // Apply force and update velocity
       const force = v(Math.cos(angle) * strength, Math.sin(angle) * strength);
       const newVel = limit(add(walker.vel, force), MaxSpeed);
-
-      // Update position with wrapping
       const newPos = wrap(add(walker.pos, newVel), InnerW, InnerH);
 
-      // Update symbol to show direction of movement
-      const newSymbol = velocityToArrow(newVel);
+      // Age existing trail points and prepend current position
+      const newTrail = [
+        { pos: walker.pos, age: 0 },
+        ...walker.trail.map((tp) => ({ ...tp, age: tp.age + 1 })),
+      ].filter((tp) => tp.age < TrailLength);
 
-      return {
-        ...walker,
-        pos: newPos,
-        vel: newVel,
-        symbol: newSymbol,
-      };
+      return { ...walker, pos: newPos, vel: newVel, trail: newTrail };
     });
 
-    return {
-      walkers: newWalkers,
-    };
+    return { walkers: newWalkers };
   };
 
-  // State management
   const counterRef = yield* Ref.make(0);
 
   const tickStream = Stream.fromEffectRepeat(
     Effect.gen(function* () {
       const now = yield* Clock.currentTimeMillis;
-
       const counter = yield* Ref.updateAndGet(counterRef, (n) => n + 1);
-
       return { counter, timestamp: now };
     })
-  ).pipe(
-    Stream.schedule(Schedule.spaced("5 milli"))
-    // Stream.takeUntil(({ counter }) => counter >= COMPLETE) // leave for debugging
-  );
+  ).pipe(Stream.schedule(Schedule.spaced("16 milli")));
 
-  // Render the initial layout
+  // Render the initial border frame sized to terminal
   yield* display(
-    Box.emptyBox(InnerH, InnerW).pipe(
+    Box.emptyBox(InnerH, InnerW * 2).pipe(
       Box.border("single"),
-      Box.vAppend(Box.text("Flow Field Walkers (Ctrl+C to exit)")),
+      Box.vAppend(
+        Box.hsep(
+          [
+            Box.text("Flow Field").pipe(Box.annotate(Ansi.bold)),
+            Box.text(`${Walkers} walkers`).pipe(Box.annotate(Ansi.dim)),
+            Box.text("Ctrl+C to exit").pipe(Box.annotate(Ansi.dim)),
+          ],
+          1,
+          Box.top
+        )
+      ),
       Box.renderPrettySync
     )
   );
 
-  // Process each tick with partial updates
+  // Animation loop
   yield* Effect.ensuring(
     Stream.runForEach(tickStream, ({ timestamp }) =>
       Effect.gen(function* () {
-        // Update simulation state
         yield* Ref.update(stateRef, (state) => stepWalkers(timestamp, state));
-        // Get current state and build content box
         const currentState = yield* Ref.get(stateRef);
+
+        // Build render commands: trail points + walker heads
+        const renderCmds: Box.Box<Ansi.AnsiStyle>[] = [];
+
+        for (const w of currentState.walkers) {
+          // Render trail (oldest first so newer overwrites)
+          for (const tp of [...w.trail].reverse()) {
+            const ch = trailChars[tp.age] ?? " ";
+            const style =
+              tp.age >= 6
+                ? Ansi.combine(w.color, Ansi.dim)
+                : Ansi.combine(w.color);
+            renderCmds.push(
+              pipe(
+                Cmd.cursorTo(Math.ceil(tp.pos.x) * 2, Math.ceil(tp.pos.y)),
+                Box.combine<Ansi.AnsiStyle>(
+                  Box.text(ch + ch).pipe(Box.annotate(style))
+                )
+              )
+            );
+          }
+
+          // Render walker head (bright, bold)
+          renderCmds.push(
+            pipe(
+              Cmd.cursorTo(Math.ceil(w.pos.x) * 2, Math.ceil(w.pos.y)),
+              Box.combine<Ansi.AnsiStyle>(
+                Box.text("██").pipe(
+                  Box.annotate(Ansi.combine(w.color, Ansi.bold))
+                )
+              )
+            )
+          );
+        }
 
         yield* display(
           pipe(
             Cmd.home,
-            Box.combine<Ansi.AnsiStyle>(
-              Box.combineAll(
-                currentState.walkers.map((w) =>
-                  pipe(
-                    Cmd.cursorTo(Math.ceil(w.pos.x), Math.ceil(w.pos.y)),
-                    Box.combine<Ansi.AnsiStyle>(
-                      Box.char(w.symbol).pipe(
-                        Box.annotate(Ansi.combine(w.color, Ansi.bold))
-                      )
-                    )
-                  )
-                )
-              )
-            ),
+            Box.combine<Ansi.AnsiStyle>(Box.combineAll(renderCmds)),
             Box.renderPrettySync
           )
         );
       })
     ),
-    display(Box.renderPrettySync(Cmd.cursorShow))
+    display(
+      Box.renderPrettySync(Box.combineAll([Cmd.altScreenLeave, Cmd.cursorShow]))
+    )
   );
-
-  yield* Effect.addFinalizer(() => {
-    return display(
-      pipe(
-        // Ensure cursor is shown on exit
-        Cmd.cursorShow,
-        Box.combine(Cmd.home),
-        Box.combine<Ansi.AnsiStyle>(
-          Box.emptyBox(InnerH * 2, InnerW).pipe(Box.border("single"))
-        ),
-        Box.renderPrettySync
-      )
-    );
-  });
 }).pipe(Effect.scoped);
