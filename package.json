@@ -1,6 +1,6 @@
 {
   "name": "effect-boxes",
-  "version": "0.13.0",
+  "version": "0.14.0",
   "description": "A functional TypeScript library for creating and manipulating text-based box layouts using Effect.js patterns",
   "main": "src/index.ts",
   "module": "src/index.ts",
