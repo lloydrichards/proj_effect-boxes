@@ -1,15 +1,5 @@
 import { BunServices } from "@effect/platform-bun";
-import {
-  Data,
-  Duration,
-  Effect,
-  Fiber,
-  pipe,
-  Ref,
-  Schedule,
-  Stream,
-  Terminal,
-} from "effect";
+import { Data, Effect, Match, pipe, Terminal } from "effect";
 import { Prompt } from "effect/unstable/cli";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
@@ -19,16 +9,20 @@ import * as Cmd from "../src/Cmd";
 // Types
 // ----------------------------------------------------------------------------
 
+type LogLevel = "INFO" | "DEBUG" | "WARN" | "ERROR" | "FATAL";
+
+type LogEntry = readonly [timestamp: string, level: LogLevel, message: string];
+
 type LogViewerState = {
-  readonly lines: ReadonlyArray<string>;
+  readonly lines: ReadonlyArray<LogEntry>;
   readonly scrollOffset: number;
-  readonly autoScroll: boolean;
+  readonly prevRows: number;
 };
 
 interface LogViewerOptions {
   readonly title: string;
   readonly height?: number;
-  readonly stream: Stream.Stream<string>;
+  readonly lines: ReadonlyArray<LogEntry>;
 }
 
 const Action = Data.taggedEnum<Prompt.ActionDefinition>();
@@ -38,14 +32,6 @@ const Action = Data.taggedEnum<Prompt.ActionDefinition>();
 // ----------------------------------------------------------------------------
 
 const DEFAULT_HEIGHT = 16;
-
-const getTermWidth = (): number => {
-  try {
-    return process.stdout.columns ?? 80;
-  } catch {
-    return 80;
-  }
-};
 
 // ----------------------------------------------------------------------------
 // Rendering
@@ -88,7 +74,7 @@ const renderLayout = (
       visibleLines.length === 0
         ? Box.text("Waiting for log data...").pipe(Box.annotate(Ansi.dim))
         : pipe(
-            visibleLines.map((line) => colorLogLine(line)),
+            visibleLines.map((entry) => renderLogLine(entry)),
             (boxes) => Box.vcat(boxes, Box.left)
           );
 
@@ -114,15 +100,9 @@ const renderLayout = (
     );
 
     // Footer
-    const scrollIndicator = state.autoScroll
-      ? Box.text("AUTO").pipe(Box.annotate(Ansi.green))
-      : Box.text("MANUAL").pipe(Box.annotate(Ansi.yellow));
-
     const footer = Box.hsep(
       [
         Box.text("  ↑/↓ scroll").pipe(Box.annotate(Ansi.dim)),
-        Box.text("·").pipe(Box.annotate(Ansi.dim)),
-        scrollIndicator,
         Box.text("·").pipe(Box.annotate(Ansi.dim)),
         Box.text("enter exit").pipe(Box.annotate(Ansi.dim)),
       ],
@@ -140,21 +120,49 @@ const renderLayout = (
     );
   });
 
-// Simple log-level coloring
-const colorLogLine = (line: string): Box.Box<Ansi.AnsiStyle> => {
-  if (line.includes("[ERROR]") || line.includes("[FATAL]")) {
-    return Box.text(line).pipe(Box.annotate(Ansi.red));
-  }
-  if (line.includes("[WARN]")) {
-    return Box.text(line).pipe(Box.annotate(Ansi.yellow));
-  }
-  if (line.includes("[DEBUG]")) {
-    return Box.text(line).pipe(Box.annotate(Ansi.dim));
-  }
-  if (line.includes("[INFO]")) {
-    return Box.text(line).pipe(Box.annotate(Ansi.cyan));
-  }
-  return Box.text(line);
+// Log-level styling
+const levelIcon = Match.type<LogLevel>().pipe(
+  Match.when("FATAL", () => "☠"),
+  Match.when("ERROR", () => "✖"),
+  Match.when("WARN", () => "⚠"),
+  Match.when("DEBUG", () => "·"),
+  Match.when("INFO", () => "●"),
+  Match.exhaustive
+);
+
+const levelStyle = Match.type<LogLevel>().pipe(
+  Match.when("FATAL", () => Ansi.combine(Ansi.bold, Ansi.bgRed, Ansi.white)),
+  Match.when("ERROR", () => Ansi.combine(Ansi.bold, Ansi.red)),
+  Match.when("WARN", () => Ansi.combine(Ansi.yellow)),
+  Match.when("DEBUG", () => Ansi.dim),
+  Match.when("INFO", () => Ansi.cyan),
+  Match.exhaustive
+);
+
+const renderLogLine = (entry: LogEntry): Box.Box<Ansi.AnsiStyle> => {
+  const [timestamp, level, message] = entry;
+  const style = levelStyle(level);
+  const icon = levelIcon(level);
+
+  const levelBox =
+    level === "FATAL"
+      ? Box.text(` ${level} `).pipe(Box.annotate(style))
+      : Box.text(level.padEnd(5)).pipe(Box.annotate(style));
+
+  return Box.hsep(
+    [
+      Box.text(timestamp).pipe(Box.annotate(Ansi.dim)),
+      Box.text(icon).pipe(Box.annotate(style)),
+      levelBox,
+      Box.text(message).pipe(
+        Box.annotate(
+          level === "FATAL" ? Ansi.combine(Ansi.bold, Ansi.red) : style
+        )
+      ),
+    ],
+    1,
+    Box.top
+  );
 };
 
 // ----------------------------------------------------------------------------
@@ -164,122 +172,79 @@ const colorLogLine = (line: string): Box.Box<Ansi.AnsiStyle> => {
 export const LogViewer = ({
   title,
   height = DEFAULT_HEIGHT,
-  stream,
-}: LogViewerOptions) => {
-  return Effect.gen(function* () {
-    // Shared ref for accumulated log lines
-    const linesRef = yield* Ref.make<ReadonlyArray<string>>([]);
+  lines,
+}: LogViewerOptions): Prompt.Prompt<string> => {
+  const initialState: LogViewerState = {
+    lines,
+    scrollOffset: 0,
+    prevRows: 0,
+  };
 
-    // Fork background fiber to consume stream
-    const fiber = yield* Stream.runForEach(stream, (line) =>
-      Ref.update(linesRef, (lines) => [...lines, line])
-    ).pipe(Effect.forkChild);
+  return Prompt.custom<LogViewerState, string>(initialState, {
+    render: Effect.fnUntraced(function* (
+      state: LogViewerState,
+      action: Prompt.Action<LogViewerState, string>
+    ) {
+      const rendered = yield* Action.$match(action, {
+        Beep: () => Box.nullBox,
 
-    const prompt = Prompt.custom<LogViewerState, string>(
-      {
-        lines: [],
-        scrollOffset: 0,
-        autoScroll: true,
-      },
-      {
-        render: (
-          _state: LogViewerState,
-          action: Prompt.Action<LogViewerState, string>
-        ) =>
-          Action.$match(action, {
-            Beep: () => Effect.succeed(""),
+        NextFrame: Effect.fnUntraced(function* ({ state: nextState }) {
+          const layout = yield* renderLayout(nextState, title, height, false);
+          // Clear previous output and render new in a single write
+          const clear =
+            nextState.prevRows > 0
+              ? Cmd.clearLines(nextState.prevRows)
+              : Cmd.cursorHide;
+          return Box.combine(clear, layout);
+        }),
 
-            NextFrame: ({ state: nextState }) =>
-              Effect.gen(function* () {
-                const layout = yield* renderLayout(
-                  nextState,
-                  title,
-                  height,
-                  false
-                );
-                return Box.renderPrettySync(layout);
-              }),
+        Submit: Effect.fnUntraced(function* () {
+          const layout = yield* renderLayout(initialState, title, height, true);
+          const clear =
+            state.prevRows > 0 ? Cmd.clearLines(state.prevRows) : Box.nullBox;
+          return Box.combineAll([
+            clear,
+            layout,
+            Box.text("") as Box.Box<Ansi.AnsiStyle>,
+          ]);
+        }),
+      });
 
-            Submit: () =>
-              Effect.gen(function* () {
-                const layout = yield* renderLayout(
-                  { lines: [], scrollOffset: 0, autoScroll: true },
-                  title,
-                  height,
-                  true
-                );
-                return Box.renderPrettySync(
-                  layout.pipe(Box.vAppend<Ansi.AnsiStyle>(Box.text("")))
-                );
-              }),
-          }),
+      return yield* Box.renderPretty(rendered);
+    }),
 
-        process: (input, state) =>
-          Effect.gen(function* () {
-            // Read latest lines from the background fiber
-            const currentLines = yield* Ref.get(linesRef);
-            const maxOffset = Math.max(0, currentLines.length - height);
+    process: Effect.fnUntraced(function* (input, state) {
+      const maxOffset = Math.max(0, state.lines.length - height);
+      // Compute prevRows for the next render to clear
+      const layout = yield* renderLayout(state, title, height, false);
 
-            // Base state with latest lines
-            const base: LogViewerState = {
+      return Match.value(input.key.name).pipe(
+        Match.when("up", () =>
+          Action.NextFrame({
+            state: {
               ...state,
-              lines: currentLines as string[],
-            };
+              scrollOffset: Math.max(0, state.scrollOffset - 1),
+              prevRows: layout.rows,
+            },
+          })
+        ),
+        Match.when("down", () =>
+          Action.NextFrame({
+            state: {
+              ...state,
+              scrollOffset: Math.min(maxOffset, state.scrollOffset + 1),
+              prevRows: layout.rows,
+            },
+          })
+        ),
+        Match.whenOr("enter", "return", () => Action.Submit({ value: "done" })),
+        Match.orElse(() => Action.Beep())
+      );
+    }),
 
-            switch (input.key.name) {
-              case "up": {
-                const newOffset = Math.max(0, base.scrollOffset - 1);
-                return Action.NextFrame({
-                  state: {
-                    ...base,
-                    scrollOffset: newOffset,
-                    autoScroll: false,
-                  },
-                });
-              }
-
-              case "down": {
-                const newOffset = Math.min(maxOffset, base.scrollOffset + 1);
-                const atBottom = newOffset >= maxOffset;
-                return Action.NextFrame({
-                  state: {
-                    ...base,
-                    scrollOffset: newOffset,
-                    autoScroll: atBottom,
-                  },
-                });
-              }
-
-              case "enter":
-              case "return":
-                return Action.Submit({ value: "done" });
-
-              default: {
-                const offset = base.autoScroll
-                  ? maxOffset
-                  : Math.min(base.scrollOffset, maxOffset);
-                return Action.NextFrame({
-                  state: { ...base, scrollOffset: offset },
-                });
-              }
-            }
-          }),
-
-        clear: (state: LogViewerState, _action) =>
-          Effect.gen(function* () {
-            const layout = yield* renderLayout(state, title, height, false);
-
-            return Box.renderPrettySync(Cmd.clearLines(layout.rows));
-          }),
-      }
-    );
-
-    const result = yield* prompt;
-
-    // Clean up background fiber
-    yield* Fiber.interrupt(fiber);
-
-    return result;
+    clear: Effect.fnUntraced(function* () {
+      return "";
+    }),
   });
 };
 
@@ -287,66 +252,95 @@ export const LogViewer = ({
 // Demo: Fake log stream
 // ----------------------------------------------------------------------------
 
-const logMessages = [
-  "[INFO]  Application starting up...",
-  "[INFO]  Loading configuration from /etc/app/config.yaml",
-  "[DEBUG] Config keys found: database, cache, auth, logging",
-  "[INFO]  Connecting to PostgreSQL at db.internal:5432",
-  "[INFO]  Database connection established (pool: 10)",
-  "[INFO]  Initializing Redis cache at cache.internal:6379",
-  "[WARN]  Redis connection slow (latency: 120ms > threshold: 100ms)",
-  "[INFO]  Cache warmed with 1,247 entries",
-  "[INFO]  Starting HTTP server on :8080",
-  "[INFO]  Registered 24 API routes",
-  "[DEBUG] Route: GET  /api/v1/users",
-  "[DEBUG] Route: POST /api/v1/users",
-  "[DEBUG] Route: GET  /api/v1/users/:id",
-  "[DEBUG] Route: PUT  /api/v1/users/:id",
-  "[INFO]  Health check endpoint: /healthz",
-  "[INFO]  Server ready, accepting connections",
-  "[INFO]  Incoming request: GET /api/v1/users (client: 10.0.1.42)",
-  "[INFO]  Response: 200 OK (23ms)",
-  "[WARN]  Rate limit approaching for client 10.0.1.42 (85/100 req/min)",
-  "[INFO]  Incoming request: POST /api/v1/users (client: 10.0.1.55)",
-  "[INFO]  Response: 201 Created (45ms)",
-  "[ERROR] Query timeout: SELECT * FROM analytics WHERE date > '2024-01-01'",
-  "[WARN]  Retrying query (attempt 2/3)...",
-  "[INFO]  Query succeeded on retry (1,203ms)",
-  "[INFO]  Incoming request: GET /api/v1/users/42 (client: 10.0.1.42)",
-  "[INFO]  Cache HIT for user:42",
-  "[INFO]  Response: 200 OK (2ms)",
-  "[DEBUG] GC pause: 12ms (heap: 245MB / 512MB)",
-  "[INFO]  Scheduled job: cleanup_sessions started",
-  "[INFO]  Cleaned 342 expired sessions",
-  "[WARN]  Disk usage at 78% on /var/data",
-  "[INFO]  Incoming request: PUT /api/v1/users/42 (client: 10.0.1.42)",
-  "[INFO]  Response: 200 OK (31ms)",
-  "[ERROR] Connection reset by peer: cache.internal:6379",
-  "[WARN]  Redis reconnecting (attempt 1/5)...",
-  "[INFO]  Redis reconnected successfully",
-  "[INFO]  Cache re-synced (delta: 23 entries)",
-  "[INFO]  Incoming request: GET /api/v1/users?page=2 (client: 10.0.1.88)",
-  "[INFO]  Response: 200 OK (18ms)",
-  "[FATAL] Out of memory: heap limit reached (512MB)",
-  "[INFO]  Initiating graceful shutdown...",
-  "[INFO]  Draining 3 active connections...",
-  "[INFO]  All connections drained",
-  "[INFO]  Closing database pool...",
-  "[INFO]  Database pool closed",
-  "[INFO]  Shutdown complete",
+const logMessages: ReadonlyArray<LogEntry> = [
+  ["00:01.1", "INFO", "Application starting up..."],
+  ["00:01.4", "INFO", "Loading configuration from /etc/app/config.yaml"],
+  ["00:01.7", "DEBUG", "Config keys found: database, cache, auth, logging"],
+  ["00:02.0", "INFO", "Connecting to PostgreSQL at db.internal:5432"],
+  ["00:02.3", "INFO", "Database connection established (pool: 10)"],
+  ["00:02.6", "INFO", "Initializing Redis cache at cache.internal:6379"],
+  [
+    "00:03.0",
+    "WARN",
+    "Redis connection slow (latency: 120ms > threshold: 100ms)",
+  ],
+  ["00:03.2", "INFO", "Cache warmed with 1,247 entries"],
+  ["00:03.5", "INFO", "Starting HTTP server on :8080"],
+  ["00:03.8", "INFO", "Registered 24 API routes"],
+  ["00:04.1", "DEBUG", "Route: GET  /api/v1/users"],
+  ["00:04.4", "DEBUG", "Route: POST /api/v1/users"],
+  ["00:04.7", "DEBUG", "Route: GET  /api/v1/users/:id"],
+  ["00:05.0", "DEBUG", "Route: PUT  /api/v1/users/:id"],
+  ["00:05.3", "INFO", "Health check endpoint: /healthz"],
+  ["00:05.6", "INFO", "Server ready, accepting connections"],
+  [
+    "00:06.0",
+    "INFO",
+    "Incoming request: GET /api/v1/users (client: 10.0.1.42)",
+  ],
+  ["00:06.2", "INFO", "Response: 200 OK (23ms)"],
+  [
+    "00:06.5",
+    "WARN",
+    "Rate limit approaching for client 10.0.1.42 (85/100 req/min)",
+  ],
+  [
+    "00:06.8",
+    "INFO",
+    "Incoming request: POST /api/v1/users (client: 10.0.1.55)",
+  ],
+  ["00:07.1", "INFO", "Response: 201 Created (45ms)"],
+  [
+    "00:07.4",
+    "ERROR",
+    "Query timeout: SELECT * FROM analytics WHERE date > '2024-01-01'",
+  ],
+  ["00:07.7", "WARN", "Retrying query (attempt 2/3)..."],
+  ["00:08.0", "INFO", "Query succeeded on retry (1,203ms)"],
+  [
+    "00:08.3",
+    "INFO",
+    "Incoming request: GET /api/v1/users/42 (client: 10.0.1.42)",
+  ],
+  ["00:08.6", "INFO", "Cache HIT for user:42"],
+  ["00:09.0", "INFO", "Response: 200 OK (2ms)"],
+  ["00:09.2", "DEBUG", "GC pause: 12ms (heap: 245MB / 512MB)"],
+  ["00:09.5", "INFO", "Scheduled job: cleanup_sessions started"],
+  ["00:09.8", "INFO", "Cleaned 342 expired sessions"],
+  ["00:10.1", "WARN", "Disk usage at 78% on /var/data"],
+  [
+    "00:10.4",
+    "INFO",
+    "Incoming request: PUT /api/v1/users/42 (client: 10.0.1.42)",
+  ],
+  ["00:10.7", "INFO", "Response: 200 OK (31ms)"],
+  ["00:11.0", "ERROR", "Connection reset by peer: cache.internal:6379"],
+  ["00:11.3", "WARN", "Redis reconnecting (attempt 1/5)..."],
+  ["00:11.6", "INFO", "Redis reconnected successfully"],
+  ["00:12.0", "INFO", "Cache re-synced (delta: 23 entries)"],
+  [
+    "00:12.2",
+    "INFO",
+    "Incoming request: GET /api/v1/users?page=2 (client: 10.0.1.88)",
+  ],
+  ["00:12.5", "INFO", "Response: 200 OK (18ms)"],
+  ["00:12.8", "FATAL", "Out of memory: heap limit reached (512MB)"],
+  ["00:13.1", "INFO", "Initiating graceful shutdown..."],
+  ["00:13.4", "INFO", "Draining 3 active connections..."],
+  ["00:13.7", "INFO", "All connections drained"],
+  ["00:14.0", "INFO", "Closing database pool..."],
+  ["00:14.3", "INFO", "Database pool closed"],
+  ["00:14.6", "INFO", "Shutdown complete"],
 ];
-
-const fakeLogStream: Stream.Stream<string> = pipe(
-  Stream.fromIterable(logMessages),
-  Stream.schedule(Schedule.spaced(Duration.millis(300)))
-);
 
 // ----------------------------------------------------------------------------
 // Main
 // ----------------------------------------------------------------------------
 
-export const main = LogViewer({
-  title: "Application Logs",
-  height: 10,
-  stream: fakeLogStream,
+export const main = Effect.gen(function* () {
+  yield* LogViewer({
+    title: "Application Logs",
+    height: 10,
+    lines: logMessages,
+  });
 }).pipe(Effect.provide(BunServices.layer));
