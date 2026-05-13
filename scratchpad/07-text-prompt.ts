@@ -1,5 +1,13 @@
 import { BunServices } from "@effect/platform-bun";
-import { Console, Data, Effect, HashMap, Option, type Terminal } from "effect";
+import {
+  Console,
+  Data,
+  Effect,
+  HashMap,
+  Match,
+  Option,
+  type Terminal,
+} from "effect";
 import { Prompt } from "effect/unstable/cli";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
@@ -14,11 +22,6 @@ type TextPromptState = {
   readonly cursor: number;
   readonly value: string;
 };
-
-interface TextOptions {
-  readonly message: string;
-  readonly default?: string;
-}
 
 // Create Action tagged enum for Prompt.custom
 const Action = Data.taggedEnum<Prompt.ActionDefinition>();
@@ -102,23 +105,24 @@ const renderLayout = (
 // BoxInput using Prompt.custom
 // ----------------------------------------------------------------------------
 
-export const BoxInput = (options: TextOptions): Prompt.Prompt<string> => {
-  const { message, default: defaultValue = "" } = options;
-
+export const BoxInput = ({
+  message,
+  default: defaultValue = "",
+}: Prompt.TextOptions): Prompt.Prompt<string> => {
   const initialState: TextPromptState = {
     cursor: defaultValue.length,
     value: defaultValue,
   };
 
   return Prompt.custom<TextPromptState, string>(initialState, {
-    render: (
+    render: Effect.fnUntraced(function* (
       state: TextPromptState,
       action: Prompt.Action<TextPromptState, string>
-    ) =>
-      Action.$match(action, {
-        Beep: () => Effect.succeed(""),
+    ) {
+      const rendered = yield* Action.$match(action, {
+        Beep: () => Box.nullBox,
 
-        NextFrame: ({ state: nextState }) => {
+        NextFrame: Effect.fnUntraced(function* ({ state: nextState }) {
           const layout = renderLayout(nextState, message, false);
           const move = relativeCursorMove(
             layout,
@@ -126,96 +130,87 @@ export const BoxInput = (options: TextOptions): Prompt.Prompt<string> => {
             nextState.cursor
           );
 
-          const rendered = Box.renderPrettySync(layout);
           if (Option.isSome(move)) {
-            const cursorReposition = Box.renderPrettySync(
-              Box.combine(
-                Cmd.cursorPrevLine(move.value.rowsUp),
-                Cmd.cursorForward(move.value.col)
-              )
-            );
-            return Effect.succeed(rendered + cursorReposition);
+            return Box.combineAll([
+              layout,
+              Cmd.cursorPrevLine(move.value.rowsUp),
+              Cmd.cursorForward(move.value.col),
+            ]);
           }
-          return Effect.succeed(rendered);
-        },
+          return layout;
+        }),
 
-        Submit: ({ value }) =>
-          Effect.succeed(
-            Box.renderPrettySync(
-              renderLayout({ ...state, value }, message, true).pipe(
-                Box.vAppend<Ansi.AnsiStyle | Reactive.Reactive>(Box.text(""))
-              )
-            )
-          ),
-      }),
+        Submit: Effect.fnUntraced(function* ({ value }) {
+          return renderLayout({ ...state, value }, message, true).pipe(
+            Box.vAppend<Ansi.AnsiStyle | Reactive.Reactive>(Box.text(""))
+          );
+        }),
+      });
 
-    process: (input: Terminal.UserInput, state: TextPromptState) => {
-      switch (input.key.name) {
-        case "backspace": {
-          if (state.cursor <= 0) return Effect.succeed(Action.Beep());
+      return yield* Box.renderPretty(rendered);
+    }),
+
+    process: Effect.fnUntraced(function* (
+      input: Terminal.UserInput,
+      state: TextPromptState
+    ) {
+      return Match.value(input.key.name).pipe(
+        Match.when("backspace", () => {
+          if (state.cursor <= 0) return Action.Beep();
           const before = state.value.slice(0, state.cursor - 1);
           const after = state.value.slice(state.cursor);
-          return Effect.succeed(
-            Action.NextFrame({
-              state: { cursor: state.cursor - 1, value: before + after },
-            })
-          );
-        }
-
-        case "left":
-          if (state.cursor <= 0) return Effect.succeed(Action.Beep());
-          return Effect.succeed(
-            Action.NextFrame({ state: { ...state, cursor: state.cursor - 1 } })
-          );
-
-        case "right":
-          if (state.cursor >= state.value.length)
-            return Effect.succeed(Action.Beep());
-          return Effect.succeed(
-            Action.NextFrame({ state: { ...state, cursor: state.cursor + 1 } })
-          );
-
-        case "enter":
-        case "return":
-          return Effect.succeed(Action.Submit({ value: state.value }));
-
-        default: {
+          return Action.NextFrame({
+            state: { cursor: state.cursor - 1, value: before + after },
+          });
+        }),
+        Match.when("left", () => {
+          if (state.cursor <= 0) return Action.Beep();
+          return Action.NextFrame({
+            state: { ...state, cursor: state.cursor - 1 },
+          });
+        }),
+        Match.when("right", () => {
+          if (state.cursor >= state.value.length) return Action.Beep();
+          return Action.NextFrame({
+            state: { ...state, cursor: state.cursor + 1 },
+          });
+        }),
+        Match.whenOr("enter", "return", () =>
+          Action.Submit({ value: state.value })
+        ),
+        Match.orElse(() => {
           if (Option.isSome(input.input) && input.input.value.length === 1) {
             const char = input.input.value;
             const before = state.value.slice(0, state.cursor);
             const after = state.value.slice(state.cursor);
-            return Effect.succeed(
-              Action.NextFrame({
-                state: {
-                  cursor: state.cursor + 1,
-                  value: before + char + after,
-                },
-              })
-            );
+            return Action.NextFrame({
+              state: {
+                cursor: state.cursor + 1,
+                value: before + char + after,
+              },
+            });
           }
-          return Effect.succeed(Action.Beep());
-        }
-      }
-    },
+          return Action.Beep();
+        })
+      );
+    }),
 
-    clear: (
+    clear: Effect.fnUntraced(function* (
       state: TextPromptState,
       _action: Prompt.Action<TextPromptState, string>
-    ) => {
+    ) {
       const layout = renderLayout(state, message, false);
       const move = relativeCursorMove(layout, "input-field", state.cursor);
 
-      return Effect.succeed(
-        Box.renderPrettySync(
-          Option.isSome(move)
-            ? Box.combine(
-                Cmd.cursorNextLine(move.value.rowsUp),
-                Cmd.clearLines(layout.rows)
-              )
-            : Cmd.clearLines(layout.rows)
-        )
+      return yield* Box.renderPretty(
+        Option.isSome(move)
+          ? Box.combine(
+              Cmd.cursorNextLine(move.value.rowsUp),
+              Cmd.clearLines(layout.rows)
+            )
+          : Cmd.clearLines(layout.rows)
       );
-    },
+    }),
   });
 };
 

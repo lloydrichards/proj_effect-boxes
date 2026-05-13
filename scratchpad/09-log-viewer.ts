@@ -4,8 +4,6 @@ import {
   Duration,
   Effect,
   Fiber,
-  HashMap,
-  Option,
   pipe,
   Ref,
   Schedule,
@@ -13,7 +11,6 @@ import {
   Terminal,
 } from "effect";
 import { Prompt } from "effect/unstable/cli";
-import { Reactive } from "../src";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 import * as Cmd from "../src/Cmd";
