@@ -120,7 +120,7 @@ export const BoxInput = ({
       action: Prompt.Action<TextPromptState, string>
     ) {
       const rendered = yield* Action.$match(action, {
-        Beep: () => Box.nullBox,
+        Beep: () => Effect.succeed(Box.nullBox),
 
         NextFrame: Effect.fnUntraced(function* ({ state: nextState }) {
           const layout = renderLayout(nextState, message, false);

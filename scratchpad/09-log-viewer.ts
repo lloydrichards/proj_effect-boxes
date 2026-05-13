@@ -1,5 +1,5 @@
 import { BunServices } from "@effect/platform-bun";
-import { Data, Effect, Match, pipe, Terminal } from "effect";
+import { Console, Data, Effect, Match, pipe, Terminal } from "effect";
 import { Prompt } from "effect/unstable/cli";
 import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
@@ -186,7 +186,7 @@ export const LogViewer = ({
       action: Prompt.Action<LogViewerState, string>
     ) {
       const rendered = yield* Action.$match(action, {
-        Beep: () => Box.nullBox,
+        Beep: () => Effect.succeed(Box.nullBox),
 
         NextFrame: Effect.fnUntraced(function* ({ state: nextState }) {
           const layout = yield* renderLayout(nextState, title, height, false);
@@ -338,6 +338,7 @@ const logMessages: ReadonlyArray<LogEntry> = [
 // ----------------------------------------------------------------------------
 
 export const main = Effect.gen(function* () {
+  yield* Console.log("Starting LogViewer demo...");
   yield* LogViewer({
     title: "Application Logs",
     height: 10,

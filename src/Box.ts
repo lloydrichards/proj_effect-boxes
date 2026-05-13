@@ -127,8 +127,7 @@ export interface Box<A = never>
   extends Pipeable,
     Equal.Equal,
     Hash.Hash,
-    Inspectable.Inspectable,
-    Effect.Yieldable<Box<A>, Box<A>> {
+    Inspectable.Inspectable {
   readonly [BoxTypeId]: BoxTypeId;
   readonly rows: number;
   readonly cols: number;
