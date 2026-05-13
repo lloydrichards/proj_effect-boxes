@@ -25,14 +25,11 @@
         "noArguments": "off",
         "useRegexLiterals": "off"
       },
+      "correctness": {
+        "useYield": "off"
+      },
       "style": {
         "useDefaultSwitchClause": "off",
-        "useNamingConvention": {
-          "level": "warn",
-          "options": {
-            "strictCase": false
-          }
-        },
         "noMagicNumbers": "off",
         "useFilenamingConvention": "off"
       },

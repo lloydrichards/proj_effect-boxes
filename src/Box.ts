@@ -1205,6 +1205,30 @@ export const resizeBoxAligned: (
 ) => (self: string[]) => string[] = internal.resizeBoxAligned;
 
 /**
+ * Renders a box to a string with ANSI styling within an Effect context.
+ *
+ * Uses the ANSI renderer to produce styled output with escape codes for
+ * bold, color, and other terminal formatting. Whitespace is not preserved.
+ *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ * import * as Ansi from "effect-boxes/Ansi"
+ * import * as Effect from "effect/Effect"
+ *
+ * const box = Box.annotate(Box.text("Hello"), Ansi.bold)
+ * const program = Box.renderPretty(box)
+ * const output = Effect.runSync(program)
+ * // Outputs bold "Hello" with ANSI escape codes
+ * ```
+ *
+ * @note Haskell: `renderPretty :: Box -> Effect String`
+ * @category utilities
+ */
+export const renderPretty: <A>(self: Box<A>) => Effect.Effect<string> =
+  internalRender.renderPretty;
+
+/**
  * Renders a box to a pretty string with ANSI styling.
  *
  * Synchronous version of render for quick rendering without Effect.
@@ -1225,6 +1249,32 @@ export const resizeBoxAligned: (
  */
 export const renderPrettySync: <A>(self: Box<A>) => string =
   internalRender.renderPrettySync;
+
+/**
+ * Renders a box to a plain string without any special formatting within an
+ * Effect context.
+ *
+ * Uses the plain renderer to produce unformatted output with whitespace
+ * preserved. Useful when styling is not needed or output will be processed
+ * further.
+ *
+ * @example
+ * ```typescript
+ * import * as Box from "effect-boxes/Box"
+ * import * as Effect from "effect/Effect"
+ *
+ * const box = Box.text("Hello\nWorld")
+ * const program = Box.renderPlain(box)
+ * const output = Effect.runSync(program)
+ * // Hello
+ * // World
+ * ```
+ *
+ * @note Haskell: `renderPlain :: Box -> Effect String`
+ * @category utilities
+ */
+export const renderPlain: <A>(self: Box<A>) => Effect.Effect<string> =
+  internalRender.renderPlain;
 
 /**
  * Renders a box to a plain string without any special formatting.

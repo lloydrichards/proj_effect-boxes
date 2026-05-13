@@ -11,20 +11,26 @@ export const defaultRenderConfig: Renderer.RenderStyle = {
 export const render = Renderer.render;
 
 /** @internal */
-export const renderPrettySync = <A>(self: Box.Box<A>): string =>
+export const renderPretty = <A>(self: Box.Box<A>): Effect.Effect<string> =>
   pipe(
     Renderer.render(self, { preserveWhitespace: false }),
-    Effect.provide(Renderer.AnsiRendererLive),
-    Effect.runSync
+    Effect.provide(Renderer.AnsiRendererLive)
+  );
+
+/** @internal */
+export const renderPrettySync = <A>(self: Box.Box<A>): string =>
+  pipe(renderPretty(self), Effect.runSync);
+
+/** @internal */
+export const renderPlain = <A>(self: Box.Box<A>): Effect.Effect<string> =>
+  pipe(
+    Renderer.render(self, { preserveWhitespace: true }),
+    Effect.provide(Renderer.PlainRendererLive)
   );
 
 /** @internal */
 export const renderPlainSync = <A>(self: Box.Box<A>): string =>
-  pipe(
-    Renderer.render(self, { preserveWhitespace: true }),
-    Effect.provide(Renderer.PlainRendererLive),
-    Effect.runSync
-  );
+  pipe(renderPlain(self), Effect.runSync);
 
 /** @internal */
 export const printBox = (
