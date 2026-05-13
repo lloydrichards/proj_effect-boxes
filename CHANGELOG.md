@@ -1,5 +1,27 @@
 # effect-boxes
 
+## 0.14.0
+
+### Minor Changes
+
+- [#58](https://github.com/lloydrichards/effect-boxes/pull/58) [`7c1aaeb`](https://github.com/lloydrichards/effect-boxes/commit/7c1aaeb08dfbbd9fe41dd97bfdbe4ee30a104776) Thanks [@lloydrichards](https://github.com/lloydrichards)! - add `Cmd.altScreenEnter` and `Cmd.altScreenLeave` for alternate screen buffer support, closes [#56](https://github.com/lloydrichards/proj_effect-boxes/issues/56)
+
+  ```typescript
+  import * as Box from "effect-boxes/Box";
+  import * as Cmd from "effect-boxes/Cmd";
+
+  // Switch to alternate screen, render content, then restore main screen on exit
+  const enter = Box.combineAll([Cmd.altScreenEnter, Cmd.cursorHide]);
+  const layout = Box.text("Full-screen interactive content");
+  const exit = Box.combineAll([Cmd.altScreenLeave, Cmd.cursorShow]);
+  ```
+
+### Patch Changes
+
+- [#57](https://github.com/lloydrichards/effect-boxes/pull/57) [`140ccbe`](https://github.com/lloydrichards/effect-boxes/commit/140ccbe8adf743f0f417527c46a088c5f3755c53) Thanks [@lloydrichards](https://github.com/lloydrichards)! - expose the renderPretty and renderPlain for working boxes into iterators
+
+- [#60](https://github.com/lloydrichards/effect-boxes/pull/60) [`31bb191`](https://github.com/lloydrichards/effect-boxes/commit/31bb1919ad2d2a51d3d3e27b8642018924dd43b8) Thanks [@lloydrichards](https://github.com/lloydrichards)! - remove yieldable from box
+
 ## 0.13.0
 
 ### Minor Changes
