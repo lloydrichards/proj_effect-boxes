@@ -700,3 +700,51 @@ export const home: Box<AnsiStyle> = internalAnsi.home;
  * @category utilities
  */
 export const bell: Box<AnsiStyle> = internalAnsi.bell;
+
+/**
+ * Switches the terminal to the alternate screen buffer.
+ *
+ * The alternate screen buffer is a separate terminal buffer (used by tools
+ * like `vim`, `less`, and `fzf`) that has no scrollback history. Content
+ * rendered on the alternate screen disappears completely when the terminal
+ * switches back to the main screen via {@link altScreenLeave}.
+ *
+ * This is the correct primitive for rendering tall interactive content that
+ * must be fully removed on dismiss, since `cursorUp` and `eraseDown` cannot
+ * reach lines that have scrolled into the main buffer's scrollback.
+ *
+ * @example
+ * ```typescript
+ * import * as Cmd from "effect-boxes/Cmd"
+ * import * as Box from "effect-boxes/Box"
+ *
+ * // Enter alternate screen, render content, then leave
+ * const fullScreenUI = Box.combineAll([
+ *   Cmd.altScreenEnter,
+ *   Box.text("Full-screen interactive content"),
+ * ])
+ * ```
+ *
+ * @category utilities
+ */
+export const altScreenEnter: Box<AnsiStyle> = internalAnsi.altScreenEnter;
+
+/**
+ * Switches the terminal back to the main screen buffer.
+ *
+ * Restores the main screen buffer that was saved when {@link altScreenEnter}
+ * was invoked. All content rendered on the alternate screen is discarded,
+ * and the terminal display returns to its previous state.
+ *
+ * @example
+ * ```typescript
+ * import * as Cmd from "effect-boxes/Cmd"
+ * import * as Box from "effect-boxes/Box"
+ *
+ * // Leave alternate screen to restore main buffer
+ * const cleanup = Cmd.altScreenLeave
+ * ```
+ *
+ * @category utilities
+ */
+export const altScreenLeave: Box<AnsiStyle> = internalAnsi.altScreenLeave;

@@ -184,3 +184,15 @@ export const home: Box.Box<Ansi.AnsiStyle> = createCmdBox("home", `${CSI}H`);
 
 /** @internal */
 export const bell: Box.Box<Ansi.AnsiStyle> = createCmdBox("bell", "\x07");
+
+/** @internal */
+export const altScreenEnter: Box.Box<Ansi.AnsiStyle> = createCmdBox(
+  "altScreenEnter",
+  `${CSI}?1049h`
+);
+
+/** @internal */
+export const altScreenLeave: Box.Box<Ansi.AnsiStyle> = createCmdBox(
+  "altScreenLeave",
+  `${CSI}?1049l`
+);
