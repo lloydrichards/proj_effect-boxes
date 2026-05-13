@@ -299,6 +299,22 @@ describe("CMD Module", () => {
         expect(cmd.annotation?.data[0]?.code).toBe("\x07");
       });
     });
+
+    describe("altScreenEnter", () => {
+      it("should generate alternate screen enter sequence", () => {
+        const cmd = Cmd.altScreenEnter;
+        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[?1049h");
+        expect(cmd.annotation?.data[0]?.name).toBe("altScreenEnter");
+      });
+    });
+
+    describe("altScreenLeave", () => {
+      it("should generate alternate screen leave sequence", () => {
+        const cmd = Cmd.altScreenLeave;
+        expect(cmd.annotation?.data[0]?.code).toBe("\x1b[?1049l");
+        expect(cmd.annotation?.data[0]?.name).toBe("altScreenLeave");
+      });
+    });
   });
 
   describe("CmdType Properties", () => {
