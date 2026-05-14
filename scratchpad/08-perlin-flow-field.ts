@@ -149,8 +149,11 @@ export const main = Effect.gen(function* () {
   const termHeight = process.stdout.rows ?? 24;
 
   // Reserve space for border (2) and title line (1)
-  // Each grid cell is 2 columns wide to approximate a square aspect ratio
-  const InnerW = Math.floor((termWidth - 2) / 2);
+  // Display width is the exact terminal width minus the two border columns.
+  // Grid width (for the particle simulation) is half the display width,
+  // rounded down so that doubling it back never exceeds the display width.
+  const displayW = termWidth - 2;
+  const InnerW = Math.floor(displayW / 2);
   const InnerH = termHeight - 3;
 
   // Scale walker count to grid area (roughly 1 per 60 cells, min 10)
@@ -217,7 +220,7 @@ export const main = Effect.gen(function* () {
 
   // Render the initial border frame sized to terminal
   yield* display(
-    Box.emptyBox(InnerH, InnerW * 2).pipe(
+    Box.emptyBox(InnerH, displayW).pipe(
       Box.border("single"),
       Box.vAppend(
         Box.hsep(
@@ -254,7 +257,10 @@ export const main = Effect.gen(function* () {
                 : Ansi.combine(w.color);
             renderCmds.push(
               pipe(
-                Cmd.cursorTo(Math.ceil(tp.pos.x) * 2, Math.ceil(tp.pos.y)),
+                Cmd.cursorTo(
+                  Math.min(Math.floor(tp.pos.x) * 2, displayW - 2) + 1,
+                  Math.floor(tp.pos.y) + 1
+                ),
                 Box.combine<Ansi.AnsiStyle>(
                   Box.text(ch + ch).pipe(Box.annotate(style))
                 )
@@ -265,7 +271,10 @@ export const main = Effect.gen(function* () {
           // Render walker head (bright, bold)
           renderCmds.push(
             pipe(
-              Cmd.cursorTo(Math.ceil(w.pos.x) * 2, Math.ceil(w.pos.y)),
+              Cmd.cursorTo(
+                Math.min(Math.floor(w.pos.x) * 2, displayW - 2) + 1,
+                Math.floor(w.pos.y) + 1
+              ),
               Box.combine<Ansi.AnsiStyle>(
                 Box.text("██").pipe(
                   Box.annotate(Ansi.combine(w.color, Ansi.bold))
