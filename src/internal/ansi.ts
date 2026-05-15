@@ -361,6 +361,11 @@ export const truncatePreservingAnsi = (
     }
   }
 
+  // Ensure ANSI sequences are properly terminated to prevent color bleed
+  if (result.includes(ESC) && !result.endsWith(RESET)) {
+    return result + RESET;
+  }
+
   return result;
 };
 /** @internal */
