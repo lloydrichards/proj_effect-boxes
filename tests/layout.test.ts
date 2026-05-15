@@ -27,7 +27,11 @@ describe("Flex.row", () => {
     // 10 available, 3 grow children with factor 1 each
     // floor(10/3) = 3 each = 9, remainder = 1 -> first child gets 4
     const result = Flex.row(
-      [Flex.grow(Box.text("A")), Flex.grow(Box.text("B")), Flex.grow(Box.text("C"))],
+      [
+        Flex.grow(Box.text("A")),
+        Flex.grow(Box.text("B")),
+        Flex.grow(Box.text("C")),
+      ],
       10
     );
     expect(Box.cols(result)).toBe(10);
@@ -79,10 +83,7 @@ describe("Flex.row", () => {
   });
 
   it("supports data-last pipe usage", () => {
-    const children = [
-      Flex.fixed(Box.text("A")),
-      Flex.grow(Box.text("B")),
-    ];
+    const children = [Flex.fixed(Box.text("A")), Flex.grow(Box.text("B"))];
     const result = pipe(children, Flex.row(20));
     expect(Box.cols(result)).toBe(20);
   });
@@ -117,10 +118,7 @@ describe("Flex.col", () => {
   });
 
   it("supports data-last pipe usage", () => {
-    const children = [
-      Flex.fixed(Box.text("A")),
-      Flex.grow(Box.text("B")),
-    ];
+    const children = [Flex.fixed(Box.text("A")), Flex.grow(Box.text("B"))];
     const result = pipe(children, Flex.col(8));
     expect(Box.rows(result)).toBe(8);
   });
@@ -130,9 +128,7 @@ describe("Flex.col", () => {
 
 describe("Container", () => {
   it("enforces width on output", () => {
-    const result = Container.make({ width: 40 }, (ctx) =>
-      Box.text("short")
-    );
+    const result = Container.make({ width: 40 }, (ctx) => Box.text("short"));
     expect(Box.cols(result)).toBe(40);
   });
 
@@ -156,13 +152,10 @@ describe("Container", () => {
 
   it("padding tuple [vertical, horizontal]", () => {
     let ctx: { innerWidth: number; innerHeight: number } | undefined;
-    Container.make(
-      { width: 30, height: 20, padding: [2, 3] },
-      (c) => {
-        ctx = c;
-        return Box.text("x");
-      }
-    );
+    Container.make({ width: 30, height: 20, padding: [2, 3] }, (c) => {
+      ctx = c;
+      return Box.text("x");
+    });
     expect(ctx!.innerWidth).toBe(24); // 30 - 3*2
     expect(ctx!.innerHeight).toBe(16); // 20 - 2*2
   });

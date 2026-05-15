@@ -1,5 +1,5 @@
 import { BunRuntime, BunServices } from "@effect/platform-bun";
-import { Effect, Option } from "effect";
+import { Cause, Console, Effect, Option } from "effect";
 import { Command, Flag, Prompt } from "effect/unstable/cli";
 
 import { main as progressBarDemo } from "./01-progress-bar";
@@ -11,6 +11,8 @@ import { main as htmlDemo } from "./06-html-rendering";
 import { main as textPromptDemo } from "./07-text-prompt";
 import { main as perlinDemo } from "./08-perlin-flow-field";
 import { main as logViewerDemo } from "./09-log-viewer";
+import { main as layoutDemo } from "./10-layout-demo";
+import { Ansi, Box, Cmd } from "../src";
 
 const demos = [
   {
@@ -60,6 +62,12 @@ const demos = [
     description:
       "Scrollable stream log viewer with truncate, minWidth, maxWidth, maxHeight",
   },
+  {
+    title: "10. Layout Combinators",
+    value: "layout",
+    description:
+      "Flex, Grid, and Container layout demos with a full dashboard example",
+  },
 ] as const;
 
 type DemoId = (typeof demos)[number]["value"];
@@ -84,6 +92,8 @@ const runDemo = (id: DemoId) => {
       return perlinDemo;
     case "log-viewer":
       return logViewerDemo;
+    case "layout":
+      return layoutDemo;
   }
 };
 
@@ -92,7 +102,7 @@ const root = Command.make(
   {
     run: Flag.integer("run").pipe(
       Flag.optional,
-      Flag.withDescription("Run a demo by number (1-9)")
+      Flag.withDescription("Run a demo by number (1-10)")
     ),
   },
   ({ run }) =>
@@ -116,7 +126,20 @@ const root = Command.make(
 
 const program = root.pipe(
   Command.run({ version: "1.0.0" }),
-  Effect.provide(BunServices.layer)
+  Effect.provide(BunServices.layer),
+  Effect.catchCause((cause) => {
+    if (Cause.hasInterruptsOnly(cause)) {
+      const message = Box.text("Bye-bye!").pipe(
+        Box.pad(0, 4),
+        Box.border("rounded", { annotation: Ansi.yellow }),
+        Box.moveDown(1)
+      );
+      return Console.log(
+        Box.renderPrettySync(Box.combine(Cmd.altScreenLeave, message))
+      );
+    }
+    return Effect.failCause(cause);
+  })
 );
 
 BunRuntime.runMain(program);
