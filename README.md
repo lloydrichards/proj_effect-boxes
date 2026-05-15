@@ -122,6 +122,7 @@ console.log(Box.renderPlainSync(table));
 ### Guides
 
 - [Box Module](./docs/using-box.md) - Core layout primitives and composition
+- [Layout Module](./docs/using-layout.md) - Higher-level Flex, Container, and Grid layouts
 - [Annotation Module](./docs/using-annotation.md) - Adding metadata to boxes
 - [ANSI Module](./docs/using-ansi.md) - Terminal colors and styling
 - [Cmd Module](./docs/using-cmd.md) - Terminal control sequences

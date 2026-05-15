@@ -182,6 +182,7 @@ Effect.runPromise(program);
 ## See Also
 
 - [Box Module](./using-box.md) - Core box creation and composition
+- [Layout Module](./using-layout.md) - Higher-level Flex, Container, and Grid layouts
 - [ANSI Module](./using-ansi.md) - Terminal styling with ANSI codes
 - [Reactive Module](./using-reactive.md) - Position tracking for interactive
   elements
