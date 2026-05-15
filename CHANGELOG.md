@@ -1,5 +1,57 @@
 # effect-boxes
 
+## 0.15.0
+
+### Minor Changes
+
+- [#69](https://github.com/lloydrichards/effect-boxes/pull/69) [`301fc12`](https://github.com/lloydrichards/effect-boxes/commit/301fc12ed44230d4ad9a0ee07384fda2840c3ba3) Thanks [@lloydrichards](https://github.com/lloydrichards)! - Add Layout module (Flex, Container, Grid), closes [#63](https://github.com/lloydrichards/proj_effect-boxes/issues/63)
+
+  Higher-level layout combinators built on top of Box for proportional space distribution, container-aware rendering, and grid layouts. All functions are pure and return standard `Box` values, composable with existing primitives like `border`, `annotate`, and `pad`.
+
+  - `Flex.row` / `Flex.col` distribute space among fixed, grow, and fill children proportionally with remainder-fair rounding
+  - `Flex.spacer` pushes adjacent children apart (like CSS `flex-grow` on an empty element)
+  - `Container.make` passes computed inner dimensions to a builder and enforces width on the output
+  - `Grid.make` arranges items in a fixed-column grid with uniform column width
+  - `Grid.auto` calculates column count from container width
+
+  All dual functions support both data-first and data-last (pipe) usage.
+
+  ```typescript
+  import { pipe } from "effect";
+  import * as Box from "effect-boxes/Box";
+  import { Container, Flex, Grid } from "effect-boxes/Layout";
+
+  // Flex row with spacer
+  const header = Flex.row(
+    [
+      Flex.fixed(Box.text("Name:")),
+      Flex.spacer(),
+      Flex.fixed(Box.text("[ok]")),
+    ],
+    80
+  );
+
+  // Container with padding and flex layout
+  const panel = Container.make({ width: 80, padding: 2 }, (ctx) =>
+    Flex.row(
+      [Flex.fixed(Box.text("sidebar")), Flex.grow(Box.text("main"))],
+      ctx.innerWidth
+    )
+  );
+
+  // Auto grid from container width
+  const grid = pipe(
+    ["A", "B", "C", "D", "E", "F"].map(Box.text),
+    Grid.auto(80, { minColWidth: 20 })
+  );
+  ```
+
+### Patch Changes
+
+- [#69](https://github.com/lloydrichards/effect-boxes/pull/69) [`9ec997b`](https://github.com/lloydrichards/effect-boxes/commit/9ec997b6bc9c4e0d73206a56d2bfed4ef3c9f14f) Thanks [@lloydrichards](https://github.com/lloydrichards)! - terminate ANSI sequences to prevent bleed
+
+- [#67](https://github.com/lloydrichards/effect-boxes/pull/67) [`9c8fa51`](https://github.com/lloydrichards/effect-boxes/commit/9c8fa519585f83d78832e25feafeb2e2c7f984bb) Thanks [@lloydrichards](https://github.com/lloydrichards)! - make Box<A> covariant in A, closes [#66](https://github.com/lloydrichards/proj_effect-boxes/issues/66)
+
 ## 0.14.0
 
 ### Minor Changes
