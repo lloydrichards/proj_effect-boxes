@@ -362,6 +362,7 @@ const coloredBox2 = pipe(Box.text("Success!"), Box.annotate(Ansi.green));
 
 ## See Also
 
+- [Layout Module](./using-layout.md) - Higher-level Flex, Container, and Grid layouts
 - [Annotation Module](./using-annotation.md) - For adding metadata to boxes
 - [ANSI Module](./using-ansi.md) - For terminal styling with colors and effects
 - [Common Patterns](./common-patterns.md) - For Effect.js integration and

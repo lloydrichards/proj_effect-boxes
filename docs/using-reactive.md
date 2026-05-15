@@ -277,6 +277,7 @@ cursorToReactive(key: string): (positionMap: PositionMap) => Option.Option<Box<A
 ## See Also
 
 - [Box Module](./using-box.md) - Core box creation and composition
+- [Layout Module](./using-layout.md) - Higher-level Flex, Container, and Grid layouts
 - [Cmd Module](./using-cmd.md) - Terminal control commands
 - [ANSI Module](./using-ansi.md) - Terminal styling with ANSI codes
 - [Common Patterns](./common-patterns.md) - For integration examples and

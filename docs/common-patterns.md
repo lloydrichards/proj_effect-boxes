@@ -306,9 +306,49 @@ const combined = pipe(
 console.log(Box.renderPrettySync(combined));
 ```
 
+### Box + Layout
+
+```typescript
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { Flex, Container, Grid } from "effect-boxes/Layout";
+
+// Use Flex to build a status bar with items pushed apart
+const statusBar = Flex.row(
+  [
+    Flex.fixed(Box.text("app v1.0").pipe(Box.annotate(Ansi.bold))),
+    Flex.spacer(),
+    Flex.fixed(Box.text("connected").pipe(Box.annotate(Ansi.green))),
+  ],
+  80
+);
+
+// Use Container for dimension-aware layouts with padding and borders
+const panel = Container.make({ width: 60, padding: 1 }, (ctx) =>
+  pipe(
+    Flex.row(
+      [Flex.fixed(Box.text("Name:")), Flex.grow(Box.text("Alice"))],
+      ctx.innerWidth
+    ),
+    Box.border("rounded")
+  )
+);
+
+// Use Grid to arrange items in columns
+const grid = Grid.auto(
+  ["Dashboard", "Settings", "Profile", "Logout"].map((label) =>
+    pipe(Box.text(label), Box.pad(0, 2), Box.border("rounded"))
+  ),
+  80,
+  { minColWidth: 20 }
+);
+```
+
 ## See Also
 
 - [Box Module](./using-box.md) - Core box creation and composition
+- [Layout Module](./using-layout.md) - Higher-level Flex, Container, and Grid layouts
 - [Annotation Module](./using-annotation.md) - Text annotation system
 - [ANSI Module](./using-ansi.md) - Terminal rendering with ANSI codes
 - [Cmd Module](./using-cmd.md) - Terminal control commands
