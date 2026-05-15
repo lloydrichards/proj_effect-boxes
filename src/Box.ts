@@ -1,4 +1,4 @@
-import type { Effect } from "effect";
+import type { Effect, Types } from "effect";
 import type * as Equal from "effect/Equal";
 import type * as Hash from "effect/Hash";
 import type * as Inspectable from "effect/Inspectable";
@@ -123,12 +123,14 @@ export type BoxAnnotations<T extends readonly unknown[]> = T extends readonly [
  *
  * @category models
  */
-export interface Box<A = never>
+export interface Box<out A = never>
   extends Pipeable,
     Equal.Equal,
     Hash.Hash,
     Inspectable.Inspectable {
-  readonly [BoxTypeId]: BoxTypeId;
+  readonly [BoxTypeId]: {
+    readonly _A: Types.Covariant<A>;
+  };
   readonly rows: number;
   readonly cols: number;
   readonly content: Content<A>;
@@ -577,8 +579,8 @@ export const vcat: {
  * @category combinators
  */
 export const hAppend: {
-  <A>(that: Box<A>): (self: Box<A>) => Box<A>;
-  <A>(self: Box<A>, that: Box<A>): Box<A>;
+  <B>(that: Box<B>): <A>(self: Box<A>) => Box<A | B>;
+  <A, B>(self: Box<A>, that: Box<B>): Box<A | B>;
 } = internal.hAppend;
 
 /**
@@ -608,8 +610,8 @@ export const hAppend: {
  * @category combinators
  */
 export const hcatWithSpace: {
-  <A>(that: Box<A>): (self: Box<A>) => Box<A>;
-  <A>(self: Box<A>, that: Box<A>): Box<A>;
+  <B>(that: Box<B>): <A>(self: Box<A>) => Box<A | B>;
+  <A, B>(self: Box<A>, that: Box<B>): Box<A | B>;
 } = internal.hcatWithSpace;
 
 /**
@@ -634,8 +636,8 @@ export const hcatWithSpace: {
  * @category combinators
  */
 export const vAppend: {
-  <A>(that: Box<A>): (self: Box<A>) => Box<A>;
-  <A>(self: Box<A>, that: Box<A>): Box<A>;
+  <B>(that: Box<B>): <A>(self: Box<A>) => Box<A | B>;
+  <A, B>(self: Box<A>, that: Box<B>): Box<A | B>;
 } = internal.vAppend;
 
 /**
@@ -667,8 +669,8 @@ export const vAppend: {
  * @category combinators
  */
 export const vcatWithSpace: {
-  <A>(that: Box<A>): (self: Box<A>) => Box<A>;
-  <A>(self: Box<A>, that: Box<A>): Box<A>;
+  <B>(that: Box<B>): <A>(self: Box<A>) => Box<A | B>;
+  <A, B>(self: Box<A>, that: Box<B>): Box<A | B>;
 } = internal.vcatWithSpace;
 
 /**
@@ -1570,11 +1572,15 @@ export const asciiBorder: BorderChars = internal.asciiBorder;
  * @category combinators
  */
 export const border: {
-  <A>(
+  <B>(
     style?: BorderStyle,
-    options?: BorderOptions<A>
-  ): (self: Box<A>) => Box<A>;
-  <A>(self: Box<A>, style?: BorderStyle, options?: BorderOptions<A>): Box<A>;
+    options?: BorderOptions<B>
+  ): <A>(self: Box<A>) => Box<A | B>;
+  <A, B>(
+    self: Box<A>,
+    style?: BorderStyle,
+    options?: BorderOptions<B>
+  ): Box<A | B>;
 } = internal.border;
 
 // --------------------------------------------------------------------------------

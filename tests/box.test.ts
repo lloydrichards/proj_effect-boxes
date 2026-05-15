@@ -1,10 +1,12 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: Testing runtime rather than build */
-import { String } from "effect";
+import { pipe, String } from "effect";
 import * as Equal from "effect/Equal";
 import * as Hash from "effect/Hash";
 import * as Inspectable from "effect/Inspectable";
 import { describe, expect, it } from "vitest";
 import * as Annotation from "../src/Annotation";
+import type { AnsiStyle } from "../src/Ansi";
+import * as Ansi from "../src/Ansi";
 import * as Box from "../src/Box";
 
 describe("Box", () => {
@@ -1200,4 +1202,59 @@ describe("Annotation Functions", () => {
     });
   });
 
+  describe("Covariance", () => {
+    it("border with annotation can be used in a generic pipeline", () => {
+      // With covariance, border can widen Box<A> to Box<A | AnsiStyle>
+      const panel = <A>(self: Box.Box<A>): Box.Box<A | AnsiStyle> =>
+        Box.border(self, "rounded", { annotation: Ansi.green });
+      const box = Box.text("hello");
+      const result = panel(box);
+      expect(result.rows).toBeGreaterThan(0);
+    });
+
+    it("Box<never> is assignable to Box<AnsiStyle>", () => {
+      const neverBox: Box.Box<never> = Box.text("hello");
+      const ansiBox: Box.Box<AnsiStyle> = neverBox;
+      expect(Box.renderPrettySync(ansiBox)).toBe("hello");
+    });
+
+    it("Box<AnsiStyle> is assignable to Box<unknown>", () => {
+      const styled: Box.Box<AnsiStyle> = pipe(
+        Box.text("styled"),
+        Box.border("rounded", { annotation: Ansi.green })
+      );
+      const wide: Box.Box<unknown> = styled;
+      expect(Box.renderPrettySync(wide)).toBeDefined();
+    });
+
+    it("hAppend composes Box<never> with Box<AnsiStyle>", () => {
+      const plain: Box.Box<never> = Box.text("left");
+      const styled: Box.Box<AnsiStyle> = pipe(
+        Box.text("right"),
+        Box.border("rounded", { annotation: Ansi.green })
+      );
+      const result: Box.Box<AnsiStyle> = Box.hAppend(plain, styled);
+      expect(result.cols).toBeGreaterThan(0);
+    });
+
+    it("vAppend composes Box<never> with Box<AnsiStyle>", () => {
+      const plain: Box.Box<never> = Box.text("top");
+      const styled: Box.Box<AnsiStyle> = pipe(
+        Box.text("bottom"),
+        Box.border("rounded", { annotation: Ansi.green })
+      );
+      const result: Box.Box<AnsiStyle> = Box.vAppend(plain, styled);
+      expect(result.rows).toBeGreaterThan(0);
+    });
+
+    it("pipe composition with mixed annotation types", () => {
+      const result = pipe(
+        Box.text("content"),
+        Box.moveRight(2),
+        Box.border("rounded", { annotation: Ansi.green }),
+        Box.moveDown(1)
+      );
+      expect(result.rows).toBeGreaterThan(0);
+    });
+  });
 });
