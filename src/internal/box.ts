@@ -1,4 +1,13 @@
-import { Array, Equal, Hash, Inspectable, Match, pipe, String } from "effect";
+import {
+  Array,
+  Equal,
+  Function,
+  Hash,
+  Inspectable,
+  Match,
+  pipe,
+  String,
+} from "effect";
 import { dual } from "effect/Function";
 import { pipeArguments } from "effect/Pipeable";
 import type * as Annotation from "../Annotation";
@@ -62,7 +71,7 @@ const contentHash = <A>(box: Box.Box<A>): number =>
   });
 
 const proto: Omit<Box.Box, "rows" | "content" | "cols" | "annotation"> = {
-  [BoxTypeId]: BoxTypeId,
+  [BoxTypeId]: { _A: Function.identity },
   [Equal.symbol]<A>(this: Box.Box<A>, that: unknown): boolean {
     return (
       isBox<A>(that) &&
@@ -338,40 +347,41 @@ export const vcat = dual<
 
 /** @internal */
 export const hAppend = dual<
-  <A>(that: Box.Box<A>) => (self: Box.Box<A>) => Box.Box<A>,
-  <A>(self: Box.Box<A>, that: Box.Box<A>) => Box.Box<A>
+  <B>(that: Box.Box<B>) => <A>(self: Box.Box<A>) => Box.Box<A | B>,
+  <A, B>(self: Box.Box<A>, that: Box.Box<B>) => Box.Box<A | B>
 >(
   2,
-  <A>(self: Box.Box<A>, that: Box.Box<A>): Box.Box<A> => hcat([self, that], top)
+  <A, B>(self: Box.Box<A>, that: Box.Box<B>): Box.Box<A | B> =>
+    hcat([self, that], top)
 );
 
 /** @internal */
 export const hcatWithSpace = dual<
-  <A>(that: Box.Box<A>) => (self: Box.Box<A>) => Box.Box<A>,
-  <A>(self: Box.Box<A>, that: Box.Box<A>) => Box.Box<A>
+  <B>(that: Box.Box<B>) => <A>(self: Box.Box<A>) => Box.Box<A | B>,
+  <A, B>(self: Box.Box<A>, that: Box.Box<B>) => Box.Box<A | B>
 >(
   2,
-  <A>(self: Box.Box<A>, that: Box.Box<A>): Box.Box<A> =>
+  <A, B>(self: Box.Box<A>, that: Box.Box<B>): Box.Box<A | B> =>
     hcat([self, emptyBox(0, 1), that], top)
 );
 
 /** @internal */
 export const vAppend = dual<
-  <A>(that: Box.Box<A>) => (self: Box.Box<A>) => Box.Box<A>,
-  <A>(self: Box.Box<A>, that: Box.Box<A>) => Box.Box<A>
+  <B>(that: Box.Box<B>) => <A>(self: Box.Box<A>) => Box.Box<A | B>,
+  <A, B>(self: Box.Box<A>, that: Box.Box<B>) => Box.Box<A | B>
 >(
   2,
-  <A>(self: Box.Box<A>, that: Box.Box<A>): Box.Box<A> =>
+  <A, B>(self: Box.Box<A>, that: Box.Box<B>): Box.Box<A | B> =>
     vcat([self, that], left)
 );
 
 /** @internal */
 export const vcatWithSpace = dual<
-  <A>(that: Box.Box<A>) => (self: Box.Box<A>) => Box.Box<A>,
-  <A>(self: Box.Box<A>, that: Box.Box<A>) => Box.Box<A>
+  <B>(that: Box.Box<B>) => <A>(self: Box.Box<A>) => Box.Box<A | B>,
+  <A, B>(self: Box.Box<A>, that: Box.Box<B>) => Box.Box<A | B>
 >(
   2,
-  <A>(self: Box.Box<A>, that: Box.Box<A>): Box.Box<A> =>
+  <A, B>(self: Box.Box<A>, that: Box.Box<B>): Box.Box<A | B> =>
     vcat([self, emptyBox(1, 0), that], left)
 );
 
@@ -1048,31 +1058,31 @@ export interface BorderOptions<A> {
 
 /** @internal */
 export const border = dual<
-  <A>(
+  <B>(
     style?: BorderStyle,
-    options?: BorderOptions<A>
-  ) => (self: Box.Box<A>) => Box.Box<A>,
-  <A>(
+    options?: BorderOptions<B>
+  ) => <A>(self: Box.Box<A>) => Box.Box<A | B>,
+  <A, B>(
     self: Box.Box<A>,
     style?: BorderStyle,
-    options?: BorderOptions<A>
-  ) => Box.Box<A>
+    options?: BorderOptions<B>
+  ) => Box.Box<A | B>
 >(
   3,
-  <A>(
+  <A, B>(
     self: Box.Box<A>,
     style: BorderStyle = "single",
-    options?: BorderOptions<A>
-  ): Box.Box<A> => {
+    options?: BorderOptions<B>
+  ): Box.Box<A | B> => {
     const chars = borderStyleToChars(style);
 
-    const borderChar = (c: string): Box.Box<A> =>
+    const borderChar = (c: string): Box.Box<A | B> =>
       options?.annotation ? annotate(char(c), options.annotation) : char(c);
 
-    const borderText = (s: string): Box.Box<A> =>
+    const borderText = (s: string): Box.Box<A | B> =>
       options?.annotation ? annotate(text(s), options.annotation) : text(s);
 
-    const when = (cond: boolean, box: Box.Box<A>): Box.Box<A> =>
+    const when = (cond: boolean, box: Box.Box<A | B>): Box.Box<A | B> =>
       cond ? box : nullBox;
 
     const sideCol = vcat(
