@@ -6,7 +6,7 @@ Output media/layout-demo.gif
 
 Set Shell "zsh"
 Set FontSize 16
-Set Width 1600
+Set Width 1400
 Set Height 800
 Set TypingSpeed 60ms
 Set WindowBar Colorful
