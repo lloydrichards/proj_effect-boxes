@@ -1,5 +1,11 @@
 # effect-boxes
 
+## 0.15.1
+
+### Patch Changes
+
+- [#70](https://github.com/lloydrichards/effect-boxes/pull/70) [`67048d4`](https://github.com/lloydrichards/effect-boxes/commit/67048d44742f6f8aaae5b1748766d495b4f2c0ff) Thanks [@lloydrichards](https://github.com/lloydrichards)! - re-export the `Layout` modules as dedicated namespaces
+
 ## 0.15.0
 
 ### Minor Changes
