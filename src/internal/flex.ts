@@ -4,42 +4,8 @@
 import { Array as Arr, Match, pipe } from "effect";
 import { dual } from "effect/Function";
 import type * as Box from "../Box.js";
+import type { Flex } from "../Layout.js";
 import * as internal from "./box.js";
-
-/*
- *  --------------------------------------------------------------------------------
- *  --  Types  ---------------------------------------------------------------------
- *  --------------------------------------------------------------------------------
- */
-
-/** @internal */
-export interface FlexFixed<A = never> {
-  readonly _tag: "Fixed";
-  readonly box: Box.Box<A>;
-}
-
-/** @internal */
-export interface FlexGrow<A = never> {
-  readonly _tag: "Grow";
-  readonly box: Box.Box<A>;
-  readonly factor: number;
-}
-
-/** @internal */
-export interface FlexFill<A = never> {
-  readonly _tag: "Fill";
-  readonly builder: (size: number) => Box.Box<A>;
-  readonly factor: number;
-}
-
-/** @internal */
-export type FlexChild<A = never> = FlexFixed<A> | FlexGrow<A> | FlexFill<A>;
-
-/** @internal */
-export interface FlexOptions {
-  readonly align?: Box.Alignment;
-  readonly gap?: number;
-}
 
 /*
  *  --------------------------------------------------------------------------------
@@ -48,13 +14,13 @@ export interface FlexOptions {
  */
 
 /** @internal */
-export const fixed = <A>(box: Box.Box<A>): FlexChild<A> => ({
+export const fixed = <A>(box: Box.Box<A>): Flex.Child<A> => ({
   _tag: "Fixed",
   box,
 });
 
 /** @internal */
-export const grow = <A>(box: Box.Box<A>, factor = 1): FlexChild<A> => ({
+export const grow = <A>(box: Box.Box<A>, factor = 1): Flex.Child<A> => ({
   _tag: "Grow",
   box,
   factor,
@@ -64,14 +30,14 @@ export const grow = <A>(box: Box.Box<A>, factor = 1): FlexChild<A> => ({
 export const fill = <A>(
   builder: (size: number) => Box.Box<A>,
   factor = 1
-): FlexChild<A> => ({
+): Flex.Child<A> => ({
   _tag: "Fill",
   builder,
   factor,
 });
 
 /** @internal */
-export const spacer = (factor = 1): FlexChild<never> => ({
+export const spacer = (factor = 1): Flex.Child<never> => ({
   _tag: "Fill",
   builder: (size: number) => internal.emptyBox(0, size),
   factor,
@@ -83,14 +49,14 @@ export const spacer = (factor = 1): FlexChild<never> => ({
  *  --------------------------------------------------------------------------------
  */
 
-const flexFactor = <A>(child: FlexChild<A>): number =>
+const flexFactor = <A>(child: Flex.Child<A>): number =>
   Match.value(child).pipe(
     Match.tag("Fixed", () => 0),
     Match.orElse((c) => c.factor)
   );
 
 const flexFixedSize = <A>(
-  child: FlexChild<A>,
+  child: Flex.Child<A>,
   measure: (box: Box.Box<A>) => number
 ): number =>
   Match.value(child).pipe(
@@ -99,7 +65,7 @@ const flexFixedSize = <A>(
   );
 
 const computeSizes = <A>(
-  children: ReadonlyArray<FlexChild<A>>,
+  children: ReadonlyArray<Flex.Child<A>>,
   available: number,
   totalFactor: number
 ): ReadonlyArray<number> => {
@@ -116,7 +82,7 @@ const computeSizes = <A>(
 
   const growIndices = pipe(
     children,
-    Arr.reduce<number[], FlexChild<A>>([], (acc, child, i) =>
+    Arr.reduce<number[], Flex.Child<A>>([], (acc, child, i) =>
       child._tag !== "Fixed" ? Arr.append(acc, i) : acc
     )
   );
@@ -134,7 +100,7 @@ const computeSizes = <A>(
 };
 
 const resolveFlexChildren = <A>(
-  children: ReadonlyArray<FlexChild<A>>,
+  children: ReadonlyArray<Flex.Child<A>>,
   available: number,
   totalFactor: number,
   alignFn: (box: Box.Box<A>, size: number) => Box.Box<A>
@@ -162,19 +128,19 @@ const resolveFlexChildren = <A>(
 export const row = dual<
   (
     containerWidth: number,
-    options?: FlexOptions
-  ) => <A>(self: ReadonlyArray<FlexChild<A>>) => Box.Box<A>,
+    options?: Flex.Options
+  ) => <A>(self: ReadonlyArray<Flex.Child<A>>) => Box.Box<A>,
   <A>(
-    self: ReadonlyArray<FlexChild<A>>,
+    self: ReadonlyArray<Flex.Child<A>>,
     containerWidth: number,
-    options?: FlexOptions
+    options?: Flex.Options
   ) => Box.Box<A>
 >(
   (args) => Arr.isArray(args[0]),
   <A>(
-    self: ReadonlyArray<FlexChild<A>>,
+    self: ReadonlyArray<Flex.Child<A>>,
     containerWidth: number,
-    options?: FlexOptions
+    options?: Flex.Options
   ): Box.Box<A> => {
     const align = options?.align ?? internal.top;
     const gap = options?.gap ?? 0;
@@ -208,19 +174,19 @@ export const row = dual<
 export const col = dual<
   (
     containerHeight: number,
-    options?: FlexOptions
-  ) => <A>(self: ReadonlyArray<FlexChild<A>>) => Box.Box<A>,
+    options?: Flex.Options
+  ) => <A>(self: ReadonlyArray<Flex.Child<A>>) => Box.Box<A>,
   <A>(
-    self: ReadonlyArray<FlexChild<A>>,
+    self: ReadonlyArray<Flex.Child<A>>,
     containerHeight: number,
-    options?: FlexOptions
+    options?: Flex.Options
   ) => Box.Box<A>
 >(
   (args) => Arr.isArray(args[0]),
   <A>(
-    self: ReadonlyArray<FlexChild<A>>,
+    self: ReadonlyArray<Flex.Child<A>>,
     containerHeight: number,
-    options?: FlexOptions
+    options?: Flex.Options
   ): Box.Box<A> => {
     const align = options?.align ?? internal.left;
     const gap = options?.gap ?? 0;

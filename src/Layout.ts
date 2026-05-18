@@ -18,59 +18,6 @@ import * as internalGrid from "./internal/grid.js";
 
 /*
  *  --------------------------------------------------------------------------------
- *  --  Flex Types  ----------------------------------------------------------------
- *  --------------------------------------------------------------------------------
- */
-
-/**
- * A flex child that occupies its intrinsic width/height.
- *
- * @category models
- */
-export interface FlexFixed<A = never> {
-  readonly _tag: "Fixed";
-  readonly box: Box.Box<A>;
-}
-
-/**
- * A flex child that grows to fill remaining space proportionally.
- *
- * @category models
- */
-export interface FlexGrow<A = never> {
-  readonly _tag: "Grow";
-  readonly box: Box.Box<A>;
-  readonly factor: number;
-}
-
-/**
- * A flex child that fills remaining space via a builder function.
- *
- * @category models
- */
-export interface FlexFill<A = never> {
-  readonly _tag: "Fill";
-  readonly builder: (size: number) => Box.Box<A>;
-  readonly factor: number;
-}
-
-/**
- * A child element in a flex layout.
- *
- * @category models
- */
-export type FlexChild<A = never> = FlexFixed<A> | FlexGrow<A> | FlexFill<A>;
-
-/**
- * @category models
- */
-export interface FlexOptions {
-  readonly align?: Box.Alignment;
-  readonly gap?: number;
-}
-
-/*
- *  --------------------------------------------------------------------------------
  *  --  Flex  ----------------------------------------------------------------------
  *  --------------------------------------------------------------------------------
  */
@@ -219,32 +166,58 @@ export const Flex = {
   col: internalFlex.col,
 } as const;
 
-/*
- *  --------------------------------------------------------------------------------
- *  --  Container Types  -----------------------------------------------------------
- *  --------------------------------------------------------------------------------
- */
-
-/**
- * Context passed to a container builder function with computed inner
- * dimensions after padding.
- *
- * @category models
- */
-export interface ContainerContext {
-  readonly width: number;
-  readonly height: number;
-  readonly innerWidth: number;
-  readonly innerHeight: number;
-}
-
 /**
  * @category models
  */
-export interface ContainerOptions {
-  readonly width: number;
-  readonly height?: number;
-  readonly padding?: number | readonly [number, number];
+export declare namespace Flex {
+  /**
+   * A flex child that occupies its intrinsic width/height.
+   *
+   * @category models
+   */
+  export interface Fixed<A = never> {
+    readonly _tag: "Fixed";
+    readonly box: Box.Box<A>;
+  }
+
+  /**
+   * A flex child that grows to fill remaining space proportionally.
+   *
+   * @category models
+   */
+  export interface Grow<A = never> {
+    readonly _tag: "Grow";
+    readonly box: Box.Box<A>;
+    readonly factor: number;
+  }
+
+  /**
+   * A flex child that fills remaining space via a builder function.
+   *
+   * @category models
+   */
+  export interface Fill<A = never> {
+    readonly _tag: "Fill";
+    readonly builder: (size: number) => Box.Box<A>;
+    readonly factor: number;
+  }
+
+  /**
+   * A child element in a flex layout.
+   *
+   * @category models
+   */
+  export type Child<A = never> = Fixed<A> | Grow<A> | Fill<A>;
+
+  /**
+   * Options for flex row/col layout.
+   *
+   * @category models
+   */
+  export interface Options {
+    readonly align?: Box.Alignment;
+    readonly gap?: number;
+  }
 }
 
 /*
@@ -283,32 +256,33 @@ export const Container = {
   make: internalContainer.make,
 } as const;
 
-/*
- *  --------------------------------------------------------------------------------
- *  --  Grid Types  ----------------------------------------------------------------
- *  --------------------------------------------------------------------------------
- */
-
 /**
  * @category models
  */
-export interface GridOptions {
-  readonly cols: number;
-  readonly colWidth: number;
-  readonly gap?: readonly [number, number];
-  readonly align?: Box.Alignment;
-  readonly stretch?: boolean;
-}
+export declare namespace Container {
+  /**
+   * Context passed to a container builder function with computed inner
+   * dimensions after padding.
+   *
+   * @category models
+   */
+  export interface Context {
+    readonly width: number;
+    readonly height: number;
+    readonly innerWidth: number;
+    readonly innerHeight: number;
+  }
 
-/**
- * @category models
- */
-export interface GridAutoOptions {
-  readonly minColWidth: number;
-  readonly maxColWidth?: number;
-  readonly gap?: number;
-  readonly align?: Box.Alignment;
-  readonly stretch?: boolean;
+  /**
+   * Options for creating a container.
+   *
+   * @category models
+   */
+  export interface Options {
+    readonly width: number;
+    readonly height?: number;
+    readonly padding?: number | readonly [number, number];
+  }
 }
 
 /*
@@ -377,3 +351,34 @@ export const Grid = {
    */
   auto: internalGrid.auto,
 } as const;
+
+/**
+ * @category models
+ */
+export declare namespace Grid {
+  /**
+   * Options for fixed-column grid layout.
+   *
+   * @category models
+   */
+  export interface Options {
+    readonly cols: number;
+    readonly colWidth: number;
+    readonly gap?: readonly [number, number];
+    readonly align?: Box.Alignment;
+    readonly stretch?: boolean;
+  }
+
+  /**
+   * Options for auto-column grid layout.
+   *
+   * @category models
+   */
+  export interface AutoOptions {
+    readonly minColWidth: number;
+    readonly maxColWidth?: number;
+    readonly gap?: number;
+    readonly align?: Box.Alignment;
+    readonly stretch?: boolean;
+  }
+}

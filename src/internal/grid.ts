@@ -4,31 +4,8 @@
 import { Array as Arr, pipe } from "effect";
 import { dual } from "effect/Function";
 import type * as Box from "../Box.js";
+import type { Grid } from "../Layout.js";
 import * as internal from "./box.js";
-
-/*
- *  --------------------------------------------------------------------------------
- *  --  Types  ---------------------------------------------------------------------
- *  --------------------------------------------------------------------------------
- */
-
-/** @internal */
-export interface GridOptions {
-  readonly cols: number;
-  readonly colWidth: number;
-  readonly gap?: readonly [number, number];
-  readonly align?: Box.Alignment;
-  readonly stretch?: boolean;
-}
-
-/** @internal */
-export interface GridAutoOptions {
-  readonly minColWidth: number;
-  readonly maxColWidth?: number;
-  readonly gap?: number;
-  readonly align?: Box.Alignment;
-  readonly stretch?: boolean;
-}
 
 /*
  *  --------------------------------------------------------------------------------
@@ -38,55 +15,64 @@ export interface GridAutoOptions {
 
 /** @internal */
 export const make = dual<
-  (options: GridOptions) => <A>(self: ReadonlyArray<Box.Box<A>>) => Box.Box<A>,
-  <A>(self: ReadonlyArray<Box.Box<A>>, options: GridOptions) => Box.Box<A>
->(2, <A>(self: ReadonlyArray<Box.Box<A>>, options: GridOptions): Box.Box<A> => {
-  const { cols, colWidth } = options;
-  const [hGap, vGap] = options.gap ?? [1, 0];
-  const align = options.align ?? internal.left;
-  const stretch = options.stretch ?? false;
+  (options: Grid.Options) => <A>(self: ReadonlyArray<Box.Box<A>>) => Box.Box<A>,
+  <A>(self: ReadonlyArray<Box.Box<A>>, options: Grid.Options) => Box.Box<A>
+>(
+  2,
+  <A>(self: ReadonlyArray<Box.Box<A>>, options: Grid.Options): Box.Box<A> => {
+    const { cols, colWidth } = options;
+    const [hGap, vGap] = options.gap ?? [1, 0];
+    const align = options.align ?? internal.left;
+    const stretch = options.stretch ?? false;
 
-  const sizeCell = (item: Box.Box<A>): Box.Box<A> =>
-    stretch
-      ? internal.alignHoriz(internal.minWidth(item, colWidth), align, colWidth)
-      : internal.alignHoriz(item, align, colWidth);
+    const sizeCell = (item: Box.Box<A>): Box.Box<A> =>
+      stretch
+        ? internal.alignHoriz(
+            internal.minWidth(item, colWidth),
+            align,
+            colWidth
+          )
+        : internal.alignHoriz(item, align, colWidth);
 
-  const padRow = (row: ReadonlyArray<Box.Box<A>>): ReadonlyArray<Box.Box<A>> =>
-    row.length < cols
-      ? Arr.appendAll(
-          row,
-          Arr.makeBy(cols - row.length, () => internal.emptyBox(1, colWidth))
+    const padRow = (
+      row: ReadonlyArray<Box.Box<A>>
+    ): ReadonlyArray<Box.Box<A>> =>
+      row.length < cols
+        ? Arr.appendAll(
+            row,
+            Arr.makeBy(cols - row.length, () => internal.emptyBox(1, colWidth))
+          )
+        : row;
+
+    return pipe(
+      Arr.chunksOf(self, cols),
+      Arr.map((chunk) =>
+        pipe(chunk, Arr.map(sizeCell), padRow, (cells) =>
+          internal.hsep(cells, hGap, internal.top)
         )
-      : row;
-
-  return pipe(
-    Arr.chunksOf(self, cols),
-    Arr.map((chunk) =>
-      pipe(chunk, Arr.map(sizeCell), padRow, (cells) =>
-        internal.hsep(cells, hGap, internal.top)
-      )
-    ),
-    (rows) => internal.vsep(rows, vGap, internal.left)
-  );
-});
+      ),
+      (rows) => internal.vsep(rows, vGap, internal.left)
+    );
+  }
+);
 
 /** @internal */
 export const auto = dual<
   (
     containerWidth: number,
-    options: GridAutoOptions
+    options: Grid.AutoOptions
   ) => <A>(self: ReadonlyArray<Box.Box<A>>) => Box.Box<A>,
   <A>(
     self: ReadonlyArray<Box.Box<A>>,
     containerWidth: number,
-    options: GridAutoOptions
+    options: Grid.AutoOptions
   ) => Box.Box<A>
 >(
   3,
   <A>(
     self: ReadonlyArray<Box.Box<A>>,
     containerWidth: number,
-    options: GridAutoOptions
+    options: Grid.AutoOptions
   ): Box.Box<A> => {
     const gap = options.gap ?? 1;
     const cols = Math.min(
