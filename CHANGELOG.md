@@ -1,5 +1,11 @@
 # effect-boxes
 
+## 0.15.2
+
+### Patch Changes
+
+- [#72](https://github.com/lloydrichards/effect-boxes/pull/72) [`88e4f32`](https://github.com/lloydrichards/effect-boxes/commit/88e4f32a54c4008f08cf92f1ce214587bfb094f1) Thanks [@lloydrichards](https://github.com/lloydrichards)! - resolve exactOptionalPropertyTypes error in autoGrid
+
 ## 0.15.1
 
 ### Patch Changes
