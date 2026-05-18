@@ -92,8 +92,8 @@ export const auto = dual<
       cols,
       colWidth,
       gap: [gap, 0],
-      align: options.align,
-      stretch: options.stretch,
+      ...(options.align !== undefined && { align: options.align }),
+      ...(options.stretch !== undefined && { stretch: options.stretch }),
     });
   }
 );

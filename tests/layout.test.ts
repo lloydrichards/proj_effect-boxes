@@ -216,6 +216,25 @@ describe("Grid.auto", () => {
     const result = Grid.auto(items, 100, { minColWidth: 10, maxColWidth: 20 });
     expect(Box.cols(result)).toBeLessThanOrEqual(100);
   });
+
+  it("works without optional align or stretch", () => {
+    const items = ["A", "B", "C", "D"].map(Box.text);
+    const result = Grid.auto(items, 30, { minColWidth: 10 });
+    expect(Box.rows(result)).toBeGreaterThan(0);
+    expect(Box.cols(result)).toBeGreaterThan(0);
+  });
+
+  it("works with explicit align option", () => {
+    const items = ["A", "B", "C", "D"].map(Box.text);
+    const result = Grid.auto(items, 30, { minColWidth: 10, align: Box.center1 });
+    expect(Box.rows(result)).toBeGreaterThan(0);
+  });
+
+  it("works with explicit stretch option", () => {
+    const items = ["A", "B", "C", "D"].map(Box.text);
+    const result = Grid.auto(items, 30, { minColWidth: 10, stretch: true });
+    expect(Box.rows(result)).toBeGreaterThan(0);
+  });
 });
 
 // ─── Render snapshot tests ───────────────────────────────────────────────────
