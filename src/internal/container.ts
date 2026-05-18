@@ -3,28 +3,8 @@
  */
 import { pipe } from "effect";
 import type * as Box from "../Box.js";
+import type { Container } from "../Layout.js";
 import * as internal from "./box.js";
-
-/*
- *  --------------------------------------------------------------------------------
- *  --  Types  ---------------------------------------------------------------------
- *  --------------------------------------------------------------------------------
- */
-
-/** @internal */
-export interface ContainerContext {
-  readonly width: number;
-  readonly height: number;
-  readonly innerWidth: number;
-  readonly innerHeight: number;
-}
-
-/** @internal */
-export interface ContainerOptions {
-  readonly width: number;
-  readonly height?: number;
-  readonly padding?: number | readonly [number, number];
-}
 
 /*
  *  --------------------------------------------------------------------------------
@@ -33,7 +13,7 @@ export interface ContainerOptions {
  */
 
 const resolvePadding = (
-  options: ContainerOptions
+  options: Container.Options
 ): readonly [number, number] => {
   if (options.padding == null) return [0, 0];
   return typeof options.padding === "number"
@@ -49,15 +29,15 @@ const resolvePadding = (
 
 /** @internal */
 export const make = <A>(
-  options: ContainerOptions,
-  builder: (ctx: ContainerContext) => Box.Box<A>
+  options: Container.Options,
+  builder: (ctx: Container.Context) => Box.Box<A>
 ): Box.Box<A> => {
   const height = options.height ?? 0;
   const [py, px] = resolvePadding(options);
   const innerWidth = Math.max(0, options.width - px * 2);
   const innerHeight = Math.max(0, height - py * 2);
 
-  const ctx: ContainerContext = {
+  const ctx: Container.Context = {
     width: options.width,
     height,
     innerWidth,

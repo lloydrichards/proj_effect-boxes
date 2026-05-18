@@ -1,7 +1,7 @@
 import { BunRuntime, BunServices } from "@effect/platform-bun";
 import { Cause, Console, Effect, Option } from "effect";
 import { Command, Flag, Prompt } from "effect/unstable/cli";
-
+import { Ansi, Box, Cmd } from "../src";
 import { main as progressBarDemo } from "./01-progress-bar";
 import { main as cursorDemo } from "./02-cursor";
 import { main as staticDemo } from "./03-static-demo";
@@ -12,7 +12,6 @@ import { main as textPromptDemo } from "./07-text-prompt";
 import { main as perlinDemo } from "./08-perlin-flow-field";
 import { main as logViewerDemo } from "./09-log-viewer";
 import { main as layoutDemo } from "./10-layout-demo";
-import { Ansi, Box, Cmd } from "../src";
 
 const demos = [
   {
