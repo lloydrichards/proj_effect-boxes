@@ -1,5 +1,11 @@
 # effect-boxes
 
+## 0.16.0
+
+### Minor Changes
+
+- [#74](https://github.com/lloydrichards/effect-boxes/pull/74) [`3ba78b1`](https://github.com/lloydrichards/effect-boxes/commit/3ba78b17498aea7d8ceb65c1a352bde0a7c5562d) Thanks [@lloydrichards](https://github.com/lloydrichards)! - add tsup to build out ESM build
+
 ## 0.15.2
 
 ### Patch Changes
