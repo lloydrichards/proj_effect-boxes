@@ -41,6 +41,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: npm --version
       - run: bun install --frozen-lockfile
+      - run: bun run build
       - name: Create Release PR or Publish
         id: changesets
         uses: changesets/action@v1
