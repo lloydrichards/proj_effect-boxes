@@ -1,5 +1,5 @@
 {
-  "extends": "@repo/tsconfig/base.json",
+  "extends": "@repo/config-typescript/base.json",
   "compilerOptions": {
     "types": ["bun"]
   },
