@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "clean": "git clean -xdf node_modules .cache .turbo",
     "build": "tsc --noEmit",
     "dev": "bun run 00-index.ts",
     "lint": "biome lint ."

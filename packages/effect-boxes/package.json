@@ -67,6 +67,7 @@
     "url": "https://github.com/lloydrichards/effect-boxes/issues"
   },
   "scripts": {
+    "clean": "git clean -xdf dist node_modules .cache .turbo tsconfig.tsbuildinfo",
     "build": "tsup && tsc --project tsconfig.build.json",
     "lint": "biome lint .",
     "test": "vitest run",
