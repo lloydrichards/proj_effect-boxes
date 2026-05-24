@@ -1,16 +1,17 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "files": {
-    "includes": [
-      "src/**/*.ts",
-      "scripts/**/*.ts",
-      "scratchpad/**/*.ts",
-      "tests/**/*.ts",
-      "*.json",
-      ".vscode/**/*.json"
-    ]
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
+    }
   },
   "formatter": {
+    "enabled": true,
     "indentStyle": "space",
     "lineWidth": 80
   },
