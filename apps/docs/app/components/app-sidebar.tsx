@@ -1,5 +1,4 @@
 import { Link, useLocation } from "react-router";
-import { navigation } from "~/nav.config";
 import {
   Sidebar,
   SidebarContent,
@@ -11,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "~/components/ui/sidebar";
+import { navigation } from "~/nav.config";
 
 export function AppSidebar() {
   const location = useLocation();

@@ -5,7 +5,7 @@
  * with visible Box content using combine, hcat, and combineAll.
  */
 
-import { Console, pipe } from "effect";
+import { Console } from "effect";
 import * as Ansi from "effect-boxes/Ansi";
 import * as Box from "effect-boxes/Box";
 

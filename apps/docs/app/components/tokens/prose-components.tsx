@@ -26,7 +26,7 @@ export const proseComponents = {
       className={cn(
         typefaceHeading2(),
         "mt-10 scroll-m-20 first:mt-0",
-        className,
+        className
       )}
       {...props}
     />
@@ -84,7 +84,7 @@ export const proseComponents = {
       className={cn(
         typefaceBody(),
         "[&>*]:text-muted-foreground mt-6 border-l-2 pl-6 italic",
-        className,
+        className
       )}
       {...props}
     />
@@ -139,7 +139,7 @@ export const proseComponents = {
     <th
       className={cn(
         "border px-4 py-2 text-left font-bold [&[align=center]]:text-center [&[align=right]]:text-right",
-        className,
+        className
       )}
       {...props}
     />
@@ -148,7 +148,7 @@ export const proseComponents = {
     <td
       className={cn(
         "border px-4 py-2 text-left [&[align=center]]:text-center [&[align=right]]:text-right",
-        className,
+        className
       )}
       {...props}
     />
@@ -157,7 +157,7 @@ export const proseComponents = {
     <pre
       className={cn(
         "bg-code text-code-foreground mb-4 overflow-x-auto rounded-md p-3 font-mono",
-        className,
+        className
       )}
       {...props}
     />
@@ -166,7 +166,7 @@ export const proseComponents = {
     <code
       className={cn(
         "bg-code text-code-foreground px-1 font-mono text-sm",
-        className,
+        className
       )}
       {...props}
     />
