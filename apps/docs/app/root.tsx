@@ -1,3 +1,4 @@
+import { MDXProvider } from "@mdx-js/react";
 import {
   isRouteErrorResponse,
   Links,
@@ -7,6 +8,8 @@ import {
   ScrollRestoration,
 } from "react-router";
 import { Sidebar } from "~/components/sidebar";
+import { ThemeToggle } from "~/components/theme-toggle";
+import { proseComponents } from "~/components/tokens/prose-components";
 import type { Route } from "./+types/root";
 import "./app.css";
 
@@ -23,21 +26,36 @@ export const links: Route.LinksFunction = () => [
   },
 ];
 
+const themeScript = `
+(function() {
+  var theme = localStorage.getItem('theme');
+  if (theme === 'dark' || (!theme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    document.documentElement.classList.add('dark');
+  }
+})();
+`;
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <Meta />
         <Links />
       </head>
       <body>
         <div className="flex min-h-screen">
           <Sidebar />
-          <main className="flex-1 max-w-4xl mx-auto px-8 py-12">
-            {children}
-          </main>
+          <div className="flex-1 flex flex-col">
+            <header className="flex justify-end px-8 py-4">
+              <ThemeToggle />
+            </header>
+            <main className="flex-1 max-w-4xl mx-auto px-8 py-8">
+              {children}
+            </main>
+          </div>
         </div>
         <ScrollRestoration />
         <Scripts />
@@ -47,7 +65,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <MDXProvider components={proseComponents}>
+      <Outlet />
+    </MDXProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
