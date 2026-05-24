@@ -1,0 +1,90 @@
+{
+  "name": "effect-boxes",
+  "version": "0.16.0",
+  "description": "A functional TypeScript library for creating and manipulating text-based box layouts using Effect.js patterns",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./Box": {
+      "types": "./dist/Box.d.ts",
+      "import": "./dist/Box.js"
+    },
+    "./Annotation": {
+      "types": "./dist/Annotation.d.ts",
+      "import": "./dist/Annotation.js"
+    },
+    "./Ansi": {
+      "types": "./dist/Ansi.d.ts",
+      "import": "./dist/Ansi.js"
+    },
+    "./Cmd": {
+      "types": "./dist/Cmd.d.ts",
+      "import": "./dist/Cmd.js"
+    },
+    "./Reactive": {
+      "types": "./dist/Reactive.d.ts",
+      "import": "./dist/Reactive.js"
+    },
+    "./Html": {
+      "types": "./dist/Html.d.ts",
+      "import": "./dist/Html.js"
+    },
+    "./Renderer": {
+      "types": "./dist/Renderer.d.ts",
+      "import": "./dist/Renderer.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist/**",
+    "src/**/*.ts"
+  ],
+  "keywords": [
+    "effect",
+    "typescript",
+    "functional",
+    "box-layout",
+    "terminal",
+    "ansi",
+    "text-rendering"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lloydrichards/effect-boxes.git",
+    "directory": "packages/effect-boxes"
+  },
+  "homepage": "https://github.com/lloydrichards/effect-boxes#readme",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/lloydrichards/effect-boxes/issues"
+  },
+  "scripts": {
+    "build": "tsup && tsc --project tsconfig.build.json",
+    "lint": "biome lint .",
+    "test": "vitest run",
+    "type-check": "tsc --noEmit",
+    "docs:check": "bun run scripts/check-tsdoc.ts",
+    "benchmark": "vitest bench --run"
+  },
+  "peerDependencies": {
+    "effect": ">=4.0.0-beta.59"
+  },
+  "devDependencies": {
+    "@microsoft/tsdoc": "^0.16.0",
+    "@microsoft/tsdoc-config": "^0.18.1",
+    "@repo/tsconfig": "workspace:*",
+    "@types/bun": "^1.3.14",
+    "@vitest/coverage-v8": "4.1.6",
+    "tinybench": "^6.0.2",
+    "tsup": "^8.5.1",
+    "vitest": "^4.1.6"
+  }
+}
