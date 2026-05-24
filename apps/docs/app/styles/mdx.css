@@ -1,0 +1,72 @@
+pre {
+  @apply border-none;
+}
+
+pre > code {
+  counter-reset: line;
+}
+
+code[data-line-numbers] {
+  counter-reset: line;
+}
+
+code[data-line-numbers] > [data-line]::before {
+  counter-increment: line;
+  content: counter(line);
+  @apply text-accent-foreground mr-4 inline-block w-4 text-right;
+}
+
+pre [data-line]:not([data-highlighted-line]) {
+  @apply border-l-2 border-l-transparent px-2 py-0.5;
+}
+
+[data-highlighted-line] {
+  @apply bg-accent/20 border-l-primary border-l-2 px-2 py-0.5;
+}
+
+[data-highlighted-chars] {
+  @apply bg-accent/20 rounded;
+}
+
+[data-highlighted-line-id="success"] {
+  @apply border-l-success bg-success/20 !text-success;
+}
+[data-highlighted-line-id="warning"] {
+  @apply border-l-warning bg-warning/20 !text-warning;
+}
+[data-highlighted-line-id="destructive"] {
+  @apply border-l-destructive bg-destructive/20 !text-destructive;
+}
+[data-highlighted-line-id="info"] {
+  @apply border-l-info bg-info/20 !text-info;
+}
+
+[data-chars-id] {
+  @apply border-b-1 px-1 py-0.5 shadow-none;
+}
+
+[data-chars-id] span {
+  @apply !text-inherit;
+}
+
+[data-chars-id="success"] {
+  @apply border-b-success bg-success/20 !text-success font-bold;
+}
+[data-chars-id="warning"] {
+  @apply border-b-warning bg-warning/20 !text-warning font-bold;
+}
+[data-chars-id="destructive"] {
+  @apply border-b-destructive bg-destructive/20 !text-destructive font-bold;
+}
+[data-chars-id="info"] {
+  @apply border-b-info bg-info/20 !text-info font-bold;
+}
+
+[data-rehype-pretty-code-title] {
+  @apply bg-accent text-accent-foreground rounded-t-lg px-3 py-2 text-sm font-semibold;
+}
+
+figure[data-rehype-pretty-code-figure]:has(> [data-rehype-pretty-code-title])
+  pre {
+  @apply !rounded-t-none;
+}
