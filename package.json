@@ -1,102 +1,27 @@
 {
-  "name": "effect-boxes",
-  "version": "0.16.0",
-  "description": "A functional TypeScript library for creating and manipulating text-based box layouts using Effect.js patterns",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./Box": {
-      "types": "./dist/Box.d.ts",
-      "import": "./dist/Box.js"
-    },
-    "./Annotation": {
-      "types": "./dist/Annotation.d.ts",
-      "import": "./dist/Annotation.js"
-    },
-    "./Ansi": {
-      "types": "./dist/Ansi.d.ts",
-      "import": "./dist/Ansi.js"
-    },
-    "./Cmd": {
-      "types": "./dist/Cmd.d.ts",
-      "import": "./dist/Cmd.js"
-    },
-    "./Reactive": {
-      "types": "./dist/Reactive.d.ts",
-      "import": "./dist/Reactive.js"
-    },
-    "./Html": {
-      "types": "./dist/Html.d.ts",
-      "import": "./dist/Html.js"
-    },
-    "./Renderer": {
-      "types": "./dist/Renderer.d.ts",
-      "import": "./dist/Renderer.js"
-    }
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "files": [
-    "dist/**",
-    "src/**/*.ts"
-  ],
-  "keywords": [
-    "effect",
-    "typescript",
-    "functional",
-    "box-layout",
-    "terminal",
-    "ansi",
-    "text-rendering"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/lloydrichards/effect-boxes.git"
-  },
-  "homepage": "https://github.com/lloydrichards/effect-boxes#readme",
-  "license": "BSD-3-Clause",
-  "bugs": {
-    "url": "https://github.com/lloydrichards/effect-boxes/issues"
-  },
+  "name": "effect-boxes-monorepo",
+  "private": true,
+  "workspaces": ["packages/*", "apps/*"],
   "scripts": {
-    "start": "bun run src/main.ts",
-    "clean": "git clean -xdf .cache dist node_modules tsconfig.tsbuildinfo",
-    "lint": "biome lint",
-    "docs:check": "bun run scripts/check-tsdoc.ts",
-    "type-check": "tsc --noEmit",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "type-check": "turbo run type-check",
+    "docs:check": "turbo run docs:check",
+    "dev": "turbo run dev",
+    "benchmark": "turbo run benchmark",
     "format": "biome check --write",
-    "test": "vitest run",
-    "scratch": "bun run scratchpad/00-index.ts",
-    "benchmark": "vitest bench --run",
-    "benchmark:quick": "vitest bench benchmarks/quick.bench.ts --run",
-    "postinstall": "effect-language-service patch",
-    "build": "tsup && tsc --project tsconfig.build.json",
-    "prepack": "bun run type-check && bun run build"
-  },
-  "peerDependencies": {
-    "effect": ">=4.0.0-beta.59"
+    "clean": "turbo run clean && git clean -xdf node_modules .cache .turbo dist tsconfig.tsbuildinfo",
+    "postinstall": "effect-language-service patch"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.15",
     "@changesets/changelog-github": "^0.7.0",
     "@changesets/cli": "^2.31.0",
     "@effect/language-service": "^0.86.1",
-    "@effect/platform-bun": "4.0.0-beta.66",
-    "@microsoft/tsdoc": "^0.16.0",
-    "@microsoft/tsdoc-config": "^0.18.1",
-    "@types/bun": "^1.3.14",
-    "@vitest/coverage-v8": "4.1.6",
     "effect": "4.0.0-beta.66",
-    "tinybench": "^6.0.2",
-    "tsup": "^8.5.1",
-    "typescript": "^6.0.3",
-    "vitest": "^4.1.6"
-  }
+    "turbo": "^2.5.4",
+    "typescript": "^6.0.3"
+  },
+  "packageManager": "bun@1.2.17"
 }
