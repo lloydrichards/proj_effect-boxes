@@ -1,0 +1,3 @@
+# Common Patterns
+
+Coming soon.

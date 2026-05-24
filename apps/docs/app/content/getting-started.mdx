@@ -1,0 +1,40 @@
+# Getting Started
+
+## Installation
+
+```bash
+npm install effect-boxes effect
+```
+
+## Basic Usage
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import { pipe } from "effect"
+
+// Create a simple text box
+const hello = Box.text("Hello, World!")
+
+// Render to string
+console.log(Box.render(hello))
+// Hello, World!
+```
+
+## Core Concepts
+
+effect-boxes is built on three modules:
+
+- **Box** — the core data type representing a rectangular block of text
+- **Annotation** — a system for attaching metadata (like styling) to regions
+- **Ansi** — terminal rendering with ANSI escape codes
+
+## Composition
+
+Boxes compose horizontally and vertically:
+
+```typescript
+const row = Box.hcat([Box.text("Left"), Box.text("Right")], Box.top)
+const col = Box.vcat([Box.text("Top"), Box.text("Bottom")], Box.left)
+```
+
+All operations are pure — they return new boxes without mutating the originals.

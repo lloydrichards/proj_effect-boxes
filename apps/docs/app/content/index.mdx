@@ -1,0 +1,37 @@
+# effect-boxes
+
+A functional text layout library for composing terminal UI with Effect.
+
+Build complex text layouts by composing simple, pure functions. Leverage
+Effect's utilities for type-safe, pipeable box operations with ANSI rendering
+support.
+
+## Features
+
+- **Pure functional composition** — all operations return new values
+- **Effect integration** — Pipeable, Equal, Hash interfaces
+- **ANSI rendering** — terminal output with color and styling
+- **Annotation system** — attach metadata to box regions
+- **Flexible alignment** — horizontal and vertical composition with alignment control
+
+## Installation
+
+```bash
+npm install effect-boxes
+```
+
+## Quick Example
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import { pipe } from "effect"
+
+const layout = pipe(
+  Box.text("Hello, World!"),
+  Box.moveRight(5),
+  Box.moveDown(2),
+  Box.alignHoriz(Box.center1, 40)
+)
+
+console.log(Box.render(layout))
+```

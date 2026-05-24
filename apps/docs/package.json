@@ -1,6 +1,33 @@
 {
   "name": "@effect-boxes/docs",
-  "version": "0.0.0",
-  "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "build": "react-router build",
+    "dev": "react-router dev",
+    "lint": "biome lint .",
+    "start": "react-router-serve ./build/server/index.js",
+    "type-check": "react-router typegen && tsc"
+  },
+  "dependencies": {
+    "@react-router/node": "7.15.1",
+    "@react-router/serve": "7.15.1",
+    "isbot": "^5.1.36",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-router": "7.15.1"
+  },
+  "devDependencies": {
+    "@mdx-js/rollup": "^3.1.1",
+    "@react-router/dev": "7.15.1",
+    "@tailwindcss/vite": "^4.2.2",
+    "@types/mdx": "^2.0.13",
+    "@types/node": "^22",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "rehype-pretty-code": "^0.14.3",
+    "shiki": "^4.1.0",
+    "tailwindcss": "^4.2.2",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.3"
+  }
 }
