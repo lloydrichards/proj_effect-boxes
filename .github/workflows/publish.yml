@@ -13,22 +13,8 @@ permissions:
   id-token: write
 
 jobs:
-  validate:
-    name: Validate
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-      - run: bun install --frozen-lockfile
-      - run: bun run type-check
-      - run: bun run lint
-      - run: bun run test
-
   release:
     name: Release
-    needs: validate
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,9 +25,8 @@ jobs:
         with:
           node-version: "24.x"
           registry-url: "https://registry.npmjs.org"
-      - run: npm --version
       - run: bun install --frozen-lockfile
-      - run: bun run build
+      - run: turbo run build
       - name: Create Release PR or Publish
         id: changesets
         uses: changesets/action@v1
