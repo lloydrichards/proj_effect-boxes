@@ -5,8 +5,8 @@
  * alignment modes, horizontal bar charts, and positional offsets (move*).
  */
 import { Effect } from "effect";
-import * as Ansi from "../src/Ansi";
-import * as Box from "../src/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import * as Box from "effect-boxes/Box";
 
 // ---------------------------------------------------------------------------
 // Helpers

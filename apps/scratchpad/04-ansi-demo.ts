@@ -2,8 +2,8 @@
  * ANSI color showcase demo for documentation screenshot
  */
 import { Effect, pipe } from "effect";
-import * as Ansi from "../src/Ansi";
-import * as Box from "../src/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import * as Box from "effect-boxes/Box";
 
 const TABLE_WIDTH = 80;
 

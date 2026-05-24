@@ -7,7 +7,7 @@
 import { BunServices } from "@effect/platform-bun";
 import { Data, Effect, Match, Terminal } from "effect";
 import { Prompt } from "effect/unstable/cli";
-import { Ansi, Box, Cmd, Container, Flex, Grid } from "../src";
+import { Ansi, Box, Cmd, Container, Flex, Grid } from "effect-boxes";
 
 // ---------------------------------------------------------------------------
 // Helpers

@@ -1,7 +1,7 @@
 import { BunRuntime, BunServices } from "@effect/platform-bun";
 import { Cause, Console, Effect, Option } from "effect";
 import { Command, Flag, Prompt } from "effect/unstable/cli";
-import { Ansi, Box, Cmd } from "../src";
+import { Ansi, Box, Cmd } from "effect-boxes";
 import { main as progressBarDemo } from "./01-progress-bar";
 import { main as cursorDemo } from "./02-cursor";
 import { main as staticDemo } from "./03-static-demo";
