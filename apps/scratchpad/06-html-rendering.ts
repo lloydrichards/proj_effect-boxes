@@ -6,9 +6,9 @@
  */
 
 import { Console, Effect, pipe } from "effect";
-import * as Box from "../src/Box";
-import * as Html from "../src/Html";
-import * as Renderer from "../src/Renderer";
+import * as Box from "effect-boxes/Box";
+import * as Html from "effect-boxes/Html";
+import * as Renderer from "effect-boxes/Renderer";
 
 export const main = Effect.gen(function* () {
   // Create blog header

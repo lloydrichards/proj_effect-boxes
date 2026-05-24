@@ -9,10 +9,10 @@ import {
   type Terminal,
 } from "effect";
 import { Prompt } from "effect/unstable/cli";
-import * as Ansi from "../src/Ansi";
-import * as Box from "../src/Box";
-import * as Cmd from "../src/Cmd";
-import * as Reactive from "../src/Reactive";
+import * as Ansi from "effect-boxes/Ansi";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
+import * as Reactive from "effect-boxes/Reactive";
 
 // ----------------------------------------------------------------------------
 // Types

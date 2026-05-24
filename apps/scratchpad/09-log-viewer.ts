@@ -1,9 +1,9 @@
 import { BunServices } from "@effect/platform-bun";
 import { Console, Data, Effect, Match, pipe, Terminal } from "effect";
 import { Prompt } from "effect/unstable/cli";
-import * as Ansi from "../src/Ansi";
-import * as Box from "../src/Box";
-import * as Cmd from "../src/Cmd";
+import * as Ansi from "effect-boxes/Ansi";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
 
 // ----------------------------------------------------------------------------
 // Types
