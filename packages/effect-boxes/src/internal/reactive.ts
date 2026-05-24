@@ -20,8 +20,8 @@ export const isReactive = (value: unknown): value is Reactive.Reactive =>
   value !== null &&
   "_tag" in value &&
   "id" in value &&
-  (value as Record<PropertyKey, unknown>)["_tag"] === "ReactiveId" &&
-  typeof (value as Record<PropertyKey, unknown>)["id"] === "string";
+  (value as Record<PropertyKey, unknown>)._tag === "ReactiveId" &&
+  typeof (value as Record<PropertyKey, unknown>).id === "string";
 
 /** @internal */
 export const make = (id: string): Reactive.Reactive => ({

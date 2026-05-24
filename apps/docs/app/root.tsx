@@ -8,9 +8,9 @@ import {
   ScrollRestoration,
 } from "react-router";
 import { AppSidebar } from "~/components/app-sidebar";
-import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { proseComponents } from "~/components/tokens/prose-components";
+import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import type { Route } from "./+types/root";
 import "./app.css";
 
@@ -43,6 +43,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {/* biome-ignore lint/security/noDangerouslySetInnerHtml: theme script must be inline to prevent FOUC */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <Meta />
         <Links />

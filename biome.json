@@ -44,5 +44,17 @@
         "noSkippedTests": "warn"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": ["apps/scratchpad/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noNonNullAssertion": "off"
+          }
+        }
+      }
+    }
+  ]
 }

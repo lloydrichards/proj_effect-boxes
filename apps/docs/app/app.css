@@ -2,6 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/jetbrains-mono";
+@import "./styles/mdx.css";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -120,7 +121,7 @@
   --destructive: oklch(0.704 0.191 22.216);
   --warning: oklch(0.82 0.17 84.429);
   --warning-foreground: oklch(0.141 0.005 285.823);
-  --success: oklch(0.648 0.15 160.0);
+  --success: oklch(0.648 0.15 160);
   --success-foreground: oklch(0.141 0.005 285.823);
   --info: oklch(0.7 0.1 249.532);
   --info-foreground: oklch(0.141 0.005 285.823);
@@ -155,5 +156,3 @@
     @apply font-mono;
   }
 }
-
-@import "./styles/mdx.css";

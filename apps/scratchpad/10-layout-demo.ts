@@ -585,7 +585,6 @@ const sections: ReadonlyArray<{
 ];
 
 const buildFrame = (w: number, h: number, sectionIndex: number): string => {
-  // biome-ignore lint/style/noNonNullAssertion: index is bounds-checked by process handler
   const section = sections[sectionIndex]!;
 
   // Navigation dots

@@ -128,7 +128,7 @@ describe("Flex.col", () => {
 
 describe("Container", () => {
   it("enforces width on output", () => {
-    const result = Container.make({ width: 40 }, (ctx) => Box.text("short"));
+    const result = Container.make({ width: 40 }, (_ctx) => Box.text("short"));
     expect(Box.cols(result)).toBe(40);
   });
 
@@ -156,8 +156,8 @@ describe("Container", () => {
       ctx = c;
       return Box.text("x");
     });
-    expect(ctx!.innerWidth).toBe(24); // 30 - 3*2
-    expect(ctx!.innerHeight).toBe(16); // 20 - 2*2
+    expect(ctx?.innerWidth).toBe(24); // 30 - 3*2
+    expect(ctx?.innerHeight).toBe(16); // 20 - 2*2
   });
 });
 
