@@ -226,7 +226,10 @@ describe("Grid.auto", () => {
 
   it("works with explicit align option", () => {
     const items = ["A", "B", "C", "D"].map(Box.text);
-    const result = Grid.auto(items, 30, { minColWidth: 10, align: Box.center1 });
+    const result = Grid.auto(items, 30, {
+      minColWidth: 10,
+      align: Box.center1,
+    });
     expect(Box.rows(result)).toBeGreaterThan(0);
   });
 
