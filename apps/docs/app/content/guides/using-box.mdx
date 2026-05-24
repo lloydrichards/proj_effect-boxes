@@ -1,0 +1,40 @@
+# Using Box
+
+The `Box` module is the core of effect-boxes. A Box represents a rectangular
+block of text that can be composed, aligned, and transformed.
+
+## Creating Boxes
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import { pipe } from "effect"
+
+// Create a box from text
+const hello = Box.text("Hello, World!")
+
+// Create an empty box
+const spacer = Box.emptyBox(1, 10)
+```
+
+## Composing Boxes
+
+Boxes can be composed horizontally and vertically:
+
+```typescript
+// Horizontal composition
+const row = Box.hcat([Box.text("Left"), Box.text("Right")], Box.top)
+
+// Vertical composition
+const col = Box.vcat([Box.text("Top"), Box.text("Bottom")], Box.left)
+```
+
+## Alignment
+
+Control how boxes align when composed:
+
+```typescript
+const centered = pipe(
+  Box.text("Hello"),
+  Box.alignHoriz(Box.center1, 20)
+)
+```
