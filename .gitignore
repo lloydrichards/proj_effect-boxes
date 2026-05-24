@@ -4,6 +4,7 @@ node_modules
 # output
 out
 dist
+apps/docs/build
 *.tgz
 
 # code coverage

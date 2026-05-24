@@ -7,7 +7,8 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
-import { Sidebar } from "~/components/sidebar";
+import { AppSidebar } from "~/components/app-sidebar";
+import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { proseComponents } from "~/components/tokens/prose-components";
 import type { Route } from "./+types/root";
@@ -46,17 +47,19 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Links />
       </head>
       <body>
-        <div className="flex min-h-screen">
-          <Sidebar />
-          <div className="flex-1 flex flex-col">
-            <header className="flex justify-end px-8 py-4">
+        <SidebarProvider>
+          <AppSidebar />
+          <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+            <header className="flex items-center gap-2 px-8 py-4">
+              <SidebarTrigger />
+              <div className="flex-1" />
               <ThemeToggle />
             </header>
-            <main className="flex-1 max-w-4xl mx-auto px-8 py-8">
+            <main className="flex-1 w-full max-w-4xl mx-auto px-8 py-8 overflow-x-auto">
               {children}
             </main>
           </div>
-        </div>
+        </SidebarProvider>
         <ScrollRestoration />
         <Scripts />
       </body>
