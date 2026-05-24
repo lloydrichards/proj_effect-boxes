@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@effect/platform-bun": "4.0.0-beta.66",
-    "@repo/tsconfig": "workspace:*",
+    "@repo/config-typescript": "workspace:*",
     "@types/bun": "^1.3.14"
   }
 }
