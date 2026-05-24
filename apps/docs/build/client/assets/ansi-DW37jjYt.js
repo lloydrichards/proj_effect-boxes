@@ -1,2 +1,0 @@
-import{k as e,t}from"./jsx-runtime-Bo3LOdBQ.js";var n=t();function r(e){let t={h1:`h1`,p:`p`,...e.components};return(0,n.jsxs)(n.Fragment,{children:[(0,n.jsx)(t.h1,{children:`Ansi API Reference`}),`
-`,(0,n.jsx)(t.p,{children:`Coming soon.`})]})}var i=e(function(e={}){let{wrapper:t}=e.components||{};return t?(0,n.jsx)(t,{...e,children:(0,n.jsx)(r,{...e})}):r(e)});export{i as default};
