@@ -1,4 +1,4 @@
-# Getting Started
+# Getting started
 
 ## Installation
 
@@ -6,7 +6,7 @@
 npm install effect-boxes effect
 ```
 
-## Basic Usage
+## Basic usage
 
 ```typescript
 import * as Box from "effect-boxes/Box"
@@ -20,21 +20,19 @@ console.log(Box.render(hello))
 // Hello, World!
 ```
 
-## Core Concepts
-
-effect-boxes is built on three modules:
-
-- **Box** — the core data type representing a rectangular block of text
-- **Annotation** — a system for attaching metadata (like styling) to regions
-- **Ansi** — terminal rendering with ANSI escape codes
-
 ## Composition
 
 Boxes compose horizontally and vertically:
 
 ```typescript
-const row = Box.hcat([Box.text("Left"), Box.text("Right")], Box.top)
-const col = Box.vcat([Box.text("Top"), Box.text("Bottom")], Box.left)
+const row = Box.hcat([Box.text("Left"), Box.text("Right")], Box.top);
+const col = Box.vcat([Box.text("Top"), Box.text("Bottom")], Box.left);
 ```
 
-All operations are pure — they return new boxes without mutating the originals.
+All operations are pure: they return new boxes without mutating the originals.
+
+## Next steps
+
+- [What is Box?](/what-is-box) for the mental model and how the library works
+- [Using Box](/guides/using-box) for the full API walkthrough
+- [Directory Tree tutorial](/tutorials/directory-tree) to build something real
