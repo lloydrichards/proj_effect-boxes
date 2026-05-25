@@ -7,15 +7,22 @@ Output media/demo.gif
 Set Shell "zsh"
 Set FontSize 16
 Set Width 1000
-Set Height 620
+Set Height 350
 Set TypingSpeed 60ms
 Set WindowBar Colorful
 Set Padding 20
 
+# --- Setup: cd into scratchpad app ---
+Hide
+Type "cd apps/scratchpad" Enter
+Sleep 300ms
+Type "clear" Enter
+Sleep 300ms
+Show
 
 # Run the demo
 Sleep 1s
-Type "bun run scratch -- --run 1"
+Type "bun dev -- --run 1"
 Sleep 300ms
 Enter
 
