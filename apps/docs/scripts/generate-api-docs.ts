@@ -19,10 +19,6 @@ import {
   pipe,
   String as Str,
 } from "effect";
-import {
-  ChildProcess,
-  ChildProcessSpawner,
-} from "effect/unstable/process";
 
 // --- Pure helpers ---
 
@@ -93,7 +89,6 @@ const toOutputName = (file: string): string =>
 const program = Effect.gen(function* () {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  const spawner = yield* ChildProcessSpawner.ChildProcessSpawner;
 
   const root = path.resolve(import.meta.dirname, "../../..");
   const pkg = path.join(root, "packages/effect-boxes");
@@ -104,19 +99,32 @@ const program = Effect.gen(function* () {
   yield* Console.log("Running @effect/docgen...");
 
   const pathEnv = [
-    path.join(root, "node_modules/.bin"),
     path.join(pkg, "node_modules/.bin"),
+    path.join(root, "node_modules/.bin"),
     process.env.PATH ?? "",
   ].join(":");
 
-  const cmd = ChildProcess.make({
-    cwd: pkg,
-    env: { ...process.env, PATH: pathEnv },
-  })`./node_modules/.bin/docgen`;
+  const result = yield* Effect.tryPromise({
+    try: () => {
+      const proc = Bun.spawn(["./node_modules/.bin/docgen"], {
+        cwd: pkg,
+        env: { ...process.env, PATH: pathEnv },
+        stdout: "pipe",
+        stderr: "pipe",
+      });
+      return proc.exited.then(async (code) => ({
+        code,
+        stdout: await new Response(proc.stdout).text(),
+        stderr: await new Response(proc.stderr).text(),
+      }));
+    },
+    catch: (e) => ({ _tag: "DocgenSpawnError" as const, cause: e }),
+  });
 
-  const exitResult = yield* spawner.exitCode(cmd).pipe(Effect.exit);
-  if (!exitResult._tag || exitResult._tag === "Failure") {
-    yield* Console.log("Warning: docgen failed, will use existing API docs if available.");
+  if (result.code !== 0) {
+    yield* Console.log(`Warning: docgen exited with code ${result.code}`);
+    if (result.stderr) yield* Console.log(result.stderr);
+    if (result.stdout) yield* Console.log(result.stdout);
   }
 
   // 2. Ensure output directory exists

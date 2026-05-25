@@ -1,3 +1,56 @@
+/**
+ * Core box data type and layout operations for text-based rendering.
+ *
+ * The `Box` module provides an immutable 2D text layout system inspired by
+ * Haskell's `boxes` library. Boxes are rectangular blocks of text that can
+ * be composed horizontally, vertically, aligned, and annotated with
+ * arbitrary metadata.
+ *
+ * ## Mental model
+ *
+ * - **`Box<A>`** — a rectangular grid of characters with optional annotations of type `A`
+ * - All operations are **pure** — they return new boxes, never mutate
+ * - Most functions are **dual** — support both data-first and pipe-based usage
+ * - Boxes implement `Equal`, `Hash`, and `Pipeable` from Effect
+ *
+ * ## Common tasks
+ *
+ * - **Create** a box: {@link text}, {@link emptyBox}, {@link char}, {@link nullBox}
+ * - **Combine** boxes: {@link hcat}, {@link vcat}, {@link hAppend}, {@link vAppend}
+ * - **Align** content: {@link alignHoriz}, {@link alignVert}, {@link align}
+ * - **Move** position: {@link moveRight}, {@link moveDown}, {@link moveLeft}, {@link moveUp}
+ * - **Add borders**: {@link border}, {@link singleBorder}, {@link roundedBorder}
+ * - **Render** to string: {@link render}, {@link renderPlain}
+ *
+ * ## Gotchas
+ *
+ * - {@link text} trims trailing spaces per line
+ * - {@link nullBox} is the identity element for {@link hcat} and {@link vcat}
+ * - Alignment constants ({@link top}, {@link bottom}, {@link center1}, {@link center2}) are shared across horizontal and vertical operations
+ *
+ * ## Quickstart
+ *
+ * **Example** (Composing a simple layout)
+ *
+ * ```ts
+ * import { pipe } from "effect"
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const layout = pipe(
+ *   Box.text("Hello"),
+ *   Box.moveRight(2),
+ *   Box.alignHoriz(Box.center1, 20)
+ * )
+ * console.log(Box.render(layout))
+ * ```
+ *
+ * @see {@link text} — create a box from a string
+ * @see {@link hcat} — horizontal concatenation
+ * @see {@link vcat} — vertical concatenation
+ * @see {@link render} — convert to string
+ *
+ * @module
+ */
 import type { Effect, Types } from "effect";
 import type * as Equal from "effect/Equal";
 import type * as Hash from "effect/Hash";
@@ -1311,7 +1364,7 @@ export const renderPlainSync: <A>(self: Box<A>) => string =
  * import * as Renderer from "effect-boxes/Renderer"
  *
  * const box = Box.text("Hello, Effect!")
- * const program = Box.render(box).pipe(Effect.provide(Renderer.PlainRendererLive))
+ * const program = box.pipe(Box.render(), Effect.provide(Renderer.PlainRendererLive))
  *
  * Effect.runPromise(program).then((result) => {
  *   console.log(result)

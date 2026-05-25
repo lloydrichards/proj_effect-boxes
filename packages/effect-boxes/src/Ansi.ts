@@ -1,3 +1,29 @@
+/**
+ * ANSI terminal styling and colored box rendering.
+ *
+ * Provides a complete set of ANSI escape code utilities for styling text
+ * in terminal environments. Includes foreground/background colors (standard,
+ * bright, 256-color, and RGB), text attributes (bold, italic, underline, etc.),
+ * and a renderer that converts annotated boxes into ANSI-escaped strings.
+ *
+ * ## Common tasks
+ *
+ * - **Style text**: {@link bold}, {@link italic}, {@link underlined}
+ * - **Foreground colors**: {@link red}, {@link green}, {@link blue}, {@link colorRGB}
+ * - **Background colors**: {@link bgRed}, {@link bgGreen}, {@link bgColorHex}
+ * - **Combine styles**: {@link combine}
+ * - **Render**: {@link renderAnnotatedBox}
+ *
+ * ## Gotchas
+ *
+ * - Styles are combined additively — later attributes override earlier ones of the same kind
+ * - {@link truncatePreservingAnsi} handles width-truncation without breaking escape sequences
+ *
+ * @see {@link renderAnnotatedBox} — render a styled box to terminal string
+ * @see {@link combine} — merge multiple styles
+ *
+ * @module
+ */
 import type { Annotation } from "./Annotation";
 import type { Box } from "./Box";
 import * as internal from "./internal/ansi";

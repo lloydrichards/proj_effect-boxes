@@ -1,3 +1,22 @@
+/**
+ * Pluggable rendering pipeline for converting boxes to output strings.
+ *
+ * The `Renderer` module defines a `TextProcessor` interface and provides
+ * Effect layers for plain text, ANSI, and HTML rendering. Use this when
+ * you need configurable or effectful rendering (e.g., tracked rendering
+ * with position maps).
+ *
+ * ## Common tasks
+ *
+ * - **Render a box**: {@link render}, {@link renderBoxToLines}
+ * - **Use a layer**: {@link PlainRendererLive}, {@link AnsiRendererLive}, {@link HtmlRendererLive}
+ * - **Track positions**: {@link tracked}
+ *
+ * @see {@link render} — main rendering function
+ * @see {@link tracked} — rendering with position tracking
+ *
+ * @module
+ */
 import { type Effect, Layer } from "effect";
 import type * as Box from "./Box";
 import * as internal from "./internal/renderer";
