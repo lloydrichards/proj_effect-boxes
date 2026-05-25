@@ -1,5 +1,10 @@
 import mdx from "@mdx-js/rollup";
 import { reactRouter } from "@react-router/dev/vite";
+import {
+  transformerNotationDiff,
+  transformerNotationFocus,
+  transformerNotationHighlight,
+} from "@shikijs/transformers";
 import tailwindcss from "@tailwindcss/vite";
 import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
@@ -17,8 +22,16 @@ export default defineConfig({
         [
           rehypePrettyCode,
           {
-            theme: "github-dark",
+            theme: {
+              dark: "github-dark",
+              light: "github-light",
+            },
             keepBackground: false,
+            transformers: [
+              transformerNotationDiff(),
+              transformerNotationHighlight(),
+              transformerNotationFocus(),
+            ],
           },
         ],
       ],
