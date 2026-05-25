@@ -12,10 +12,17 @@ Set TypingSpeed 60ms
 Set WindowBar Colorful
 Set Padding 20
 
+# --- Setup: cd into scratchpad app ---
+Hide
+Type "cd apps/scratchpad" Enter
+Sleep 300ms
+Type "clear" Enter
+Sleep 300ms
+Show
 
 # Run the demo
 Sleep 1s
-Type "bun run scratch --run 10"
+Type "bun dev -- --run 10"
 Sleep 300ms
 Enter
 

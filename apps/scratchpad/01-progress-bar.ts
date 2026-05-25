@@ -7,22 +7,26 @@ import {
   Ref,
   Schedule,
   Stream,
+  Terminal,
 } from "effect";
 import * as Ansi from "effect-boxes/Ansi";
 import * as Box from "effect-boxes/Box";
 import * as Cmd from "effect-boxes/Cmd";
+import { Container, Flex } from "effect-boxes/Layout";
 import * as Reactive from "effect-boxes/Reactive";
 
 const display = (msg: string) => Effect.sync(() => process.stdout.write(msg));
 
-const StatusBar = (status: string, counter: number, time: string) =>
-  pipe(
+const StatusBar = (status: string, counter: number, time: string, width: number) =>
+  Flex.row(
     [
-      Box.text(`Status: ${status}`),
-      Box.text(`Counter: ${counter}`),
-      Box.text(`⏰ ${time}`),
+      Flex.fixed(Box.text(`Status: ${status}`)),
+      Flex.fixed(Box.text("  |  ")),
+      Flex.fixed(Box.text(`Counter: ${counter}`)),
+      Flex.fixed(Box.text("  |  ")),
+      Flex.fixed(Box.text(`⏰ ${time}`)),
     ],
-    Box.punctuateH(Box.left, Box.text("  |  "))
+    width
   );
 
 const ProgressBar = (progress: number, total: number, width: number) => {
@@ -53,11 +57,16 @@ const formatTime = (timestamp: number): string => {
 
 export const main = Effect.gen(function* () {
   // Clear screen and hide cursor for cleaner output
-  yield* display(Box.renderPrettySync(Cmd.clearScreen));
-  yield* display(Box.renderPrettySync(Cmd.cursorHide));
+  yield* display(Box.renderPrettySync(Box.combine(Cmd.clearScreen,Cmd.cursorHide)));
+
+  const terminal = yield* Terminal.Terminal
 
   const Complete = 1000;
-  const ProgressBarWidth = 69;
+  const ContainerWidth = (yield* terminal.columns)-2
+  // For reactive updates, pre-compute the progress bar width matching Container's inner math
+  // Container padding [1,2] => innerWidth = 85 - 2(border) - 2*2(padding) = 79
+  // percentBox = 5 + 2(border) = 7, gap = 2
+  const ProgressBarInnerWidth = ContainerWidth - 2 - 4 - 7 - 2;
 
   const counterRef = yield* Ref.make(0);
 
@@ -68,40 +77,59 @@ export const main = Effect.gen(function* () {
     const timeStr = formatTime(timestamp);
     const status = counter >= Complete ? "completed" : "running";
 
-    const top = Box.hcat(
-      [
-        ProgressBar(counter, Complete, ProgressBarWidth).pipe(
-          Reactive.makeReactive("progress-bar"),
-          Box.border("single")
-        ),
-        Box.text(`${percentage.toString().padStart(3)}%`).pipe(
+    const top = Container.make(
+      { width: ContainerWidth, padding: [1, 2] },
+      (ctx) => {
+        const percentBox = Box.text(
+          `${percentage.toString().padStart(3)}%`
+        ).pipe(
           Box.alignHoriz(Box.right, 5),
           Box.annotate(percentage === 100 ? Ansi.green : Ansi.blue),
           Reactive.makeReactive("percentage"),
-          Box.border("single"),
-          Box.annotate(Ansi.green)
-        ),
-      ],
-      Box.center1
-    ).pipe(Box.pad(1), Box.border("single"));
+          Box.border("rounded", {
+            annotation: Ansi.green,
+            sides:{left:false}}),
+        );
+        // progress bar fills remaining space after percentage box
+        const barWidth = ctx.innerWidth - Box.cols(percentBox) - 2;
+        return Flex.row(
+          [
+            Flex.fixed(
+              ProgressBar(counter, Complete, barWidth).pipe(
+                Reactive.makeReactive("progress-bar"),
+                Box.border("single")
+              )
+            ),
+            Flex.fixed(percentBox),
+          ],
+          ctx.innerWidth,
+          { align: Box.center1 }
+        );
+      }
+    ).pipe(Box.border("rounded", { sides: { bottom: false } }));
 
-    const bottom = StatusBar(status, counter, timeStr).pipe(
-      Box.alignHoriz(Box.center1, 79),
-      Reactive.makeReactive("status-bar"),
-      Box.border("single")
-    );
+    const bottom = Container.make(
+      { width: ContainerWidth },
+      (ctx) =>
+        StatusBar(status, counter, timeStr, ctx.innerWidth).pipe(
+          Box.alignHoriz(Box.center1, ctx.innerWidth),
+          Reactive.makeReactive("status-bar")
+        )
+    ).pipe(Box.border("single"));
 
-    const footer = Box.punctuateH(
+    const footer = Flex.row(
       [
-        Box.text("Press"),
-        Box.text("Ctrl+C").pipe(Box.annotate(Ansi.blue)),
-        Box.text("to stop..."),
+        Flex.fixed(Box.text("Press")),
+        Flex.fixed(Box.text(" ")),
+        Flex.fixed(Box.text("Ctrl+C").pipe(Box.annotate(Ansi.blue))),
+        Flex.fixed(Box.text(" ")),
+        Flex.fixed(Box.text("to stop...")),
       ],
-      Box.left,
-      Box.text(" ")
+      ContainerWidth
     );
 
-    return Box.punctuateV([top, bottom, footer], Box.top, Box.char(" "));
+    const layout = Box.vcat([top, bottom], Box.left);
+    return Box.punctuateV([layout, footer], Box.top, Box.char(" "));
   };
 
   // Display the initial layout
@@ -137,7 +165,7 @@ export const main = Effect.gen(function* () {
             Reactive.cursorToReactive("progress-bar"),
             Option.map((cursorCmd) => [
               cursorCmd,
-              ProgressBar(counter, Complete, ProgressBarWidth),
+              ProgressBar(counter, Complete, ProgressBarInnerWidth),
             ])
           ),
           pipe(
@@ -157,9 +185,9 @@ export const main = Effect.gen(function* () {
             Reactive.cursorToReactive("status-bar"),
             Option.map((cursorCmd) => [
               cursorCmd,
-              StatusBar(status, counter, timeStr).pipe(
-                Box.truncate(79, Box.center1),
-                Box.alignHoriz(Box.center1, 79)
+              StatusBar(status, counter, timeStr, ContainerWidth - 2).pipe(
+                Box.truncate(ContainerWidth - 2, Box.center1),
+                Box.alignHoriz(Box.center1, ContainerWidth - 2)
               ),
             ])
           ),
