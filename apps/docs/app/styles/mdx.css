@@ -47,7 +47,7 @@ html.dark code[data-theme] span {
 
 /* Shiki transformer: highlight notation */
 .highlighted {
-  @apply bg-primary/10;
+  @apply bg-accent/20 border-l-primary border-l-2 px-2 py-0.5;
 }
 
 pre > code {
@@ -64,7 +64,7 @@ code[data-line-numbers] > [data-line]::before {
   @apply text-code-foreground/40 mr-4 inline-block w-4 text-right;
 }
 
-pre [data-line]:not([data-highlighted-line]) {
+pre [data-line]:not([data-highlighted-line]):not(.highlighted) {
   @apply border-l-2 border-l-transparent px-2 py-0.5;
 }
 
