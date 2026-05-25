@@ -2,6 +2,8 @@ import type React from "react";
 import type { ComponentPropsWithoutRef } from "react";
 import { Link } from "react-router";
 
+import { AnsiTerminal } from "~/components/ansi-terminal";
+import { CodeExample } from "~/components/code-example";
 import {
   typefaceAnchor,
   typefaceBody,
@@ -181,4 +183,6 @@ export const proseComponents = {
       alt={props.alt ?? ""}
     />
   ),
+  AnsiTerminal,
+  CodeExample,
 };

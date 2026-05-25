@@ -155,8 +155,7 @@ const program = Effect.gen(function* () {
       const lowerKey = baseName.toLowerCase();
       const count = seenLower.get(lowerKey) ?? 0;
       seenLower.set(lowerKey, count + 1);
-      const fileName =
-        count > 0 ? `${baseName}_${count}.ts` : `${baseName}.ts`;
+      const fileName = count > 0 ? `${baseName}_${count}.ts` : `${baseName}.ts`;
       return fs.writeFileString(path.join(outDir, fileName), `${ex.code}\n`);
     },
     { discard: true }

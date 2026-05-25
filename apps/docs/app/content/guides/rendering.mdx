@@ -1,0 +1,124 @@
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+import { pipe, Effect } from "effect"
+
+# Rendering
+
+Rendering converts a `Box<A>` into a string. effect-boxes provides three
+levels of rendering depending on your needs: sync convenience functions,
+Effect-based functions, and the full layer-based Renderer service.
+
+## Sync Rendering
+
+The simplest way to render a box. No Effect runtime needed.
+
+export const sampleBox = pipe(Box.text("Hello"), Box.annotate(Ansi.bold))
+export const outPlain = Box.renderPlainSync(sampleBox)
+export const outPretty = Box.renderPrettySync(sampleBox)
+
+<CodeExample layout="side-by-side">
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+import { pipe } from "effect"
+
+const box = pipe(Box.text("Hello"), Box.annotate(Ansi.bold))
+
+// Strips all annotations — plain text output
+Box.renderPlainSync(box)
+```
+<AnsiTerminal input={outPlain} title="renderPlainSync" />
+</CodeExample>
+
+<CodeExample layout="side-by-side">
+```typescript
+// Preserves ANSI escape codes for terminal display
+Box.renderPrettySync(box)
+```
+<AnsiTerminal input={outPretty} title="renderPrettySync" />
+</CodeExample>
+
+Use `renderPlainSync` when you need raw text (logging, file output, testing).
+Use `renderPrettySync` when displaying in a terminal that supports ANSI codes.
+
+## Effect-based Rendering
+
+For use within Effect programs. These functions return an `Effect` but do not
+require a Renderer layer — they use a built-in renderer internally.
+
+```typescript
+import { Effect } from "effect"
+import * as Box from "effect-boxes/Box"
+
+const box = Box.text("Hello")
+
+// Plain text as Effect
+const plain: Effect.Effect<string> = Box.renderPlain(box)
+
+// ANSI-styled as Effect
+const pretty: Effect.Effect<string> = Box.renderPretty(box)
+
+// Run them
+Effect.runSync(plain)  // "Hello\n"
+Effect.runSync(pretty) // "Hello\n" (with ANSI codes if annotated)
+```
+
+These are useful when composing rendering into a larger Effect pipeline
+without needing to manage renderer configuration.
+
+## Layer-based Rendering
+
+For full control, use `Box.render` with a Renderer layer. This enables
+dependency injection, custom rendering configuration, and testability.
+
+```typescript
+import { Effect } from "effect"
+import * as Box from "effect-boxes/Box"
+import * as Renderer from "effect-boxes/Renderer"
+
+const box = Box.text("Hello")
+
+// Render using a specific renderer layer
+const program = pipe(
+  Box.render(box),
+  Effect.provide(Renderer.AnsiRendererLive)
+)
+
+Effect.runSync(program) // "Hello\n" with ANSI support
+
+// Print directly to console
+const print = pipe(
+  Box.printBox(box),
+  Effect.provide(Renderer.PlainRendererLive)
+)
+
+Effect.runPromise(print)
+```
+
+### Available Renderer Layers
+
+| Layer | Output | Use Case |
+|-------|--------|----------|
+| `PlainRendererLive` | Raw text, no formatting | Logging, file output, tests |
+| `AnsiRendererLive` | ANSI escape sequences | Terminal display |
+| `HtmlRendererLive` | HTML elements | Web rendering |
+| `HtmlPrettyRendererLive` | Indented HTML | Readable HTML output |
+
+### Choosing a Renderer
+
+- **Plain** — Use when annotations should be stripped. Good for testing
+  and non-terminal output.
+- **Ansi** — Use for terminal applications. Interprets `AnsiStyle`
+  annotations as color/bold/underline escape codes.
+- **Html** — Use when rendering boxes for the web. Interprets
+  `HtmlAnnotationData` annotations as HTML tags and attributes.
+
+## When to Use Which
+
+| Scenario | Function |
+|----------|----------|
+| Quick terminal output | `renderPrettySync` |
+| Plain text for tests | `renderPlainSync` |
+| Inside an Effect pipeline | `renderPlain` / `renderPretty` |
+| Custom renderer or DI | `render` + layer |
+| HTML generation | `render` + `HtmlRendererLive` |
