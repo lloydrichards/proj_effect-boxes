@@ -28,22 +28,30 @@ functions. Contains sensible defaults for whitespace handling and formatting.
 **Signature**
 
 ```ts
-export declare const defaultRenderConfig: RenderConfig
+export declare const defaultRenderConfig: RenderConfig;
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Box from "effect-boxes/Box"
-import { Effect, pipe } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Box from "effect-boxes/Box";
+import { Effect, pipe } from "effect";
 
-const box = Box.text("Hello World")
+const box = Box.text("Hello World");
 
 // These are equivalent - both use default config
-const render1 = pipe(box, Renderer.render(), Effect.provide(Renderer.PlainRendererLive))
+const render1 = pipe(
+  box,
+  Renderer.render(),
+  Effect.provide(Renderer.PlainRendererLive)
+);
 
-const render2 = pipe(box, Renderer.render(Renderer.defaultRenderConfig), Effect.provide(Renderer.PlainRendererLive))
+const render2 = pipe(
+  box,
+  Renderer.render(Renderer.defaultRenderConfig),
+  Effect.provide(Renderer.PlainRendererLive)
+);
 ```
 
 ## layers
@@ -60,27 +68,35 @@ Processes all styling annotations and converts them to appropriate ANSI codes.
 **Signature**
 
 ```ts
-export declare const AnsiRendererLive: Layer.Layer<internal.Renderer, never, never>
+export declare const AnsiRendererLive: Layer.Layer<
+  internal.Renderer,
+  never,
+  never
+>;
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { Effect, pipe } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { Effect, pipe } from "effect";
 
 const colorfulBox = Box.vcat(
   [
     Box.text("✓ Success").pipe(Box.annotate(Ansi.green)),
     Box.text("⚠ Warning").pipe(Box.annotate(Ansi.yellow)),
-    Box.text("✗ Error").pipe(Box.annotate(Ansi.red))
+    Box.text("✗ Error").pipe(Box.annotate(Ansi.red)),
   ],
   Box.left
-)
+);
 
-const terminalOutput = pipe(colorfulBox, Renderer.render(), Effect.provide(Renderer.AnsiRendererLive))
+const terminalOutput = pipe(
+  colorfulBox,
+  Renderer.render(),
+  Effect.provide(Renderer.AnsiRendererLive)
+);
 // Result: Text with full color and formatting
 ```
 
@@ -94,20 +110,27 @@ strings that are easier to inspect in logs, snapshots, and tests.
 **Signature**
 
 ```ts
-export declare const HtmlPrettyRendererLive: Layer.Layer<internal.Renderer, never, never>
+export declare const HtmlPrettyRendererLive: Layer.Layer<
+  internal.Renderer,
+  never,
+  never
+>;
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Box from "effect-boxes/Box"
-import * as Html from "effect-boxes/Html"
-import { Effect, pipe } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Box from "effect-boxes/Box";
+import * as Html from "effect-boxes/Html";
+import { Effect, pipe } from "effect";
 
-const box = Box.text("Hello").pipe(Box.annotate(Html.p()))
+const box = Box.text("Hello").pipe(Box.annotate(Html.p()));
 
-const html = pipe(Renderer.render(box), Effect.provide(Renderer.HtmlPrettyRendererLive))
+const html = pipe(
+  Renderer.render(box),
+  Effect.provide(Renderer.HtmlPrettyRendererLive)
+);
 ```
 
 ### HtmlRendererLive
@@ -122,27 +145,37 @@ documentation generation, or any context where HTML output is required.
 **Signature**
 
 ```ts
-export declare const HtmlRendererLive: Layer.Layer<internal.Renderer, never, never>
+export declare const HtmlRendererLive: Layer.Layer<
+  internal.Renderer,
+  never,
+  never
+>;
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Box from "effect-boxes/Box"
-import * as Html from "effect-boxes/Html"
-import { Effect, pipe } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Box from "effect-boxes/Box";
+import * as Html from "effect-boxes/Html";
+import { Effect, pipe } from "effect";
 
 const htmlBox = Box.vcat(
   [
     Box.text("Hello World").pipe(Box.annotate(Html.h1())),
-    Box.text("This is an example of HTML rendering.").pipe(Box.annotate(Html.p())),
-    Box.text("Goodbye!").pipe(Box.annotate(Html.p()))
+    Box.text("This is an example of HTML rendering.").pipe(
+      Box.annotate(Html.p())
+    ),
+    Box.text("Goodbye!").pipe(Box.annotate(Html.p())),
   ],
   Box.left
-)
+);
 
-const htmlOutput = pipe(htmlBox, Renderer.render(), Effect.provide(Renderer.HtmlRendererLive))
+const htmlOutput = pipe(
+  htmlBox,
+  Renderer.render(),
+  Effect.provide(Renderer.HtmlRendererLive)
+);
 // Result: HTML string with appropriate tags
 ```
 
@@ -158,27 +191,35 @@ rendering, resulting in plain text representation of the box layout.
 **Signature**
 
 ```ts
-export declare const PlainRendererLive: Layer.Layer<internal.Renderer, never, never>
+export declare const PlainRendererLive: Layer.Layer<
+  internal.Renderer,
+  never,
+  never
+>;
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { Effect, pipe } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { Effect, pipe } from "effect";
 
 const styledBox = Box.vcat(
   [
     Box.text("Title").pipe(Box.annotate(Ansi.bold)),
     Box.text("Content").pipe(Box.annotate(Ansi.red)),
-    Box.text("Footer").pipe(Box.annotate(Ansi.blue))
+    Box.text("Footer").pipe(Box.annotate(Ansi.blue)),
   ],
   Box.left
-)
+);
 
-const plainOutput = pipe(styledBox, Renderer.render(), Effect.provide(Renderer.PlainRendererLive))
+const plainOutput = pipe(
+  styledBox,
+  Renderer.render(),
+  Effect.provide(Renderer.PlainRendererLive)
+);
 // Result: "Title\nContent\nFooter" (no ANSI codes)
 ```
 
@@ -196,36 +237,40 @@ aspects during the rendering process.
 
 ```ts
 export type RenderConfig = {
-  readonly preserveWhitespace?: boolean
-}
+  readonly preserveWhitespace?: boolean;
+};
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Box from "effect-boxes/Box"
-import { Effect, pipe } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Box from "effect-boxes/Box";
+import { Effect, pipe } from "effect";
 
 const multiLineBox = Box.vcat(
   [
     Box.text("Line 1   "), // Trailing spaces
     Box.text("Line 2"),
-    Box.text("   Line 3") // Leading spaces
+    Box.text("   Line 3"), // Leading spaces
   ],
   Box.left
-)
+);
 
 // Default configuration - may trim whitespace
-const defaultConfig: Renderer.RenderConfig = {}
+const defaultConfig: Renderer.RenderConfig = {};
 
 // Preserve all whitespace
 const preserveConfig: Renderer.RenderConfig = {
-  preserveWhitespace: true
-}
+  preserveWhitespace: true,
+};
 
 // Usage with render function
-const renderWithConfig = pipe(multiLineBox, Renderer.render(preserveConfig), Effect.provide(Renderer.PlainRendererLive))
+const renderWithConfig = pipe(
+  multiLineBox,
+  Renderer.render(preserveConfig),
+  Effect.provide(Renderer.PlainRendererLive)
+);
 ```
 
 ### RenderFrame (type alias)
@@ -238,27 +283,30 @@ boxes in the layout. Positions use logical terminal cell coordinates.
 **Signature**
 
 ```ts
-export type RenderFrame = internal.RenderFrame
+export type RenderFrame = internal.RenderFrame;
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Reactive from "effect-boxes/Reactive"
-import * as Box from "effect-boxes/Box"
-import { Effect, pipe, HashMap } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Reactive from "effect-boxes/Reactive";
+import * as Box from "effect-boxes/Box";
+import { Effect, pipe, HashMap } from "effect";
 
 const layout = Box.vcat(
   [
     Reactive.makeReactive(Box.text("Header"), "header"),
     Box.text("Body"),
-    Reactive.makeReactive(Box.text("Footer"), "footer")
+    Reactive.makeReactive(Box.text("Footer"), "footer"),
   ],
   Box.left
-)
+);
 
-const program = pipe(Renderer.tracked(layout), Effect.provide(Renderer.PlainRendererLive))
+const program = pipe(
+  Renderer.tracked(layout),
+  Effect.provide(Renderer.PlainRendererLive)
+);
 // Result: { lines: [...], output: "Header\nBody\nFooter", positions: HashMap }
 ```
 
@@ -275,30 +323,30 @@ ANSI styling and formatting with optional whitespace handling.
 ```ts
 export type RenderStyle =
   | { readonly _tag: "Plain" }
-  | { readonly _tag: "Pretty"; readonly preserveWhitespace?: boolean }
+  | { readonly _tag: "Pretty"; readonly preserveWhitespace?: boolean };
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { Effect } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { Effect } from "effect";
 
-const styledBox = Box.text("Hello World").pipe(Box.annotate(Ansi.red))
+const styledBox = Box.text("Hello World").pipe(Box.annotate(Ansi.red));
 
 // Plain rendering - strips all formatting
-const plainStyle: Renderer.RenderStyle = { _tag: "Plain" }
+const plainStyle: Renderer.RenderStyle = { _tag: "Plain" };
 
 // Pretty rendering - preserves ANSI formatting
 const prettyStyle: Renderer.RenderStyle = {
   _tag: "Pretty",
-  preserveWhitespace: true
-}
+  preserveWhitespace: true,
+};
 
 // Pretty rendering with default whitespace handling
-const prettyDefault: Renderer.RenderStyle = { _tag: "Pretty" }
+const prettyDefault: Renderer.RenderStyle = { _tag: "Pretty" };
 ```
 
 ### Renderer (type alias)
@@ -312,7 +360,7 @@ Effect-based rendering operations.
 **Signature**
 
 ```ts
-export type Renderer = internal.Renderer
+export type Renderer = internal.Renderer;
 ```
 
 ### TextProcessor (type alias)
@@ -327,35 +375,39 @@ different renderer implementations to control text output behavior.
 
 ```ts
 export type TextProcessor = {
-  readonly processLine: (text: string, targetWidth: number) => string
-  readonly processLineAligned: (text: string, targetWidth: number, alignment: Box.Alignment) => string
-  readonly preservesFormatting: boolean
-}
+  readonly processLine: (text: string, targetWidth: number) => string;
+  readonly processLineAligned: (
+    text: string,
+    targetWidth: number,
+    alignment: Box.Alignment
+  ) => string;
+  readonly preservesFormatting: boolean;
+};
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Box from "effect-boxes/Box"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Box from "effect-boxes/Box";
 
 const customProcessor: Renderer.TextProcessor = {
   processLine: (text, targetWidth) => {
     // Custom line processing logic
-    return text.padEnd(targetWidth, " ")
+    return text.padEnd(targetWidth, " ");
   },
   processLineAligned: (text, targetWidth, alignment) => {
     // Custom alignment logic
     switch (alignment) {
       case Box.center1:
-        const padding = Math.floor((targetWidth - text.length) / 2)
-        return " ".repeat(padding) + text
+        const padding = Math.floor((targetWidth - text.length) / 2);
+        return " ".repeat(padding) + text;
       default:
-        return text
+        return text;
     }
   },
-  preservesFormatting: true
-}
+  preservesFormatting: true,
+};
 ```
 
 ## rendering
@@ -373,26 +425,38 @@ Supports both data-first and data-last calling patterns.
 
 ```ts
 export declare const render: {
-  <A>(config?: RenderConfig): (box: Box.Box<A>) => Effect.Effect<string, never, Renderer>
-  <A>(box: Box.Box<A>, config?: RenderConfig): Effect.Effect<string, never, Renderer>
-}
+  <A>(
+    config?: RenderConfig
+  ): (box: Box.Box<A>) => Effect.Effect<string, never, Renderer>;
+  <A>(
+    box: Box.Box<A>,
+    config?: RenderConfig
+  ): Effect.Effect<string, never, Renderer>;
+};
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { Effect, pipe } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { Effect, pipe } from "effect";
 
-const styledBox = Box.text("Hello World").pipe(Box.annotate(Ansi.green))
+const styledBox = Box.text("Hello World").pipe(Box.annotate(Ansi.green));
 
 // Data-first usage
-const program1 = pipe(Renderer.render(styledBox), Effect.provide(Renderer.AnsiRendererLive))
+const program1 = pipe(
+  Renderer.render(styledBox),
+  Effect.provide(Renderer.AnsiRendererLive)
+);
 
 // Data-last usage
-const program2 = pipe(styledBox, Renderer.render(), Effect.provide(Renderer.AnsiRendererLive))
+const program2 = pipe(
+  styledBox,
+  Renderer.render(),
+  Effect.provide(Renderer.AnsiRendererLive)
+);
 ```
 
 ### renderBoxToLines
@@ -407,27 +471,36 @@ and annotation rendering according to the active renderer implementation.
 **Signature**
 
 ```ts
-export declare const renderBoxToLines: <A>(box: Box.Box<A>) => Effect.Effect<string[], never, internal.Renderer>
+export declare const renderBoxToLines: <A>(
+  box: Box.Box<A>
+) => Effect.Effect<string[], never, internal.Renderer>;
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { Effect, pipe } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { Effect, pipe } from "effect";
 
 const complexBox = Box.vcat(
   [
     Box.text("Header").pipe(Box.annotate(Ansi.bold)),
-    Box.hcat([Box.text("Left"), Box.text("Right").pipe(Box.annotate(Ansi.red))], Box.top),
-    Box.text("Footer")
+    Box.hcat(
+      [Box.text("Left"), Box.text("Right").pipe(Box.annotate(Ansi.red))],
+      Box.top
+    ),
+    Box.text("Footer"),
   ],
   Box.left
-)
+);
 
-const renderLines = pipe(complexBox, Renderer.renderBoxToLines, Effect.provide(Renderer.AnsiRendererLive))
+const renderLines = pipe(
+  complexBox,
+  Renderer.renderBoxToLines,
+  Effect.provide(Renderer.AnsiRendererLive)
+);
 
 // Result: Effect that yields ["Header", "LeftRight", "Footer"]
 // with appropriate ANSI formatting
@@ -446,25 +519,25 @@ for flexible composition.
 
 ```ts
 export declare const renderLinesToString: {
-  (config?: RenderConfig): (lines: string[]) => string
-  (lines: string[], config?: RenderConfig): string
-}
+  (config?: RenderConfig): (lines: string[]) => string;
+  (lines: string[], config?: RenderConfig): string;
+};
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import { pipe } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import { pipe } from "effect";
 
-const lines = ["Header", "Content Line 1", "Content Line 2", "Footer"]
+const lines = ["Header", "Content Line 1", "Content Line 2", "Footer"];
 
 // Data-first usage
-const result1 = Renderer.renderLinesToString(lines)
+const result1 = Renderer.renderLinesToString(lines);
 // "Header\nContent Line 1\nContent Line 2\nFooter"
 
 // Data-last usage with pipe
-const result2 = pipe(lines, Renderer.renderLinesToString())
+const result2 = pipe(lines, Renderer.renderLinesToString());
 ```
 
 ### tracked
@@ -479,30 +552,38 @@ all reactive annotations. Supports both data-first and data-last calling pattern
 
 ```ts
 export declare const tracked: {
-  <A>(config?: RenderConfig): (box: Box.Box<A>) => Effect.Effect<RenderFrame, never, Renderer>
-  <A>(box: Box.Box<A>, config?: RenderConfig): Effect.Effect<RenderFrame, never, Renderer>
-}
+  <A>(
+    config?: RenderConfig
+  ): (box: Box.Box<A>) => Effect.Effect<RenderFrame, never, Renderer>;
+  <A>(
+    box: Box.Box<A>,
+    config?: RenderConfig
+  ): Effect.Effect<RenderFrame, never, Renderer>;
+};
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Reactive from "effect-boxes/Reactive"
-import * as Box from "effect-boxes/Box"
-import { Effect, pipe, HashMap } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Reactive from "effect-boxes/Reactive";
+import * as Box from "effect-boxes/Box";
+import { Effect, pipe, HashMap } from "effect";
 
 const layout = Box.vcat(
-  [Reactive.makeReactive(Box.text("Title"), "title"), Reactive.makeReactive(Box.text("Button"), "btn")],
+  [
+    Reactive.makeReactive(Box.text("Title"), "title"),
+    Reactive.makeReactive(Box.text("Button"), "btn"),
+  ],
   Box.left
-)
+);
 
 const program = Effect.gen(function* () {
-  const frame = yield* Renderer.tracked(layout)
-  console.log(frame.output)
-  const btnPos = HashMap.get(frame.positions, "btn")
-  return frame
-}).pipe(Effect.provide(Renderer.AnsiRendererLive))
+  const frame = yield* Renderer.tracked(layout);
+  console.log(frame.output);
+  const btnPos = HashMap.get(frame.positions, "btn");
+  return frame;
+}).pipe(Effect.provide(Renderer.AnsiRendererLive));
 ```
 
 ## services
@@ -518,25 +599,28 @@ that require specific rendering implementations (Plain or ANSI).
 **Signature**
 
 ```ts
-export declare const Renderer: typeof internal.Renderer
+export declare const Renderer: typeof internal.Renderer;
 ```
 
 **Example**
 
 ```typescript
-import * as Renderer from "effect-boxes/Renderer"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { Effect, pipe } from "effect"
+import * as Renderer from "effect-boxes/Renderer";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { Effect, pipe } from "effect";
 
 const renderProgram = (content: string) =>
   Effect.gen(function* () {
-    const styledBox = Box.text(content).pipe(Box.annotate(Ansi.green))
-    const result = yield* Renderer.render(styledBox)
-    yield* Effect.log(`Rendered: ${result}`)
-    return result
-  })
+    const styledBox = Box.text(content).pipe(Box.annotate(Ansi.green));
+    const result = yield* Renderer.render(styledBox);
+    yield* Effect.log(`Rendered: ${result}`);
+    return result;
+  });
 
 // Run with ANSI renderer
-const program = pipe(renderProgram("Hello Effect!"), Effect.provide(Renderer.AnsiRendererLive))
+const program = pipe(
+  renderProgram("Hello Effect!"),
+  Effect.provide(Renderer.AnsiRendererLive)
+);
 ```

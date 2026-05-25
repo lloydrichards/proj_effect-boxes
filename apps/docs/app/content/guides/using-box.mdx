@@ -50,8 +50,8 @@ export const outPara = Box.renderPrettySync(
   Box.para(
     "The Box module is the core of the effect-boxes library, providing the fundamental data structures and operations for creating and composing rectangular text layouts. Boxes can be combined horizontally and vertically, aligned within larger spaces, and annotated with styling information for rich terminal output.",
     Box.left,
-    50,
-  ),
+    50
+  )
 );
 
 <CodeExample>
@@ -60,7 +60,7 @@ export const outPara = Box.renderPrettySync(
 const paragraph = Box.para(
   "The Box module is the core of the effect-boxes library, providing the fundamental data structures and operations for creating and composing rectangular text layouts. Boxes can be combined horizontally and vertically, aligned within larger spaces, and annotated with styling information for rich terminal output.",
   Box.left,
-  50,
+  50
 );
 ```
 
@@ -73,11 +73,11 @@ export const outColumns = Box.renderPrettySync(
       "The Box module is the core of the effect-boxes library, providing the fundamental data structures and operations for creating and composing rectangular text layouts. Boxes can be combined horizontally and vertically, aligned within larger spaces, and annotated with styling information for rich terminal output.",
       Box.left,
       25,
-      6,
+      6
     ),
     2,
-    Box.top,
-  ),
+    Box.top
+  )
 );
 
 <CodeExample>
@@ -87,7 +87,7 @@ const cols = Box.columns(
   "The Box module is the core of the effect-boxes library...",
   Box.left, // alignment
   25, // column width
-  6, // column height
+  6 // column height
 );
 const layout = Box.hsep(cols, 2, Box.top);
 ```
@@ -102,7 +102,7 @@ Boxes can be combined horizontally and vertically to build complex layouts.
 ### Horizontal Composition
 
 export const outHcat = Box.renderPrettySync(
-  Box.hcat([Box.text("Left"), Box.text(" | "), Box.text("Right")], Box.top),
+  Box.hcat([Box.text("Left"), Box.text(" | "), Box.text("Right")], Box.top)
 );
 
 <CodeExample>
@@ -110,7 +110,7 @@ export const outHcat = Box.renderPrettySync(
 ```typescript
 const row = Box.hcat(
   [Box.text("Left"), Box.text(" | "), Box.text("Right")],
-  Box.top,
+  Box.top
 );
 ```
 
@@ -123,8 +123,8 @@ export const outPunctuateH = Box.renderPrettySync(
   Box.punctuateH(
     [Box.text("Name"), Box.text("Age"), Box.text("City")],
     Box.top,
-    Box.text(" | "),
-  ),
+    Box.text(" | ")
+  )
 );
 
 <CodeExample>
@@ -133,7 +133,7 @@ export const outPunctuateH = Box.renderPrettySync(
 const table = Box.punctuateH(
   [Box.text("Name"), Box.text("Age"), Box.text("City")],
   Box.top,
-  Box.text(" | "),
+  Box.text(" | ")
 );
 ```
 
@@ -141,7 +141,7 @@ const table = Box.punctuateH(
 </CodeExample>
 
 export const outHsep = Box.renderPrettySync(
-  Box.hsep([Box.text("A"), Box.text("B"), Box.text("C")], 3, Box.top),
+  Box.hsep([Box.text("A"), Box.text("B"), Box.text("C")], 3, Box.top)
 );
 
 <CodeExample>
@@ -150,7 +150,7 @@ export const outHsep = Box.renderPrettySync(
 const spaced = Box.hsep(
   [Box.text("A"), Box.text("B"), Box.text("C")],
   3, // spaces between boxes
-  Box.top,
+  Box.top
 );
 ```
 
@@ -160,7 +160,7 @@ const spaced = Box.hsep(
 ### Vertical Composition
 
 export const outVcat = Box.renderPrettySync(
-  Box.vcat([Box.text("Top"), Box.text("Middle"), Box.text("Bottom")], Box.left),
+  Box.vcat([Box.text("Top"), Box.text("Middle"), Box.text("Bottom")], Box.left)
 );
 
 <CodeExample>
@@ -168,7 +168,7 @@ export const outVcat = Box.renderPrettySync(
 ```typescript
 const column = Box.vcat(
   [Box.text("Top"), Box.text("Middle"), Box.text("Bottom")],
-  Box.left,
+  Box.left
 );
 ```
 
@@ -179,8 +179,8 @@ export const outPunctuateV = Box.renderPrettySync(
   Box.punctuateV(
     [Box.text("Header"), Box.text("Content"), Box.text("Footer")],
     Box.left,
-    Box.text("---"),
-  ),
+    Box.text("---")
+  )
 );
 
 <CodeExample>
@@ -189,7 +189,7 @@ export const outPunctuateV = Box.renderPrettySync(
 const sections = Box.punctuateV(
   [Box.text("Header"), Box.text("Content"), Box.text("Footer")],
   Box.left,
-  Box.text("---"),
+  Box.text("---")
 );
 ```
 
@@ -201,7 +201,7 @@ const sections = Box.punctuateV(
 For combining two boxes, use `hAppend` and `vAppend`:
 
 export const outAppend = Box.renderPrettySync(
-  pipe(Box.text("Hello "), Box.hAppend(Box.text("World"))),
+  pipe(Box.text("Hello "), Box.hAppend(Box.text("World")))
 );
 
 <CodeExample>
@@ -223,8 +223,8 @@ export const outAlignH = Box.renderPrettySync(
   pipe(
     Box.text("Hello"),
     Box.alignHoriz(Box.center1, 20),
-    Box.border("single", { annotation: Ansi.brightBlack }),
-  ),
+    Box.border("single", { annotation: Ansi.brightBlack })
+  )
 );
 
 <CodeExample>
@@ -239,8 +239,8 @@ const centered = Box.alignHoriz(Box.text("Hello"), Box.center1, 20);
 export const outAlign = Box.renderPrettySync(
   pipe(
     Box.align(Box.text("X"), Box.center1, Box.center1, 3, 7),
-    Box.border("single", { annotation: Ansi.brightBlack }),
-  ),
+    Box.border("single", { annotation: Ansi.brightBlack })
+  )
 );
 
 <CodeExample>
@@ -252,7 +252,7 @@ const centered2d = Box.align(
   Box.center1, // horizontal
   Box.center1, // vertical
   3, // height
-  7, // width
+  7 // width
 );
 ```
 
@@ -268,8 +268,8 @@ export const outMove = Box.renderPrettySync(
     Box.text("Hello"),
     Box.moveRight(5),
     Box.moveDown(2),
-    Box.border("single", { annotation: Ansi.brightBlack }),
-  ),
+    Box.border("single", { annotation: Ansi.brightBlack })
+  )
 );
 
 <CodeExample>
@@ -290,13 +290,13 @@ was removed. The position parameter controls which part of the text is kept.
 
 export const longBox = Box.text("This is a very long piece of text");
 export const outTruncLeft = Box.renderPrettySync(
-  pipe(longBox, Box.truncate(15, Box.left)),
+  pipe(longBox, Box.truncate(15, Box.left))
 );
 export const outTruncRight = Box.renderPrettySync(
-  pipe(longBox, Box.truncate(15, Box.right)),
+  pipe(longBox, Box.truncate(15, Box.right))
 );
 export const outTruncCenter = Box.renderPrettySync(
-  pipe(longBox, Box.truncate(15, Box.center1)),
+  pipe(longBox, Box.truncate(15, Box.center1))
 );
 
 <CodeExample>
@@ -345,7 +345,7 @@ metadata attached to a box's content that renderers interpret differently.
 Use `Box.annotate` to attach an annotation:
 
 export const outAnnotate = Box.renderPrettySync(
-  pipe(Box.text("Error!"), Box.annotate(Ansi.red)),
+  pipe(Box.text("Error!"), Box.annotate(Ansi.red))
 );
 
 <CodeExample>
@@ -373,24 +373,32 @@ Each annotation type has a corresponding renderer that interprets it. See
 
 To get a string from a box, use the sync convenience functions:
 
-export const outPlain = Box.renderPlainSync(pipe(Box.text("Hello"), Box.annotate(Ansi.red)))
-export const outPretty = Box.renderPrettySync(pipe(Box.text("Hello"), Box.annotate(Ansi.red)))
+export const outPlain = Box.renderPlainSync(
+  pipe(Box.text("Hello"), Box.annotate(Ansi.red))
+);
+export const outPretty = Box.renderPrettySync(
+  pipe(Box.text("Hello"), Box.annotate(Ansi.red))
+);
 
 <CodeExample layout="side-by-side">
+
 ```typescript
-const box = pipe(Box.text("Hello"), Box.annotate(Ansi.red))
+const box = pipe(Box.text("Hello"), Box.annotate(Ansi.red));
 
 // Strips all annotations
-Box.renderPlainSync(box)
+Box.renderPlainSync(box);
 ```
+
 <AnsiTerminal input={outPlain} title="renderPlainSync" />
 </CodeExample>
 
 <CodeExample layout="side-by-side">
+
 ```typescript
 // Preserves ANSI styling
-Box.renderPrettySync(box)
+Box.renderPrettySync(box);
 ```
+
 <AnsiTerminal input={outPretty} title="renderPrettySync" />
 </CodeExample>
 

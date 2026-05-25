@@ -13,7 +13,7 @@
     "docs:check": "turbo run docs:check",
     "dev": "turbo run dev",
     "benchmark": "turbo run benchmark",
-    "format": "biome check --write",
+    "format": "bunx prettier --write \"**/*.{md,mdx}\" && biome check --write",
     "clean": "turbo run clean && git clean -xdf node_modules .cache .turbo dist tsconfig.tsbuildinfo",
     "postinstall": "effect-language-service patch"
   },

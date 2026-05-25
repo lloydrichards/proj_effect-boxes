@@ -66,11 +66,11 @@ For library-specific details (modules, usage guides, common patterns), see the
 
 This project is organized as a monorepo:
 
-| Path | Description |
-| --- | --- |
+| Path                                               | Description                     |
+| -------------------------------------------------- | ------------------------------- |
 | [`packages/effect-boxes`](./packages/effect-boxes) | Core library (published to npm) |
-| [`apps/docs`](./apps/docs) | Documentation website |
-| [`apps/scratchpad`](./apps/scratchpad) | Development playground |
+| [`apps/docs`](./apps/docs)                         | Documentation website           |
+| [`apps/scratchpad`](./apps/scratchpad)             | Development playground          |
 
 ## Contributing
 

@@ -24,20 +24,25 @@ for rewriting previous output (spinners, progress bars, etc.).
 **Signature**
 
 ```ts
-export declare const clearLines: (rows: number) => Box<AnsiStyle>
+export declare const clearLines: (rows: number) => Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
 
 // Clear 3 lines of previous output and overwrite
 const update = Box.vcat(
-  [Cmd.clearLines(3), Box.text("Replaced line 1"), Box.text("Replaced line 2"), Box.text("Replaced line 3")],
+  [
+    Cmd.clearLines(3),
+    Box.text("Replaced line 1"),
+    Box.text("Replaced line 2"),
+    Box.text("Replaced line 3"),
+  ],
   Box.left
-)
+);
 ```
 
 ### eraseDown
@@ -51,16 +56,16 @@ Ideal for clearing content below while preserving headers or navigation.
 **Signature**
 
 ```ts
-export declare const eraseDown: Box<AnsiStyle>
+export declare const eraseDown: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const refreshContent = pipe(
   Box.vcat(
@@ -70,11 +75,11 @@ const refreshContent = pipe(
       Cmd.eraseDown, // Clear everything below header
       Box.text(""),
       Box.text("New content area").pipe(Box.annotate(Ansi.blue)),
-      Box.text("Data refreshed at: " + new Date().toLocaleTimeString())
+      Box.text("Data refreshed at: " + new Date().toLocaleTimeString()),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### eraseEndLine
@@ -88,16 +93,16 @@ Essential for truncating lines and cleaning up trailing content.
 **Signature**
 
 ```ts
-export declare const eraseEndLine: Box<AnsiStyle>
+export declare const eraseEndLine: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const truncateOutput = pipe(
   Box.vcat(
@@ -105,11 +110,11 @@ const truncateOutput = pipe(
       Box.text("File: very-long-filename-that-should-be-truncated.txt"),
       Cmd.cursorBackward(30), // Move back to truncation point
       Cmd.eraseEndLine, // Clear everything after cursor
-      Box.text("...").pipe(Box.annotate(Ansi.dim)) // Add ellipsis
+      Box.text("...").pipe(Box.annotate(Ansi.dim)), // Add ellipsis
     ],
     Box.left
   )
-)
+);
 ```
 
 ### eraseLine
@@ -123,16 +128,16 @@ for updating status lines or replacing line content.
 **Signature**
 
 ```ts
-export declare const eraseLine: Box<AnsiStyle>
+export declare const eraseLine: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const updateStatus = pipe(
   Box.vcat(
@@ -141,11 +146,11 @@ const updateStatus = pipe(
       Box.text("Status: Parsing..."),
       Cmd.cursorUp(1), // Go back to status line
       Cmd.eraseLine, // Clear the status line
-      Box.text("Status: ✓ Complete").pipe(Box.annotate(Ansi.green))
+      Box.text("Status: ✓ Complete").pipe(Box.annotate(Ansi.green)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### eraseLines
@@ -159,16 +164,16 @@ amounts of content while preserving other screen areas.
 **Signature**
 
 ```ts
-export declare const eraseLines: (rows: number) => Box<AnsiStyle>
+export declare const eraseLines: (rows: number) => Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const clearPreviousOutput = pipe(
   Box.vcat(
@@ -179,11 +184,11 @@ const clearPreviousOutput = pipe(
       Cmd.eraseLines(3), // Clear the 3 lines above
       Box.text("Line 1: New output").pipe(Box.annotate(Ansi.green)),
       Box.text("Line 2: New output").pipe(Box.annotate(Ansi.green)),
-      Box.text("Line 3: New output").pipe(Box.annotate(Ansi.green))
+      Box.text("Line 3: New output").pipe(Box.annotate(Ansi.green)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### eraseScreen
@@ -197,30 +202,36 @@ creating fresh displays and implementing screen-based applications.
 **Signature**
 
 ```ts
-export declare const eraseScreen: Box<AnsiStyle>
+export declare const eraseScreen: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const newScreenDisplay = pipe(
   Box.vcat(
     [
       Cmd.eraseScreen, // Clear everything, cursor to top
-      Box.text("╔═══════════════════════════════╗").pipe(Box.annotate(Ansi.cyan)),
-      Box.text("║      APPLICATION STARTUP      ║").pipe(Box.annotate(Ansi.cyan)),
-      Box.text("╚═══════════════════════════════╝").pipe(Box.annotate(Ansi.cyan)),
+      Box.text("╔═══════════════════════════════╗").pipe(
+        Box.annotate(Ansi.cyan)
+      ),
+      Box.text("║      APPLICATION STARTUP      ║").pipe(
+        Box.annotate(Ansi.cyan)
+      ),
+      Box.text("╚═══════════════════════════════╝").pipe(
+        Box.annotate(Ansi.cyan)
+      ),
       Box.text(""),
-      Box.text("Initializing...").pipe(Box.annotate(Ansi.yellow))
+      Box.text("Initializing...").pipe(Box.annotate(Ansi.yellow)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### eraseStartLine
@@ -234,16 +245,16 @@ Useful for selective line editing and partial content replacement.
 **Signature**
 
 ```ts
-export declare const eraseStartLine: Box<AnsiStyle>
+export declare const eraseStartLine: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const updateLinePrefix = pipe(
   Box.vcat(
@@ -251,11 +262,11 @@ const updateLinePrefix = pipe(
       Box.text("ERROR: Failed to connect to server"),
       Cmd.cursorBackward(28), // Move back to before "Failed"
       Cmd.eraseStartLine, // Clear "ERROR: " prefix
-      Box.text("SUCCESS:").pipe(Box.annotate(Ansi.green))
+      Box.text("SUCCESS:").pipe(Box.annotate(Ansi.green)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### eraseUp
@@ -269,16 +280,16 @@ Useful for clearing headers or top sections while preserving content below.
 **Signature**
 
 ```ts
-export declare const eraseUp: Box<AnsiStyle>
+export declare const eraseUp: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const refreshHeader = pipe(
   Box.vcat(
@@ -287,11 +298,11 @@ const refreshHeader = pipe(
       Cmd.eraseUp, // Clear everything above this point
       Cmd.cursorTo(0, 0), // Go to top for new header
       Box.text("NEW HEADER").pipe(Box.annotate(Ansi.bold)),
-      Box.text("Updated: " + new Date().toLocaleTimeString())
+      Box.text("Updated: " + new Date().toLocaleTimeString()),
     ],
     Box.left
   )
-)
+);
 ```
 
 ## movement
@@ -307,27 +318,27 @@ dynamic updates that overwrite previous content.
 **Signature**
 
 ```ts
-export declare const cursorBackward: (columns?: number) => Box<AnsiStyle>
+export declare const cursorBackward: (columns?: number) => Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const progressUpdate = pipe(
   Box.hcat(
     [
       Box.text("Progress: 45%"),
       Cmd.cursorBackward(3), // Move back to overwrite percentage
-      Box.text("67%").pipe(Box.annotate(Ansi.green))
+      Box.text("67%").pipe(Box.annotate(Ansi.green)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### cursorDown
@@ -341,16 +352,16 @@ vertical navigation interfaces.
 **Signature**
 
 ```ts
-export declare const cursorDown: (lines?: number) => Box<AnsiStyle>
+export declare const cursorDown: (lines?: number) => Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const stepByStepOutput = pipe(
   Box.vcat(
@@ -359,11 +370,11 @@ const stepByStepOutput = pipe(
       Cmd.cursorDown(1),
       Box.text("Step 2: Process").pipe(Box.annotate(Ansi.yellow)),
       Cmd.cursorDown(1),
-      Box.text("Step 3: Complete").pipe(Box.annotate(Ansi.green))
+      Box.text("Step 3: Complete").pipe(Box.annotate(Ansi.green)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### cursorForward
@@ -377,15 +388,15 @@ or building horizontal navigation interfaces.
 **Signature**
 
 ```ts
-export declare const cursorForward: (columns?: number) => Box<AnsiStyle>
+export declare const cursorForward: (columns?: number) => Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import { pipe } from "effect";
 
 const indentedList = pipe(
   Box.vcat(
@@ -394,15 +405,15 @@ const indentedList = pipe(
       Box.hcat(
         [
           Cmd.cursorForward(4), // Indent 4 spaces
-          Box.text("- Sub item 1")
+          Box.text("- Sub item 1"),
         ],
         Box.left
       ),
-      Box.hcat([Cmd.cursorForward(4), Box.text("- Sub item 2")], Box.left)
+      Box.hcat([Cmd.cursorForward(4), Box.text("- Sub item 2")], Box.left),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### cursorMove
@@ -417,27 +428,30 @@ knowing the absolute coordinates.
 **Signature**
 
 ```ts
-export declare const cursorMove: (column?: number, row?: number) => Box<AnsiStyle>
+export declare const cursorMove: (
+  column?: number,
+  row?: number
+) => Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const correctTypo = pipe(
   Box.hcat(
     [
       Box.text("Hello wrold!"),
       Cmd.cursorMove(-6, 0), // Move back 6 characters
-      Box.text("world").pipe(Box.annotate(Ansi.green))
+      Box.text("world").pipe(Box.annotate(Ansi.green)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### cursorNextLine
@@ -451,16 +465,16 @@ start of the line.
 **Signature**
 
 ```ts
-export declare const cursorNextLine: (rows?: number) => Box<AnsiStyle>
+export declare const cursorNextLine: (rows?: number) => Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const structuredOutput = pipe(
   Box.vcat(
@@ -469,11 +483,11 @@ const structuredOutput = pipe(
       Cmd.cursorNextLine(2), // Skip a line, start fresh
       Box.text("Section 2: Processing").pipe(Box.annotate(Ansi.blue)),
       Cmd.cursorNextLine(2),
-      Box.text("Section 3: Results").pipe(Box.annotate(Ansi.green))
+      Box.text("Section 3: Results").pipe(Box.annotate(Ansi.green)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### cursorPrevLine
@@ -487,16 +501,16 @@ creating scrolling effects.
 **Signature**
 
 ```ts
-export declare const cursorPrevLine: (rows?: number) => Box<AnsiStyle>
+export declare const cursorPrevLine: (rows?: number) => Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const updatePreviousStatus = pipe(
   Box.vcat(
@@ -504,11 +518,11 @@ const updatePreviousStatus = pipe(
       Box.text("Task 1: Running..."),
       Box.text("Task 2: Pending"),
       Cmd.cursorPrevLine(2), // Go back to Task 1 line
-      Box.text("Task 1: ✓ Complete").pipe(Box.annotate(Ansi.green))
+      Box.text("Task 1: ✓ Complete").pipe(Box.annotate(Ansi.green)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### cursorTo
@@ -522,16 +536,19 @@ regions, or implementing cursor-based interfaces.
 **Signature**
 
 ```ts
-export declare const cursorTo: (column?: number, row?: number) => Box<AnsiStyle>
+export declare const cursorTo: (
+  column?: number,
+  row?: number
+) => Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const statusAtPosition = pipe(
   Box.vcat(
@@ -539,11 +556,11 @@ const statusAtPosition = pipe(
       Cmd.cursorTo(0, 0), // Top-left corner
       Box.text("System Status").pipe(Box.annotate(Ansi.bold)),
       Cmd.cursorTo(50, 0), // Top-right area
-      Box.text("Online").pipe(Box.annotate(Ansi.green))
+      Box.text("Online").pipe(Box.annotate(Ansi.green)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### cursorUp
@@ -557,17 +574,17 @@ and dynamic content updates.
 **Signature**
 
 ```ts
-export declare const cursorUp: (lines?: number) => Box<AnsiStyle>
+export declare const cursorUp: (lines?: number) => Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
 
-const moveUp = Cmd.cursorUp(3)
-const output = Box.renderPrettySync(moveUp)
+const moveUp = Cmd.cursorUp(3);
+const output = Box.renderPrettySync(moveUp);
 // Contains ANSI escape sequence to move cursor up 3 lines
 ```
 
@@ -584,16 +601,16 @@ to properly restore cursor position and terminal attributes.
 **Signature**
 
 ```ts
-export declare const cursorRestorePosition: Box<AnsiStyle>
+export declare const cursorRestorePosition: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const saveRestoreDemo = pipe(
   Box.vcat(
@@ -603,11 +620,11 @@ const saveRestoreDemo = pipe(
       Cmd.cursorTo(30, 5), // Move elsewhere
       Box.text("Temporary content").pipe(Box.annotate(Ansi.red)),
       Cmd.cursorRestorePosition, // Back to original position
-      Box.text(" - continued").pipe(Box.annotate(Ansi.green))
+      Box.text(" - continued").pipe(Box.annotate(Ansi.green)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### cursorSavePosition
@@ -621,16 +638,16 @@ need to temporarily move the cursor and then return to the original position.
 **Signature**
 
 ```ts
-export declare const cursorSavePosition: Box<AnsiStyle>
+export declare const cursorSavePosition: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const temporaryStatus = pipe(
   Box.vcat(
@@ -640,11 +657,11 @@ const temporaryStatus = pipe(
       Cmd.cursorTo(0, 0), // Move to top for status
       Box.text("Status: Processing...").pipe(Box.annotate(Ansi.yellow)),
       Cmd.cursorRestorePosition, // Return to saved position
-      Box.text("Continuing main content...")
+      Box.text("Continuing main content..."),
     ],
     Box.left
   )
-)
+);
 ```
 
 ## utilities
@@ -665,17 +682,20 @@ reach lines that have scrolled into the main buffer's scrollback.
 **Signature**
 
 ```ts
-export declare const altScreenEnter: Box<AnsiStyle>
+export declare const altScreenEnter: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
 
 // Enter alternate screen, render content, then leave
-const fullScreenUI = Box.combineAll([Cmd.altScreenEnter, Box.text("Full-screen interactive content")])
+const fullScreenUI = Box.combineAll([
+  Cmd.altScreenEnter,
+  Box.text("Full-screen interactive content"),
+]);
 ```
 
 ### altScreenLeave
@@ -689,17 +709,17 @@ and the terminal display returns to its previous state.
 **Signature**
 
 ```ts
-export declare const altScreenLeave: Box<AnsiStyle>
+export declare const altScreenLeave: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
 
 // Leave alternate screen to restore main buffer
-const cleanup = Cmd.altScreenLeave
+const cleanup = Cmd.altScreenLeave;
 ```
 
 ### bell
@@ -713,16 +733,16 @@ or indicating completion of long-running operations.
 **Signature**
 
 ```ts
-export declare const bell: Box<AnsiStyle>
+export declare const bell: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const criticalAlert = pipe(
   Box.vcat(
@@ -730,11 +750,11 @@ const criticalAlert = pipe(
       Cmd.bell, // Sound alert
       Box.text("⚠️  CRITICAL ERROR").pipe(Box.annotate(Ansi.red)),
       Box.text("System requires immediate attention"),
-      Cmd.bell // Second alert for emphasis
+      Cmd.bell, // Second alert for emphasis
     ],
     Box.left
   )
-)
+);
 ```
 
 ### clearScreen
@@ -748,31 +768,39 @@ but specifically optimized for full screen resets.
 **Signature**
 
 ```ts
-export declare const clearScreen: Box<AnsiStyle>
+export declare const clearScreen: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const initializeApp = pipe(
   Box.vcat(
     [
       Cmd.clearScreen, // Start with clean screen
-      Box.text("╔════════════════════════════════════════╗").pipe(Box.annotate(Ansi.cyan)),
-      Box.text("║               WELCOME TO               ║").pipe(Box.annotate(Ansi.cyan)),
-      Box.text("║            EFFECT BOXES CLI            ║").pipe(Box.annotate(Ansi.cyan)),
-      Box.text("╚════════════════════════════════════════╝").pipe(Box.annotate(Ansi.cyan)),
+      Box.text("╔════════════════════════════════════════╗").pipe(
+        Box.annotate(Ansi.cyan)
+      ),
+      Box.text("║               WELCOME TO               ║").pipe(
+        Box.annotate(Ansi.cyan)
+      ),
+      Box.text("║            EFFECT BOXES CLI            ║").pipe(
+        Box.annotate(Ansi.cyan)
+      ),
+      Box.text("╚════════════════════════════════════════╝").pipe(
+        Box.annotate(Ansi.cyan)
+      ),
       Box.text(""),
-      Box.text("Loading...").pipe(Box.annotate(Ansi.yellow))
+      Box.text("Loading...").pipe(Box.annotate(Ansi.yellow)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### home
@@ -786,16 +814,16 @@ known position without clearing screen content.
 **Signature**
 
 ```ts
-export declare const home: Box<AnsiStyle>
+export declare const home: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const updateTopStatus = pipe(
   Box.vcat(
@@ -804,11 +832,11 @@ const updateTopStatus = pipe(
       Box.text("STATUS: ").pipe(Box.annotate(Ansi.bold)),
       Box.text("Connected").pipe(Box.annotate(Ansi.green)),
       Box.text(" | "),
-      Box.text("Users: 42").pipe(Box.annotate(Ansi.blue))
+      Box.text("Users: 42").pipe(Box.annotate(Ansi.blue)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ## visibility
@@ -824,16 +852,16 @@ animations where the blinking cursor would be distracting.
 **Signature**
 
 ```ts
-export declare const cursorHide: Box<AnsiStyle>
+export declare const cursorHide: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const progressBar = pipe(
   Box.vcat(
@@ -841,11 +869,11 @@ const progressBar = pipe(
       Cmd.cursorHide, // Hide cursor for clean display
       Box.text("Downloading...").pipe(Box.annotate(Ansi.blue)),
       Box.text("▓▓▓▓▓▓▓░░░ 70%").pipe(Box.annotate(Ansi.cyan)),
-      Box.text("ETA: 30 seconds").pipe(Box.annotate(Ansi.dim))
+      Box.text("ETA: 30 seconds").pipe(Box.annotate(Ansi.dim)),
     ],
     Box.left
   )
-)
+);
 ```
 
 ### cursorShow
@@ -859,16 +887,16 @@ clean output displays or animation sequences.
 **Signature**
 
 ```ts
-export declare const cursorShow: Box<AnsiStyle>
+export declare const cursorShow: Box<AnsiStyle>;
 ```
 
 **Example**
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Cmd from "effect-boxes/Cmd";
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 const cleanOutputSequence = pipe(
   Box.vcat(
@@ -877,9 +905,9 @@ const cleanOutputSequence = pipe(
       Box.text("Processing data...").pipe(Box.annotate(Ansi.blue)),
       Box.text("████████████████ 100%").pipe(Box.annotate(Ansi.green)),
       Box.text("Complete!").pipe(Box.annotate(Ansi.bold)),
-      Cmd.cursorShow // Restore cursor for user input
+      Cmd.cursorShow, // Restore cursor for user input
     ],
     Box.left
   )
-)
+);
 ```

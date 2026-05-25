@@ -3,8 +3,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "prebuild": "bun run scripts/generate-api-docs.ts",
-    "predev": "bun run scripts/generate-api-docs.ts",
+    "prebuild": "bun run scripts/generate-api-docs.ts && bunx prettier --write \"**/*.{md,mdx}\"",
+    "predev": "bun run scripts/generate-api-docs.ts && bunx prettier --write \"**/*.{md,mdx}\"",
     "build": "react-router build",
     "clean": "rm -rf build node_modules .react-router",
     "dev": "react-router dev",

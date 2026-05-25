@@ -25,8 +25,11 @@ on the output, and applies padding.
 
 ```ts
 export declare const Container: {
-  readonly make: <A>(options: Container.Options, builder: (ctx: Container.Context) => Box.Box<A>) => Box.Box<A>
-}
+  readonly make: <A>(
+    options: Container.Options,
+    builder: (ctx: Container.Context) => Box.Box<A>
+  ) => Box.Box<A>;
+};
 ```
 
 ### Flex
@@ -46,38 +49,56 @@ with `Box.maxWidth` to enforce hard limits.
 
 ```ts
 export declare const Flex: {
-  readonly fixed: <A>(box: Box.Box<A>) => Flex.Child<A>
-  readonly grow: <A>(box: Box.Box<A>, factor?: number) => Flex.Child<A>
-  readonly fill: <A>(builder: (size: number) => Box.Box<A>, factor?: number) => Flex.Child<A>
-  readonly spacer: (factor?: number) => Flex.Child<never>
+  readonly fixed: <A>(box: Box.Box<A>) => Flex.Child<A>;
+  readonly grow: <A>(box: Box.Box<A>, factor?: number) => Flex.Child<A>;
+  readonly fill: <A>(
+    builder: (size: number) => Box.Box<A>,
+    factor?: number
+  ) => Flex.Child<A>;
+  readonly spacer: (factor?: number) => Flex.Child<never>;
   readonly row: ((
     containerWidth: number,
     options?: Flex.Options
   ) => <A>(self: ReadonlyArray<Flex.Child<A>>) => Box.Box<A>) &
-    (<A>(self: ReadonlyArray<Flex.Child<A>>, containerWidth: number, options?: Flex.Options) => Box.Box<A>)
+    (<A>(
+      self: ReadonlyArray<Flex.Child<A>>,
+      containerWidth: number,
+      options?: Flex.Options
+    ) => Box.Box<A>);
   readonly col: ((
     containerHeight: number,
     options?: Flex.Options
   ) => <A>(self: ReadonlyArray<Flex.Child<A>>) => Box.Box<A>) &
-    (<A>(self: ReadonlyArray<Flex.Child<A>>, containerHeight: number, options?: Flex.Options) => Box.Box<A>)
-}
+    (<A>(
+      self: ReadonlyArray<Flex.Child<A>>,
+      containerHeight: number,
+      options?: Flex.Options
+    ) => Box.Box<A>);
+};
 ```
 
 **Example**
 
 ```typescript
-import { pipe } from "effect"
-import * as Box from "effect-boxes/Box"
-import { Flex } from "effect-boxes/Layout"
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import { Flex } from "effect-boxes/Layout";
 
 // Data-first
-const row = Flex.row([Flex.fixed(Box.text("Name:")), Flex.spacer(), Flex.fixed(Box.text("[ok]"))], 80)
+const row = Flex.row(
+  [Flex.fixed(Box.text("Name:")), Flex.spacer(), Flex.fixed(Box.text("[ok]"))],
+  80
+);
 
 // Data-last (pipe)
 const row2 = pipe(
-  [Flex.fixed(Box.text("Name:")), Flex.grow(Box.text("value"), 2), Flex.fixed(Box.text("[ok]"))],
+  [
+    Flex.fixed(Box.text("Name:")),
+    Flex.grow(Box.text("value"), 2),
+    Flex.fixed(Box.text("[ok]")),
+  ],
   Flex.row(80, { gap: 1 })
-)
+);
 ```
 
 ### Grid
@@ -88,14 +109,20 @@ Arranges items in rows and columns with uniform column width.
 
 ```ts
 export declare const Grid: {
-  readonly make: ((options: Grid.Options) => <A>(self: ReadonlyArray<Box.Box<A>>) => Box.Box<A>) &
-    (<A>(self: ReadonlyArray<Box.Box<A>>, options: Grid.Options) => Box.Box<A>)
+  readonly make: ((
+    options: Grid.Options
+  ) => <A>(self: ReadonlyArray<Box.Box<A>>) => Box.Box<A>) &
+    (<A>(self: ReadonlyArray<Box.Box<A>>, options: Grid.Options) => Box.Box<A>);
   readonly auto: ((
     containerWidth: number,
     options: Grid.AutoOptions
   ) => <A>(self: ReadonlyArray<Box.Box<A>>) => Box.Box<A>) &
-    (<A>(self: ReadonlyArray<Box.Box<A>>, containerWidth: number, options: Grid.AutoOptions) => Box.Box<A>)
-}
+    (<A>(
+      self: ReadonlyArray<Box.Box<A>>,
+      containerWidth: number,
+      options: Grid.AutoOptions
+    ) => Box.Box<A>);
+};
 ```
 
 ## models
@@ -111,10 +138,10 @@ dimensions after padding.
 
 ```ts
 export interface Context {
-  readonly width: number
-  readonly height: number
-  readonly innerWidth: number
-  readonly innerHeight: number
+  readonly width: number;
+  readonly height: number;
+  readonly innerWidth: number;
+  readonly innerHeight: number;
 }
 ```
 
@@ -126,9 +153,9 @@ Options for creating a container.
 
 ```ts
 export interface Options {
-  readonly width: number
-  readonly height?: number
-  readonly padding?: number | readonly [number, number]
+  readonly width: number;
+  readonly height?: number;
+  readonly padding?: number | readonly [number, number];
 }
 ```
 
@@ -142,9 +169,9 @@ A flex child that fills remaining space via a builder function.
 
 ```ts
 export interface Fill<A = never> {
-  readonly _tag: "Fill"
-  readonly builder: (size: number) => Box.Box<A>
-  readonly factor: number
+  readonly _tag: "Fill";
+  readonly builder: (size: number) => Box.Box<A>;
+  readonly factor: number;
 }
 ```
 
@@ -156,8 +183,8 @@ A flex child that occupies its intrinsic width/height.
 
 ```ts
 export interface Fixed<A = never> {
-  readonly _tag: "Fixed"
-  readonly box: Box.Box<A>
+  readonly _tag: "Fixed";
+  readonly box: Box.Box<A>;
 }
 ```
 
@@ -169,9 +196,9 @@ A flex child that grows to fill remaining space proportionally.
 
 ```ts
 export interface Grow<A = never> {
-  readonly _tag: "Grow"
-  readonly box: Box.Box<A>
-  readonly factor: number
+  readonly _tag: "Grow";
+  readonly box: Box.Box<A>;
+  readonly factor: number;
 }
 ```
 
@@ -183,8 +210,8 @@ Options for flex row/col layout.
 
 ```ts
 export interface Options {
-  readonly align?: Box.Alignment
-  readonly gap?: number
+  readonly align?: Box.Alignment;
+  readonly gap?: number;
 }
 ```
 
@@ -195,7 +222,7 @@ A child element in a flex layout.
 **Signature**
 
 ```ts
-export type Child<A = never> = Fixed<A> | Grow<A> | Fill<A>
+export type Child<A = never> = Fixed<A> | Grow<A> | Fill<A>;
 ```
 
 ### Grid (namespace)
@@ -208,11 +235,11 @@ Options for auto-column grid layout.
 
 ```ts
 export interface AutoOptions {
-  readonly minColWidth: number
-  readonly maxColWidth?: number
-  readonly gap?: number
-  readonly align?: Box.Alignment
-  readonly stretch?: boolean
+  readonly minColWidth: number;
+  readonly maxColWidth?: number;
+  readonly gap?: number;
+  readonly align?: Box.Alignment;
+  readonly stretch?: boolean;
 }
 ```
 
@@ -224,10 +251,10 @@ Options for fixed-column grid layout.
 
 ```ts
 export interface Options {
-  readonly cols: number
-  readonly colWidth: number
-  readonly gap?: readonly [number, number]
-  readonly align?: Box.Alignment
-  readonly stretch?: boolean
+  readonly cols: number;
+  readonly colWidth: number;
+  readonly gap?: readonly [number, number];
+  readonly align?: Box.Alignment;
+  readonly stretch?: boolean;
 }
 ```

@@ -23,15 +23,15 @@ npm install effect-boxes
 ## Quick Example
 
 ```typescript
-import * as Box from "effect-boxes/Box"
-import { pipe } from "effect"
+import * as Box from "effect-boxes/Box";
+import { pipe } from "effect";
 
 const layout = pipe(
   Box.text("Hello, World!"),
   Box.moveRight(5),
   Box.moveDown(2),
   Box.alignHoriz(Box.center1, 40)
-)
+);
 
-console.log(Box.render(layout))
+console.log(Box.render(layout));
 ```

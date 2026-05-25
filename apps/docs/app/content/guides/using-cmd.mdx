@@ -1,7 +1,7 @@
-import * as Box from "effect-boxes/Box"
-import * as Cmd from "effect-boxes/Cmd"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 # Using Cmd
 
@@ -16,16 +16,13 @@ with other boxes using `Box.combine` or `Box.combineAll`, commands inject
 escape sequences into the output stream without affecting layout.
 
 ```typescript
-import * as Box from "effect-boxes/Box"
-import * as Cmd from "effect-boxes/Cmd"
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
 
 // A command is just a box — compose it like any other
-const output = Box.combineAll([
-  Cmd.clearScreen,
-  Box.text("Hello, terminal!")
-])
+const output = Box.combineAll([Cmd.clearScreen, Box.text("Hello, terminal!")]);
 
-console.log(Box.renderPrettySync(output))
+console.log(Box.renderPrettySync(output));
 ```
 
 ## Cursor Movement
@@ -35,13 +32,13 @@ console.log(Box.renderPrettySync(output))
 Move the cursor to a specific column and row (0-indexed):
 
 ```typescript
-import * as Cmd from "effect-boxes/Cmd"
+import * as Cmd from "effect-boxes/Cmd";
 
 // Move to column 10, row 5
-Cmd.cursorTo(10, 5)
+Cmd.cursorTo(10, 5);
 
 // Move to home position (top-left)
-Cmd.home
+Cmd.home;
 ```
 
 ### Relative Movement
@@ -50,17 +47,17 @@ Move the cursor relative to its current position:
 
 ```typescript
 // Move 5 columns right and 2 rows up
-Cmd.cursorMove(5, -2)
+Cmd.cursorMove(5, -2);
 
 // Single-direction helpers
-Cmd.cursorUp(3)
-Cmd.cursorDown(2)
-Cmd.cursorForward(10)
-Cmd.cursorBackward(4)
+Cmd.cursorUp(3);
+Cmd.cursorDown(2);
+Cmd.cursorForward(10);
+Cmd.cursorBackward(4);
 
 // Move to start of next/previous line
-Cmd.cursorNextLine(1)
-Cmd.cursorPrevLine(1)
+Cmd.cursorNextLine(1);
+Cmd.cursorPrevLine(1);
 ```
 
 ### Save and Restore
@@ -68,16 +65,16 @@ Cmd.cursorPrevLine(1)
 Save the cursor position and restore it later:
 
 ```typescript
-import { pipe } from "effect"
-import * as Box from "effect-boxes/Box"
-import * as Cmd from "effect-boxes/Cmd"
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
 
 const withSavedPosition = Box.combineAll([
   Cmd.cursorSavePosition,
   Cmd.cursorTo(0, 0),
   Box.text("Status: OK"),
   Cmd.cursorRestorePosition,
-])
+]);
 ```
 
 ## Screen Clearing
@@ -86,29 +83,29 @@ const withSavedPosition = Box.combineAll([
 
 ```typescript
 // Clear everything and move cursor to home
-Cmd.clearScreen
+Cmd.clearScreen;
 
 // Clear from cursor to end of screen
-Cmd.eraseDown
+Cmd.eraseDown;
 
 // Clear from cursor to start of screen
-Cmd.eraseUp
+Cmd.eraseUp;
 
 // Clear entire screen (without moving cursor)
-Cmd.eraseScreen
+Cmd.eraseScreen;
 ```
 
 ### Line Clearing
 
 ```typescript
 // Clear the entire current line
-Cmd.eraseLine
+Cmd.eraseLine;
 
 // Clear from cursor to end of line
-Cmd.eraseEndLine
+Cmd.eraseEndLine;
 
 // Clear from cursor to start of line
-Cmd.eraseStartLine
+Cmd.eraseStartLine;
 ```
 
 ### Multi-line Clearing
@@ -117,10 +114,10 @@ Two approaches for clearing multiple lines:
 
 ```typescript
 // eraseLines: deletes N lines from the scroll region (shifts content up)
-Cmd.eraseLines(5)
+Cmd.eraseLines(5);
 
 // clearLines: blanks N lines in place (no scrolling), cursor moves up
-Cmd.clearLines(3)
+Cmd.clearLines(3);
 ```
 
 `clearLines` is the better choice for rewriting output in place (spinners,
@@ -131,15 +128,15 @@ progress bars) since it doesn't affect surrounding content.
 Hide the cursor during animations or full-screen rendering to avoid flicker:
 
 ```typescript
-import * as Box from "effect-boxes/Box"
-import * as Cmd from "effect-boxes/Cmd"
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
 
 // Hide during render, show after
 const frame = Box.combineAll([
   Cmd.cursorHide,
   Box.text("Rendering..."),
   Cmd.cursorShow,
-])
+]);
 ```
 
 ## Alternate Screen
@@ -148,21 +145,18 @@ Switch to the alternate screen buffer (used by full-screen TUI apps like
 vim, htop). Content on the main screen is preserved and restored on exit:
 
 ```typescript
-import * as Box from "effect-boxes/Box"
-import * as Cmd from "effect-boxes/Cmd"
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
 
 // Enter alternate screen at start
 const enter = Box.combineAll([
   Cmd.altScreenEnter,
   Cmd.cursorHide,
   Cmd.clearScreen,
-])
+]);
 
 // Leave alternate screen on exit (restores previous content)
-const leave = Box.combineAll([
-  Cmd.altScreenLeave,
-  Cmd.cursorShow,
-])
+const leave = Box.combineAll([Cmd.altScreenLeave, Cmd.cursorShow]);
 ```
 
 ## Combining with Boxes
@@ -171,10 +165,10 @@ Use `Box.combine` (binary) or `Box.combineAll` (array) to interleave
 commands with visible content:
 
 ```typescript
-import { pipe } from "effect"
-import * as Box from "effect-boxes/Box"
-import * as Cmd from "effect-boxes/Cmd"
-import * as Ansi from "effect-boxes/Ansi"
+import { pipe } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
+import * as Ansi from "effect-boxes/Ansi";
 
 // Position text at specific coordinates
 const positioned = Box.combineAll([
@@ -182,9 +176,9 @@ const positioned = Box.combineAll([
   pipe(Box.text("Hello!"), Box.annotate(Ansi.bold)),
   Cmd.cursorTo(10, 7),
   pipe(Box.text("World!"), Box.annotate(Ansi.green)),
-])
+]);
 
-console.log(Box.renderPrettySync(positioned))
+console.log(Box.renderPrettySync(positioned));
 ```
 
 Commands compose with `pipe` too:
@@ -193,10 +187,8 @@ Commands compose with `pipe` too:
 const output = pipe(
   Cmd.clearScreen,
   Box.combine(Cmd.cursorTo(0, 2)),
-  Box.combine(Box.text("Centered title").pipe(
-    Box.alignHoriz(Box.center1, 65)
-  ))
-)
+  Box.combine(Box.text("Centered title").pipe(Box.alignHoriz(Box.center1, 65)))
+);
 ```
 
 ## Practical Example: Rewriting Output
@@ -205,18 +197,21 @@ The `clearLines` pattern is common for progress displays and spinners —
 clear the previous frame and write the new one in its place:
 
 ```typescript
-import * as Box from "effect-boxes/Box"
-import * as Cmd from "effect-boxes/Cmd"
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
 
 const renderFrame = (progress: number) =>
   Box.combineAll([
     Cmd.clearLines(3),
-    Box.vcat([
-      Box.text("Downloading..."),
-      Box.text(`Progress: ${progress}%`),
-      Box.text(progress === 100 ? "Done!" : `ETA: ${100 - progress}s`),
-    ], Box.left),
-  ])
+    Box.vcat(
+      [
+        Box.text("Downloading..."),
+        Box.text(`Progress: ${progress}%`),
+        Box.text(progress === 100 ? "Done!" : `ETA: ${100 - progress}s`),
+      ],
+      Box.left
+    ),
+  ]);
 
 // Each call to renderFrame clears the previous 3 lines
 // and writes the updated content in place
@@ -227,33 +222,30 @@ const renderFrame = (progress: number) =>
 A typical full-screen TUI lifecycle:
 
 ```typescript
-import { Effect, Console } from "effect"
-import * as Box from "effect-boxes/Box"
-import * as Cmd from "effect-boxes/Cmd"
-import * as Ansi from "effect-boxes/Ansi"
+import { Effect, Console } from "effect";
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
+import * as Ansi from "effect-boxes/Ansi";
 
 const setup = Box.combineAll([
   Cmd.altScreenEnter,
   Cmd.cursorHide,
   Cmd.clearScreen,
-])
+]);
 
 const render = (state: AppState) =>
   Box.combineAll([
     Cmd.home,
     buildUI(state), // your layout function
-  ])
+  ]);
 
-const teardown = Box.combineAll([
-  Cmd.altScreenLeave,
-  Cmd.cursorShow,
-])
+const teardown = Box.combineAll([Cmd.altScreenLeave, Cmd.cursorShow]);
 
 const app = Effect.gen(function* () {
-  yield* Console.log(Box.renderPrettySync(setup))
+  yield* Console.log(Box.renderPrettySync(setup));
   // ... event loop ...
-  yield* Console.log(Box.renderPrettySync(teardown))
-})
+  yield* Console.log(Box.renderPrettySync(teardown));
+});
 ```
 
 For the full list of available commands, see the [Cmd API reference](/api/cmd).
