@@ -1,0 +1,147 @@
+import * as Box from "effect-boxes/Box";
+import * as Reactive from "effect-boxes/Reactive";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe, Option, HashMap } from "effect";
+
+# Using Reactive
+
+The `Reactive` module adds position tracking to boxes. Annotate any box with
+a string ID, then after layout you can query where it ended up: row, column,
+width, and height. This is useful for cursor navigation, hit-testing, and
+targeted updates in interactive terminal applications.
+
+## Making a box reactive
+
+Use `Reactive.makeReactive` to tag a box with an ID:
+
+export const outBasic = Box.renderPrettySync(
+  Box.vcat(
+    [
+      Reactive.makeReactive(Box.text("Header"), "header"),
+      Box.text("Content"),
+      Reactive.makeReactive(Box.text("Footer"), "footer"),
+    ],
+    Box.left
+  )
+);
+
+<CodeExample>
+
+```typescript
+import * as Box from "effect-boxes/Box";
+import * as Reactive from "effect-boxes/Reactive";
+
+const layout = Box.vcat(
+  [
+    Reactive.makeReactive(Box.text("Header"), "header"),
+    Box.text("Content"),
+    Reactive.makeReactive(Box.text("Footer"), "footer"),
+  ],
+  Box.left
+);
+```
+
+<AnsiTerminal input={outBasic} />
+</CodeExample>
+
+The layout renders identically. Reactive annotations don't affect appearance,
+they only enable position queries after composition.
+
+## Querying positions
+
+Call `Reactive.getPositions` on any composed box to get a `HashMap` of IDs
+to their calculated positions:
+
+```typescript
+import { HashMap } from "effect";
+import * as Reactive from "effect-boxes/Reactive";
+
+const positions = Reactive.getPositions(layout);
+
+const headerPos = HashMap.get(positions, "header");
+// Some({ row: 0, col: 0, rows: 1, cols: 6 })
+
+const footerPos = HashMap.get(positions, "footer");
+// Some({ row: 2, col: 0, rows: 1, cols: 6 })
+```
+
+Positions are 0-based and reflect the final layout after all alignment,
+padding, and composition has been resolved.
+
+## Cursor navigation
+
+Once you know where a reactive box is, use `cursorToReactive` to generate
+an ANSI cursor-movement command:
+
+```typescript
+import * as Reactive from "effect-boxes/Reactive";
+import { pipe, Option } from "effect";
+
+const positions = Reactive.getPositions(layout);
+const moveCmd = Reactive.cursorToReactive(positions, "footer");
+
+pipe(
+  moveCmd,
+  Option.match({
+    onNone: () => console.log("ID not found"),
+    onSome: (cmd) => {
+      // cmd is a Box<AnsiStyle> containing cursor movement escape codes
+      console.log(Box.renderPrettySync(cmd));
+    },
+  })
+);
+```
+
+Returns `Option.none()` if the ID doesn't exist in the position map, so
+it's safe to use without runtime errors.
+
+## Practical example: highlight active item
+
+Combine reactive positions with `Cmd` to update a specific region without
+re-rendering the entire layout:
+
+```typescript
+import * as Box from "effect-boxes/Box";
+import * as Cmd from "effect-boxes/Cmd";
+import * as Reactive from "effect-boxes/Reactive";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe, Option } from "effect";
+
+// Build a menu with reactive items
+const menu = Box.vcat(
+  [
+    Reactive.makeReactive(Box.text("  File  "), "item-0"),
+    Reactive.makeReactive(Box.text("  Edit  "), "item-1"),
+    Reactive.makeReactive(Box.text("  View  "), "item-2"),
+  ],
+  Box.left
+);
+
+// Get positions after layout
+const positions = Reactive.getPositions(menu);
+
+// Highlight item at index 1
+const highlightItem = (index: number) => {
+  const id = `item-${index}`;
+  return pipe(
+    Reactive.cursorToReactive(positions, id),
+    Option.map((moveCmd) =>
+      Box.combine(moveCmd, Box.text("> Active <").pipe(Box.annotate(Ansi.bold)))
+    )
+  );
+};
+```
+
+## When to use Reactive
+
+- Interactive prompts, to track menu items for keyboard navigation
+- Dashboards, to update individual panels without full re-render
+- Forms, to map cursor position to input fields
+
+Reactive annotations compose with other annotations. A box can be both
+styled with `Ansi` and tracked with `Reactive` by nesting compositions.
+
+## API reference
+
+See the full [Reactive API reference](/api/reactive) for type signatures
+and additional utilities.
