@@ -1,0 +1,233 @@
+# Layout overview
+
+Layout — higher-level layout combinators built on top of Box.
+
+Provides container-aware composition primitives inspired by CSS Flexbox:
+
+- `Flex.row` / `Flex.col` distribute space among children proportionally
+- `Container.make` passes available dimensions to child builders
+- `Grid.make` / `Grid.auto` arrange items in fixed-column grids
+
+All helpers are pure functions that return standard Box values,
+composable with existing Box primitives (border, annotate, pad, etc).
+
+---
+
+## combinators
+
+### Container
+
+Provides container dimensions to a child builder function.
+Automatically computes inner dimensions after padding, enforces width
+on the output, and applies padding.
+
+**Signature**
+
+```ts
+export declare const Container: {
+  readonly make: <A>(options: Container.Options, builder: (ctx: Container.Context) => Box.Box<A>) => Box.Box<A>
+}
+```
+
+### Flex
+
+Distributes space among children using a flexbox-style algorithm.
+
+Fixed children keep their intrinsic size. Grow and Fill children share
+remaining space proportionally based on their factor. Remainder columns
+are distributed one each to the first N grow children to avoid rounding
+gaps.
+
+If fixed children exceed the container size, grow children receive 0
+space and the result may be wider/taller than the container. Compose
+with `Box.maxWidth` to enforce hard limits.
+
+**Signature**
+
+```ts
+export declare const Flex: {
+  readonly fixed: <A>(box: Box.Box<A>) => Flex.Child<A>
+  readonly grow: <A>(box: Box.Box<A>, factor?: number) => Flex.Child<A>
+  readonly fill: <A>(builder: (size: number) => Box.Box<A>, factor?: number) => Flex.Child<A>
+  readonly spacer: (factor?: number) => Flex.Child<never>
+  readonly row: ((
+    containerWidth: number,
+    options?: Flex.Options
+  ) => <A>(self: ReadonlyArray<Flex.Child<A>>) => Box.Box<A>) &
+    (<A>(self: ReadonlyArray<Flex.Child<A>>, containerWidth: number, options?: Flex.Options) => Box.Box<A>)
+  readonly col: ((
+    containerHeight: number,
+    options?: Flex.Options
+  ) => <A>(self: ReadonlyArray<Flex.Child<A>>) => Box.Box<A>) &
+    (<A>(self: ReadonlyArray<Flex.Child<A>>, containerHeight: number, options?: Flex.Options) => Box.Box<A>)
+}
+```
+
+**Example**
+
+```typescript
+import { pipe } from "effect"
+import * as Box from "effect-boxes/Box"
+import { Flex } from "effect-boxes/Layout"
+
+// Data-first
+const row = Flex.row([Flex.fixed(Box.text("Name:")), Flex.spacer(), Flex.fixed(Box.text("[ok]"))], 80)
+
+// Data-last (pipe)
+const row2 = pipe(
+  [Flex.fixed(Box.text("Name:")), Flex.grow(Box.text("value"), 2), Flex.fixed(Box.text("[ok]"))],
+  Flex.row(80, { gap: 1 })
+)
+```
+
+### Grid
+
+Arranges items in rows and columns with uniform column width.
+
+**Signature**
+
+```ts
+export declare const Grid: {
+  readonly make: ((options: Grid.Options) => <A>(self: ReadonlyArray<Box.Box<A>>) => Box.Box<A>) &
+    (<A>(self: ReadonlyArray<Box.Box<A>>, options: Grid.Options) => Box.Box<A>)
+  readonly auto: ((
+    containerWidth: number,
+    options: Grid.AutoOptions
+  ) => <A>(self: ReadonlyArray<Box.Box<A>>) => Box.Box<A>) &
+    (<A>(self: ReadonlyArray<Box.Box<A>>, containerWidth: number, options: Grid.AutoOptions) => Box.Box<A>)
+}
+```
+
+## models
+
+### Container (namespace)
+
+#### Context (interface)
+
+Context passed to a container builder function with computed inner
+dimensions after padding.
+
+**Signature**
+
+```ts
+export interface Context {
+  readonly width: number
+  readonly height: number
+  readonly innerWidth: number
+  readonly innerHeight: number
+}
+```
+
+#### Options (interface)
+
+Options for creating a container.
+
+**Signature**
+
+```ts
+export interface Options {
+  readonly width: number
+  readonly height?: number
+  readonly padding?: number | readonly [number, number]
+}
+```
+
+### Flex (namespace)
+
+#### Fill (interface)
+
+A flex child that fills remaining space via a builder function.
+
+**Signature**
+
+```ts
+export interface Fill<A = never> {
+  readonly _tag: "Fill"
+  readonly builder: (size: number) => Box.Box<A>
+  readonly factor: number
+}
+```
+
+#### Fixed (interface)
+
+A flex child that occupies its intrinsic width/height.
+
+**Signature**
+
+```ts
+export interface Fixed<A = never> {
+  readonly _tag: "Fixed"
+  readonly box: Box.Box<A>
+}
+```
+
+#### Grow (interface)
+
+A flex child that grows to fill remaining space proportionally.
+
+**Signature**
+
+```ts
+export interface Grow<A = never> {
+  readonly _tag: "Grow"
+  readonly box: Box.Box<A>
+  readonly factor: number
+}
+```
+
+#### Options (interface)
+
+Options for flex row/col layout.
+
+**Signature**
+
+```ts
+export interface Options {
+  readonly align?: Box.Alignment
+  readonly gap?: number
+}
+```
+
+#### Child (type alias)
+
+A child element in a flex layout.
+
+**Signature**
+
+```ts
+export type Child<A = never> = Fixed<A> | Grow<A> | Fill<A>
+```
+
+### Grid (namespace)
+
+#### AutoOptions (interface)
+
+Options for auto-column grid layout.
+
+**Signature**
+
+```ts
+export interface AutoOptions {
+  readonly minColWidth: number
+  readonly maxColWidth?: number
+  readonly gap?: number
+  readonly align?: Box.Alignment
+  readonly stretch?: boolean
+}
+```
+
+#### Options (interface)
+
+Options for fixed-column grid layout.
+
+**Signature**
+
+```ts
+export interface Options {
+  readonly cols: number
+  readonly colWidth: number
+  readonly gap?: readonly [number, number]
+  readonly align?: Box.Alignment
+  readonly stretch?: boolean
+}
+```

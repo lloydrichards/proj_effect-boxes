@@ -29,6 +29,11 @@ export const navigation: NavSection[] = [
       { label: "Box", href: "/api/box" },
       { label: "Annotation", href: "/api/annotation" },
       { label: "Ansi", href: "/api/ansi" },
+      { label: "Cmd", href: "/api/cmd" },
+      { label: "Html", href: "/api/html" },
+      { label: "Layout", href: "/api/layout" },
+      { label: "Reactive", href: "/api/reactive" },
+      { label: "Renderer", href: "/api/renderer" },
     ],
   },
 ];

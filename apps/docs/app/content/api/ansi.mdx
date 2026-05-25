@@ -1,3 +1,736 @@
-# Ansi API Reference
+# Ansi overview
 
-Coming soon.
+---
+
+## combinators
+
+### combine
+
+Combines multiple ANSI style annotations into a single annotation.
+
+Merges multiple ANSI styling annotations using a last-wins strategy
+for conflicting attributes. This allows you to layer styles like
+combining color with formatting.
+
+**Signature**
+
+```ts
+export declare const combine: (...annotations: AnsiAnnotation[]) => AnsiAnnotation
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+
+const styledText = Box.text("Important Warning").pipe(Box.annotate(Ansi.combine(Ansi.red, Ansi.bold, Ansi.underlined)))
+console.log(Box.renderPrettySync(styledText))
+// Outputs red, bold, underlined text
+```
+
+## constructors
+
+### bgBlack
+
+Black background color.
+
+**Signature**
+
+```ts
+export declare const bgBlack: AnsiAnnotation
+```
+
+### bgBlue
+
+Blue background color.
+
+**Signature**
+
+```ts
+export declare const bgBlue: AnsiAnnotation
+```
+
+### bgBrightBlack
+
+Bright black (gray) background color.
+
+**Signature**
+
+```ts
+export declare const bgBrightBlack: AnsiAnnotation
+```
+
+### bgBrightBlue
+
+Bright blue background color.
+
+**Signature**
+
+```ts
+export declare const bgBrightBlue: AnsiAnnotation
+```
+
+### bgBrightCyan
+
+Bright cyan background color.
+
+**Signature**
+
+```ts
+export declare const bgBrightCyan: AnsiAnnotation
+```
+
+### bgBrightGreen
+
+Bright green background color.
+
+**Signature**
+
+```ts
+export declare const bgBrightGreen: AnsiAnnotation
+```
+
+### bgBrightMagenta
+
+Bright magenta background color.
+
+**Signature**
+
+```ts
+export declare const bgBrightMagenta: AnsiAnnotation
+```
+
+### bgBrightRed
+
+Bright red background color.
+
+**Signature**
+
+```ts
+export declare const bgBrightRed: AnsiAnnotation
+```
+
+### bgBrightWhite
+
+Bright white background color.
+
+**Signature**
+
+```ts
+export declare const bgBrightWhite: AnsiAnnotation
+```
+
+### bgBrightYellow
+
+Bright yellow background color.
+
+**Signature**
+
+```ts
+export declare const bgBrightYellow: AnsiAnnotation
+```
+
+### bgColor256
+
+Creates a background color using 256-color palette.
+
+**Signature**
+
+```ts
+export declare const bgColor256: (n: number) => AnsiAnnotation
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+
+const highlighted = Box.text("Highlighted text").pipe(
+  Box.annotate(Ansi.bgColor256(226)) // Bright yellow background
+)
+```
+
+### bgColorHex
+
+Creates a background color from a hex color string.
+
+Accepts hex strings with or without a leading `#`, in 3-digit or 6-digit
+format (e.g. `"#ff00ff"`, `"ff00ff"`, `"#f0f"`, `"f0f"`).
+
+**Signature**
+
+```ts
+export declare const bgColorHex: (hex: string) => AnsiAnnotation
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+
+const warmBg = Ansi.bgColorHex("#FFE4B5")
+const styledText = Box.text("Warm background").pipe(Box.annotate(warmBg))
+console.log(Box.renderPrettySync(styledText))
+```
+
+### bgColorRGB
+
+Creates a background color using RGB values.
+
+**Signature**
+
+```ts
+export declare const bgColorRGB: (r: number, g: number, b: number) => AnsiAnnotation
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+
+const softBackground = Ansi.bgColorRGB(240, 240, 240)
+const subtleText = Box.text("Soft background").pipe(Box.annotate(softBackground))
+```
+
+### bgCyan
+
+Cyan background color.
+
+**Signature**
+
+```ts
+export declare const bgCyan: AnsiAnnotation
+```
+
+### bgDefault
+
+Default background color (terminal default).
+
+**Signature**
+
+```ts
+export declare const bgDefault: AnsiAnnotation
+```
+
+### bgGreen
+
+Green background color.
+
+**Signature**
+
+```ts
+export declare const bgGreen: AnsiAnnotation
+```
+
+### bgMagenta
+
+Magenta background color.
+
+**Signature**
+
+```ts
+export declare const bgMagenta: AnsiAnnotation
+```
+
+### bgRed
+
+Red background color.
+
+**Signature**
+
+```ts
+export declare const bgRed: AnsiAnnotation
+```
+
+### bgWhite
+
+White background color.
+
+**Signature**
+
+```ts
+export declare const bgWhite: AnsiAnnotation
+```
+
+### bgYellow
+
+Yellow background color.
+
+**Signature**
+
+```ts
+export declare const bgYellow: AnsiAnnotation
+```
+
+### black
+
+Standard black foreground color.
+
+**Signature**
+
+```ts
+export declare const black: AnsiAnnotation
+```
+
+### blink
+
+Blinking text formatting.
+
+Makes text blink (if supported by terminal).
+
+**Signature**
+
+```ts
+export declare const blink: AnsiAnnotation
+```
+
+### blue
+
+Standard blue foreground color.
+
+**Signature**
+
+```ts
+export declare const blue: AnsiAnnotation
+```
+
+### bold
+
+Bold text formatting.
+
+Makes text appear with increased weight/intensity.
+
+**Signature**
+
+```ts
+export declare const bold: AnsiAnnotation
+```
+
+### brightBlack
+
+Bright black (gray) foreground color.
+
+**Signature**
+
+```ts
+export declare const brightBlack: AnsiAnnotation
+```
+
+### brightBlue
+
+Bright blue foreground color.
+
+**Signature**
+
+```ts
+export declare const brightBlue: AnsiAnnotation
+```
+
+### brightCyan
+
+Bright cyan foreground color.
+
+**Signature**
+
+```ts
+export declare const brightCyan: AnsiAnnotation
+```
+
+### brightGreen
+
+Bright green foreground color.
+
+**Signature**
+
+```ts
+export declare const brightGreen: AnsiAnnotation
+```
+
+### brightMagenta
+
+Bright magenta foreground color.
+
+**Signature**
+
+```ts
+export declare const brightMagenta: AnsiAnnotation
+```
+
+### brightRed
+
+Bright red foreground color.
+
+**Signature**
+
+```ts
+export declare const brightRed: AnsiAnnotation
+```
+
+### brightWhite
+
+Bright white foreground color.
+
+**Signature**
+
+```ts
+export declare const brightWhite: AnsiAnnotation
+```
+
+### brightYellow
+
+Bright yellow foreground color.
+
+**Signature**
+
+```ts
+export declare const brightYellow: AnsiAnnotation
+```
+
+### color256
+
+Creates a foreground color using 256-color palette.
+
+Uses the extended 256-color ANSI palette for more color options
+beyond the basic 8 colors.
+
+**Signature**
+
+```ts
+export declare const color256: (n: number) => AnsiAnnotation
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+
+const brightOrange = Ansi.color256(208)
+const coloredText = Box.text("Bright orange text").pipe(Box.annotate(brightOrange))
+```
+
+### colorHex
+
+Creates a foreground color from a hex color string.
+
+Accepts hex strings with or without a leading `#`, in 3-digit or 6-digit
+format (e.g. `"#ff00ff"`, `"ff00ff"`, `"#f0f"`, `"f0f"`).
+
+**Signature**
+
+```ts
+export declare const colorHex: (hex: string) => AnsiAnnotation
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+
+const coral = Ansi.colorHex("#FF6B6B")
+const styledText = Box.text("Coral text").pipe(Box.annotate(coral))
+console.log(Box.renderPrettySync(styledText))
+```
+
+### colorRGB
+
+Creates a foreground color using RGB values.
+
+Provides true color support with full RGB specification.
+Each component should be between 0-255.
+
+**Signature**
+
+```ts
+export declare const colorRGB: (r: number, g: number, b: number) => AnsiAnnotation
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+
+const customPurple = Ansi.colorRGB(128, 0, 128)
+const styledText = Box.text("Custom purple").pipe(Box.annotate(customPurple))
+console.log(Box.renderPrettySync(styledText))
+```
+
+### cyan
+
+Standard cyan foreground color.
+
+**Signature**
+
+```ts
+export declare const cyan: AnsiAnnotation
+```
+
+### dim
+
+Dim text formatting.
+
+Makes text appear with reduced intensity.
+
+**Signature**
+
+```ts
+export declare const dim: AnsiAnnotation
+```
+
+### fgDefault
+
+Default foreground color (terminal default).
+
+**Signature**
+
+```ts
+export declare const fgDefault: AnsiAnnotation
+```
+
+### green
+
+Standard green foreground color.
+
+**Signature**
+
+```ts
+export declare const green: AnsiAnnotation
+```
+
+### hidden
+
+Hidden text formatting.
+
+Makes text invisible (useful for passwords).
+
+**Signature**
+
+```ts
+export declare const hidden: AnsiAnnotation
+```
+
+### inverse
+
+Inverse text formatting.
+
+Swaps foreground and background colors.
+
+**Signature**
+
+```ts
+export declare const inverse: AnsiAnnotation
+```
+
+### italic
+
+Italic text formatting.
+
+Makes text appear slanted (if supported by terminal).
+
+**Signature**
+
+```ts
+export declare const italic: AnsiAnnotation
+```
+
+### magenta
+
+Standard magenta foreground color.
+
+**Signature**
+
+```ts
+export declare const magenta: AnsiAnnotation
+```
+
+### overline
+
+Overline text formatting.
+
+Adds a line above the text.
+
+**Signature**
+
+```ts
+export declare const overline: AnsiAnnotation
+```
+
+### red
+
+Standard red foreground color.
+
+**Signature**
+
+```ts
+export declare const red: AnsiAnnotation
+```
+
+### reset
+
+Reset all formatting.
+
+Clears all ANSI formatting and returns to terminal defaults.
+
+**Signature**
+
+```ts
+export declare const reset: AnsiAnnotation
+```
+
+### strikethrough
+
+Strikethrough text formatting.
+
+Adds a line through the middle of the text.
+
+**Signature**
+
+```ts
+export declare const strikethrough: AnsiAnnotation
+```
+
+### underlined
+
+Underlined text formatting.
+
+Adds an underline beneath the text.
+
+**Signature**
+
+```ts
+export declare const underlined: AnsiAnnotation
+```
+
+### white
+
+Standard white foreground color.
+
+**Signature**
+
+```ts
+export declare const white: AnsiAnnotation
+```
+
+### yellow
+
+Standard yellow foreground color.
+
+**Signature**
+
+```ts
+export declare const yellow: AnsiAnnotation
+```
+
+## models
+
+### AnsiAnnotation (type alias)
+
+**Signature**
+
+```ts
+export type AnsiAnnotation = Annotation<AnsiStyle>
+```
+
+### AnsiAttribute (type alias)
+
+**Signature**
+
+```ts
+export type AnsiAttribute = {
+  readonly _tag: "ForegroundColor" | "BackgroundColor" | "TextAttribute" | "CommandAttribute"
+  readonly name: string
+  readonly code: string
+}
+```
+
+### AnsiStyle (type alias)
+
+**Signature**
+
+```ts
+export type AnsiStyle = readonly AnsiAttribute[]
+```
+
+## utilities
+
+### getAnsiEscapeSequence
+
+Extracts ANSI escape sequence from annotation data.
+
+Converts ANSI style data into the raw escape sequence string used
+by terminals. Styled sequences (colors, text effects) join codes
+with ';' and end with 'm'. Returns null for non-ANSI data.
+
+**Signature**
+
+```ts
+export declare const getAnsiEscapeSequence: (data: AnsiStyle) => string | null
+```
+
+**Example**
+
+```typescript
+import * as Ansi from "effect-boxes/Ansi"
+import * as Annotation from "effect-boxes/Annotation"
+
+const redStyle = Annotation.getAnnotationData(Ansi.red)
+const escapeSeq = Ansi.getAnsiEscapeSequence(redStyle)
+console.log(escapeSeq)
+// "\u001b[31m" (ANSI red foreground code)
+```
+
+### renderAnnotatedBox
+
+Converts a box into an array of text lines with ANSI annotation support.
+
+Renders a box to text lines while preserving ANSI styling annotations.
+This is the core function that bridges the Box layout system with
+terminal ANSI output.
+
+**Signature**
+
+```ts
+export declare const renderAnnotatedBox: <A>({ cols, content, rows, annotation }: Box<A>) => string[]
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+
+const box = Box.text("Warning").pipe(Box.annotate(Ansi.red))
+const lines = Ansi.renderAnnotatedBox(box)
+console.log(lines[0])
+```
+
+### truncatePreservingAnsi
+
+Truncates a string to a target width while preserving ANSI escape sequences.
+
+Ensures that ANSI codes remain intact while the visible text is cut
+to fit within the specified width. Useful for displaying colored
+text in constrained spaces.
+
+**Signature**
+
+```ts
+export declare const truncatePreservingAnsi: (text: string, targetWidth: number) => string
+```
+
+**Example**
+
+```typescript
+import * as Ansi from "effect-boxes/Ansi"
+
+const coloredText = "\x1b[31mThis is a long red text\x1b[0m"
+const truncated = Ansi.truncatePreservingAnsi(coloredText, 10)
+console.log(truncated)
+// Outputs: "\x1b[31mThis is a \x1b[0m"
+```

@@ -19,5 +19,10 @@ export default [
     route("box", "content/api/box.mdx"),
     route("annotation", "content/api/annotation.mdx"),
     route("ansi", "content/api/ansi.mdx"),
+    route("cmd", "content/api/cmd.mdx"),
+    route("html", "content/api/html.mdx"),
+    route("layout", "content/api/layout.mdx"),
+    route("reactive", "content/api/reactive.mdx"),
+    route("renderer", "content/api/renderer.mdx"),
   ]),
 ] satisfies RouteConfig;
