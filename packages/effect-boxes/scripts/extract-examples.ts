@@ -22,13 +22,6 @@ import {
 } from "effect";
 import * as ts from "typescript";
 
-type Example = {
-  readonly module: string;
-  readonly exportName: string;
-  readonly index: number;
-  readonly code: string;
-};
-
 const PUBLIC_MODULES = [
   "src/Annotation.ts",
   "src/Ansi.ts",

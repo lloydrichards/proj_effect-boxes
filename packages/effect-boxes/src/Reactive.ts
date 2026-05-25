@@ -114,21 +114,14 @@ export type PositionMap = HashMap.HashMap<
  * @example
  * ```typescript
  * import * as Reactive from "effect-boxes/Reactive"
+ *
+ * console.log(Reactive.isReactive({ id: "btn", kind: "reactive" }))
+ * // false (not a valid Reactive instance)
+ *
+ * const r = Reactive.reactive("button-1")
  * import * as Annotation from "effect-boxes/Annotation"
- * import * as Ansi from "effect-boxes/Ansi"
- *
- * const annotations = [
- *   Ansi.red,
- *   Reactive.reactive("button-1"),
- *   Ansi.bold,
- *   Reactive.reactive("menu-item")
- * ]
- *
- * const reactiveOnly = annotations.filter(ann => {
- *   const data = Annotation.getAnnotationData(ann)
- *   return Reactive.isReactive(data)
- * })
- * // Contains only the reactive annotations
+ * console.log(Reactive.isReactive(Annotation.getAnnotationData(r)))
+ * // true
  * ```
  *
  * @category guards
