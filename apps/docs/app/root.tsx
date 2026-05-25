@@ -1,5 +1,4 @@
 import { MDXProvider } from "@mdx-js/react";
-import { GithubIcon } from "~/components/icons";
 import {
   isRouteErrorResponse,
   Link,
@@ -12,6 +11,7 @@ import {
 } from "react-router";
 import { AppSidebar } from "~/components/app-sidebar";
 import { DocFooter } from "~/components/doc-footer";
+import { GithubIcon } from "~/components/icons";
 import { TableOfContents } from "~/components/table-of-contents";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { proseComponents } from "~/components/tokens/prose-components";
@@ -21,7 +21,6 @@ import {
   useSidebar,
 } from "~/components/ui/sidebar";
 import type { TOCItem } from "~/lib/remark-toc-export";
-import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
 import "./app.css";
 
@@ -64,7 +63,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <AppSidebar />
           <div className="flex-1 flex flex-col min-w-0">
             <SiteHeader />
-            <main className="flex-1 w-full max-w-[72ch] xl:max-w-none xl:px-12 mx-auto px-6 py-10">
+            <main className="flex-1 w-full px-6 xl:px-12 xl:pr-[14rem] py-10">
               {children}
             </main>
           </div>
@@ -79,19 +78,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export default function App() {
   const matches = useMatches();
   const lastMatch = matches[matches.length - 1];
+  // biome-ignore lint/suspicious/noExplicitAny: React Router's useMatches handle is untyped
   const toc: TOCItem[] = (lastMatch?.handle as any)?.toc ?? [];
   const hasToc = toc.length > 0;
 
   return (
     <MDXProvider components={proseComponents}>
       {hasToc && <TableOfContents toc={toc} />}
-      <div className={hasToc ? "xl:flex xl:items-start xl:gap-16" : undefined}>
-        <div className={cn("flex-1 min-w-0", hasToc && "xl:max-w-[72ch]")}>
-          <Outlet />
-          <DocFooter />
-        </div>
-        {hasToc && <TableOfContents toc={toc} desktopOnly />}
+      <div className="mx-auto w-full max-w-[72ch]">
+        <Outlet />
+        <DocFooter />
       </div>
+      {hasToc && <TableOfContents toc={toc} desktopOnly />}
     </MDXProvider>
   );
 }

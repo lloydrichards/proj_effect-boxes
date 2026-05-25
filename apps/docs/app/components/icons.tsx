@@ -19,4 +19,3 @@ export const GithubIcon = (props: SVGProps<SVGSVGElement>) => (
     <path d="M9 18c-4.51 2-5-2-7-2" />
   </svg>
 );
-

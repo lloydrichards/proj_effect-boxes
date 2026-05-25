@@ -240,7 +240,7 @@ const section = (title: string, content: Box.Box<Ansi.AnsiStyle>) =>
 The three Layout primitives compose for complex responsive layouts:
 
 ```typescript
-const dashboard = Container.make({ width: 80, padding: 1 }, (ctx) => {
+const dashboard = Container.make({ width: 65, padding: 1 }, (ctx) => {
   // Header with flex
   const header = Flex.row(
     [Flex.fixed(heading("Dashboard")), Flex.spacer(), Flex.fixed(label("v1.0"))],

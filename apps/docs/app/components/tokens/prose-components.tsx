@@ -26,7 +26,11 @@ export const proseComponents = {
   ),
   h2: ({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
     <h2
-      className={cn(typefaceHeading2(), "mt-12 scroll-m-20 first:mt-0", className)}
+      className={cn(
+        typefaceHeading2(),
+        "mt-12 scroll-m-20 first:mt-0",
+        className
+      )}
       {...props}
     />
   ),
@@ -152,7 +156,11 @@ export const proseComponents = {
       {...props}
     />
   ),
-  pre: ({ className, children, ...props }: React.HTMLAttributes<HTMLPreElement>) => (
+  pre: ({
+    className,
+    children,
+    ...props
+  }: React.HTMLAttributes<HTMLPreElement>) => (
     <CodeBlock className={className} {...props}>
       {children}
     </CodeBlock>

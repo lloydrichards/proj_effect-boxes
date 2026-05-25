@@ -54,7 +54,7 @@ export const AnsiTerminal = ({
       )}
     </div>
     {/* Terminal body */}
-    <pre className="overflow-x-auto bg-code-block p-4 font-mono text-sm leading-[1.4] text-code-block-foreground">
+    <pre className="font-terminal overflow-x-auto bg-code-block p-4 text-sm leading-[1.2] text-code-block-foreground">
       <AnsiHtml text={input} style={vscodePalette} />
     </pre>
   </div>

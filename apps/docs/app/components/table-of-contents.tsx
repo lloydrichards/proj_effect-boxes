@@ -23,7 +23,7 @@ export function TableOfContents({ toc, desktopOnly }: TableOfContentsProps) {
 
   if (desktopOnly) {
     return (
-      <nav className="hidden xl:block sticky top-16 max-h-[calc(100vh-4rem)] w-48 shrink-0 overflow-y-auto scrollbar-none">
+      <nav className="hidden xl:block fixed top-16 right-8 max-h-[calc(100vh-4rem)] w-48 overflow-y-auto scrollbar-none">
         <p className="mb-3 font-heading text-xs font-medium uppercase tracking-[0.05em] text-muted-foreground">
           On this page
         </p>
@@ -74,7 +74,7 @@ function buildTree(items: TOCItem[]): TOCNode[] {
     // Pop stack until we find a parent with lower depth
     while (
       stack.length > 0 &&
-      stack[stack.length - 1]!.item.depth >= item.depth
+      (stack[stack.length - 1]?.item.depth || 0) >= item.depth
     ) {
       stack.pop();
     }
@@ -82,7 +82,7 @@ function buildTree(items: TOCItem[]): TOCNode[] {
     if (stack.length === 0) {
       root.push(node);
     } else {
-      stack[stack.length - 1]!.children.push(node);
+      stack[stack.length - 1]?.children.push(node);
     }
 
     stack.push(node);
