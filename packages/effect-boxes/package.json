@@ -38,6 +38,10 @@
     "./Renderer": {
       "types": "./dist/Renderer.d.ts",
       "import": "./dist/Renderer.js"
+    },
+    "./Layout": {
+      "types": "./dist/Layout.d.ts",
+      "import": "./dist/Layout.js"
     }
   },
   "publishConfig": {

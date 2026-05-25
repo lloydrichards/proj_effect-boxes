@@ -10,6 +10,7 @@ export default defineConfig({
     "src/Reactive.ts",
     "src/Html.ts",
     "src/Renderer.ts",
+    "src/Layout.ts",
   ],
   format: ["esm"],
   target: "es2022",
