@@ -20,6 +20,7 @@ export const navigation: NavSection[] = [
       { label: "Using Annotation", href: "/guides/using-annotation" },
       { label: "Using Ansi", href: "/guides/using-ansi" },
       { label: "Using Layout", href: "/guides/using-layout" },
+      { label: "Rendering", href: "/guides/rendering" },
       { label: "Common Patterns", href: "/guides/common-patterns" },
     ],
   },

@@ -1,40 +1,398 @@
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
+
 # Using Box
 
 The `Box` module is the core of effect-boxes. A Box represents a rectangular
-block of text that can be composed, aligned, and transformed.
+block of text with explicit dimensions that can be composed, aligned, and
+transformed through functional composition.
 
 ## Creating Boxes
 
+The most common way to create a box is from a string. Multi-line strings
+are handled automatically.
+
+export const outText = Box.renderPrettySync(Box.text("Hello\nWorld"));
+
+<CodeExample>
+
 ```typescript
-import * as Box from "effect-boxes/Box"
-import { pipe } from "effect"
+import * as Box from "effect-boxes/Box";
 
-// Create a box from text
-const hello = Box.text("Hello, World!")
-
-// Create an empty box
-const spacer = Box.emptyBox(1, 10)
+const hello = Box.text("Hello\nWorld");
+// 2 rows, 5 columns
 ```
+
+<AnsiTerminal input={outText} />
+</CodeExample>
+
+Other constructors include `Box.emptyBox(rows, cols)` for blank space,
+`Box.char(c)` for a single character, and `Box.line(s)` for a single-line box:
+
+```typescript
+// An empty box with specific dimensions
+const empty = Box.emptyBox(2, 10);
+
+// A single character
+const star = Box.char("*");
+
+// A single-line box (strips newlines)
+const oneLine = Box.line("Hello World");
+```
+
+## Text Flow
+
+For longer text, `para` wraps content to a specified width, and `columns`
+creates newspaper-style columnar layouts.
+
+export const outPara = Box.renderPrettySync(
+  Box.para(
+    "The Box module is the core of the effect-boxes library, providing the fundamental data structures and operations for creating and composing rectangular text layouts. Boxes can be combined horizontally and vertically, aligned within larger spaces, and annotated with styling information for rich terminal output.",
+    Box.left,
+    50,
+  ),
+);
+
+<CodeExample>
+
+```typescript
+const paragraph = Box.para(
+  "The Box module is the core of the effect-boxes library, providing the fundamental data structures and operations for creating and composing rectangular text layouts. Boxes can be combined horizontally and vertically, aligned within larger spaces, and annotated with styling information for rich terminal output.",
+  Box.left,
+  50,
+);
+```
+
+<AnsiTerminal input={outPara} />
+</CodeExample>
+
+export const outColumns = Box.renderPrettySync(
+  Box.hsep(
+    Box.columns(
+      "The Box module is the core of the effect-boxes library, providing the fundamental data structures and operations for creating and composing rectangular text layouts. Boxes can be combined horizontally and vertically, aligned within larger spaces, and annotated with styling information for rich terminal output.",
+      Box.left,
+      25,
+      6,
+    ),
+    2,
+    Box.top,
+  ),
+);
+
+<CodeExample>
+
+```typescript
+const cols = Box.columns(
+  "The Box module is the core of the effect-boxes library...",
+  Box.left, // alignment
+  25, // column width
+  6, // column height
+);
+const layout = Box.hsep(cols, 2, Box.top);
+```
+
+<AnsiTerminal input={outColumns} />
+</CodeExample>
 
 ## Composing Boxes
 
-Boxes can be composed horizontally and vertically:
+Boxes can be combined horizontally and vertically to build complex layouts.
+
+### Horizontal Composition
+
+export const outHcat = Box.renderPrettySync(
+  Box.hcat([Box.text("Left"), Box.text(" | "), Box.text("Right")], Box.top),
+);
+
+<CodeExample>
 
 ```typescript
-// Horizontal composition
-const row = Box.hcat([Box.text("Left"), Box.text("Right")], Box.top)
-
-// Vertical composition
-const col = Box.vcat([Box.text("Top"), Box.text("Bottom")], Box.left)
+const row = Box.hcat(
+  [Box.text("Left"), Box.text(" | "), Box.text("Right")],
+  Box.top,
+);
 ```
 
-## Alignment
+<AnsiTerminal input={outHcat} />
+</CodeExample>
 
-Control how boxes align when composed:
+Use `punctuateH` to insert a separator between boxes, or `hsep` for spacing:
+
+export const outPunctuateH = Box.renderPrettySync(
+  Box.punctuateH(
+    [Box.text("Name"), Box.text("Age"), Box.text("City")],
+    Box.top,
+    Box.text(" | "),
+  ),
+);
+
+<CodeExample>
 
 ```typescript
-const centered = pipe(
-  Box.text("Hello"),
-  Box.alignHoriz(Box.center1, 20)
-)
+const table = Box.punctuateH(
+  [Box.text("Name"), Box.text("Age"), Box.text("City")],
+  Box.top,
+  Box.text(" | "),
+);
 ```
+
+<AnsiTerminal input={outPunctuateH} />
+</CodeExample>
+
+export const outHsep = Box.renderPrettySync(
+  Box.hsep([Box.text("A"), Box.text("B"), Box.text("C")], 3, Box.top),
+);
+
+<CodeExample>
+
+```typescript
+const spaced = Box.hsep(
+  [Box.text("A"), Box.text("B"), Box.text("C")],
+  3, // spaces between boxes
+  Box.top,
+);
+```
+
+<AnsiTerminal input={outHsep} />
+</CodeExample>
+
+### Vertical Composition
+
+export const outVcat = Box.renderPrettySync(
+  Box.vcat([Box.text("Top"), Box.text("Middle"), Box.text("Bottom")], Box.left),
+);
+
+<CodeExample>
+
+```typescript
+const column = Box.vcat(
+  [Box.text("Top"), Box.text("Middle"), Box.text("Bottom")],
+  Box.left,
+);
+```
+
+<AnsiTerminal input={outVcat} />
+</CodeExample>
+
+export const outPunctuateV = Box.renderPrettySync(
+  Box.punctuateV(
+    [Box.text("Header"), Box.text("Content"), Box.text("Footer")],
+    Box.left,
+    Box.text("---"),
+  ),
+);
+
+<CodeExample>
+
+```typescript
+const sections = Box.punctuateV(
+  [Box.text("Header"), Box.text("Content"), Box.text("Footer")],
+  Box.left,
+  Box.text("---"),
+);
+```
+
+<AnsiTerminal input={outPunctuateV} />
+</CodeExample>
+
+### Appending Individual Boxes
+
+For combining two boxes, use `hAppend` and `vAppend`:
+
+export const outAppend = Box.renderPrettySync(
+  pipe(Box.text("Hello "), Box.hAppend(Box.text("World"))),
+);
+
+<CodeExample>
+
+```typescript
+const combined = pipe(Box.text("Hello "), Box.hAppend(Box.text("World")));
+```
+
+<AnsiTerminal input={outAppend} />
+</CodeExample>
+
+## Alignment and Positioning
+
+### Alignment
+
+Control how a box is positioned within a larger space:
+
+export const outAlignH = Box.renderPrettySync(
+  pipe(
+    Box.text("Hello"),
+    Box.alignHoriz(Box.center1, 20),
+    Box.border("single", { annotation: Ansi.brightBlack }),
+  ),
+);
+
+<CodeExample>
+
+```typescript
+const centered = Box.alignHoriz(Box.text("Hello"), Box.center1, 20);
+```
+
+<AnsiTerminal input={outAlignH} />
+</CodeExample>
+
+export const outAlign = Box.renderPrettySync(
+  pipe(
+    Box.align(Box.text("X"), Box.center1, Box.center1, 3, 7),
+    Box.border("single", { annotation: Ansi.brightBlack }),
+  ),
+);
+
+<CodeExample>
+
+```typescript
+// Align both horizontally and vertically
+const centered2d = Box.align(
+  Box.text("X"),
+  Box.center1, // horizontal
+  Box.center1, // vertical
+  3, // height
+  7, // width
+);
+```
+
+<AnsiTerminal input={outAlign} />
+</CodeExample>
+
+### Moving Boxes
+
+Shift a box by adding empty space around it:
+
+export const outMove = Box.renderPrettySync(
+  pipe(
+    Box.text("Hello"),
+    Box.moveRight(5),
+    Box.moveDown(2),
+    Box.border("single", { annotation: Ansi.brightBlack }),
+  ),
+);
+
+<CodeExample>
+
+```typescript
+const positioned = pipe(Box.text("Hello"), Box.moveRight(5), Box.moveDown(2));
+```
+
+<AnsiTerminal input={outMove} />
+</CodeExample>
+
+Available movement functions: `moveRight`, `moveLeft`, `moveDown`, `moveUp`.
+
+## Truncation
+
+Truncate each line to a maximum width, inserting an ellipsis where content
+was removed. The position parameter controls which part of the text is kept.
+
+export const longBox = Box.text("This is a very long piece of text");
+export const outTruncLeft = Box.renderPrettySync(
+  pipe(longBox, Box.truncate(15, Box.left)),
+);
+export const outTruncRight = Box.renderPrettySync(
+  pipe(longBox, Box.truncate(15, Box.right)),
+);
+export const outTruncCenter = Box.renderPrettySync(
+  pipe(longBox, Box.truncate(15, Box.center1)),
+);
+
+<CodeExample>
+
+```typescript
+const long = Box.text("This is a very long piece of text");
+
+// Keep the beginning
+pipe(long, Box.truncate(15, Box.left));
+
+// Keep the end
+pipe(long, Box.truncate(15, Box.right));
+
+// Keep both ends
+pipe(long, Box.truncate(15, Box.center1));
+```
+
+<AnsiTerminal input={outTruncLeft} title="left" />
+</CodeExample>
+
+<CodeExample>
+
+```typescript
+pipe(long, Box.truncate(15, Box.right));
+```
+
+<AnsiTerminal input={outTruncRight} title="right" />
+</CodeExample>
+
+<CodeExample>
+
+```typescript
+pipe(long, Box.truncate(15, Box.center1));
+```
+
+<AnsiTerminal input={outTruncCenter} title="center" />
+</CodeExample>
+
+If the box is already within the target width, it is returned unchanged.
+
+## Annotations
+
+Boxes are parameterized by an annotation type: `Box<A>`. Annotations are
+metadata attached to a box's content that renderers interpret differently.
+
+Use `Box.annotate` to attach an annotation:
+
+export const outAnnotate = Box.renderPrettySync(
+  pipe(Box.text("Error!"), Box.annotate(Ansi.red)),
+);
+
+<CodeExample>
+
+```typescript
+import * as Ansi from "effect-boxes/Ansi";
+
+const error = pipe(Box.text("Error!"), Box.annotate(Ansi.red));
+```
+
+<AnsiTerminal input={outAnnotate} />
+</CodeExample>
+
+The annotation type determines what styling is applied at render time:
+
+- **Ansi** — Terminal colors and text effects (bold, underline, etc.)
+- **Cmd** — Terminal control sequences (cursor movement, screen clearing)
+- **Html** — HTML elements and attributes for web rendering
+
+Each annotation type has a corresponding renderer that interprets it. See
+[Using Ansi](/guides/using-ansi) for terminal styling and the
+[Rendering guide](/guides/rendering) for how renderers process annotations.
+
+## Rendering
+
+To get a string from a box, use the sync convenience functions:
+
+export const outPlain = Box.renderPlainSync(pipe(Box.text("Hello"), Box.annotate(Ansi.red)))
+export const outPretty = Box.renderPrettySync(pipe(Box.text("Hello"), Box.annotate(Ansi.red)))
+
+<CodeExample layout="side-by-side">
+```typescript
+const box = pipe(Box.text("Hello"), Box.annotate(Ansi.red))
+
+// Strips all annotations
+Box.renderPlainSync(box)
+```
+<AnsiTerminal input={outPlain} title="renderPlainSync" />
+</CodeExample>
+
+<CodeExample layout="side-by-side">
+```typescript
+// Preserves ANSI styling
+Box.renderPrettySync(box)
+```
+<AnsiTerminal input={outPretty} title="renderPrettySync" />
+</CodeExample>
+
+For Effect-based rendering and the full renderer layer system, see the
+[Rendering guide](/guides/rendering).

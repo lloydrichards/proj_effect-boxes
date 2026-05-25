@@ -13,6 +13,7 @@ export default [
     route("using-annotation", "content/guides/using-annotation.mdx"),
     route("using-ansi", "content/guides/using-ansi.mdx"),
     route("using-layout", "content/guides/using-layout.mdx"),
+    route("rendering", "content/guides/rendering.mdx"),
     route("common-patterns", "content/guides/common-patterns.mdx"),
   ]),
   ...prefix("api", [
