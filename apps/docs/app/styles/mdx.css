@@ -118,3 +118,27 @@ figure[data-rehype-pretty-code-figure]:has(> [data-rehype-pretty-code-title])
   pre {
   @apply border-t-0;
 }
+
+/* Autolink headings */
+.subheading-anchor {
+  @apply no-underline inline-flex items-center justify-center size-8 ml-2 text-muted-foreground/0 align-middle transition-colors duration-150;
+}
+
+.subheading-anchor::after {
+  content: "#";
+  @apply font-mono text-[0.75em] font-bold;
+}
+
+h2:hover > .subheading-anchor,
+h3:hover > .subheading-anchor,
+h4:hover > .subheading-anchor,
+h5:hover > .subheading-anchor,
+h6:hover > .subheading-anchor,
+.subheading-anchor:hover,
+.subheading-anchor:focus-visible {
+  @apply text-primary;
+}
+
+.subheading-anchor:focus-visible {
+  @apply outline-2 outline-offset-2 outline-ring;
+}
