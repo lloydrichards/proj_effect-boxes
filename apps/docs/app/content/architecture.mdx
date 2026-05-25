@@ -1,0 +1,136 @@
+# Architecture
+
+How effect-boxes works internally: the box tree, annotation propagation,
+and the pluggable renderer pipeline.
+
+## The box tree
+
+A `Box<A>` is a recursive tree. The `content` field is a discriminated union:
+
+```typescript
+type Content<A> =
+  | { _tag: "Blank" } // Empty space
+  | { _tag: "Text"; text: string } // A raw string line
+  | { _tag: "Row"; boxes: Box<A>[] } // Horizontal composition
+  | { _tag: "Col"; boxes: Box<A>[] } // Vertical composition
+  | { _tag: "SubBox"; hAlign: Alignment; vAlign: Alignment; box: Box<A> };
+```
+
+Every composition operation (`hcat`, `vcat`, alignment functions) builds
+deeper tree nodes. The tree is only flattened into text lines at render time.
+
+This deferred evaluation means:
+
+- Composition is cheap (just building tree nodes)
+- Layout decisions propagate correctly through the entire tree
+- The same tree can be rendered differently by different renderers
+
+## Width calculation
+
+Terminal text is not monospaced in the way you might expect. The internal
+`Width` module handles:
+
+- ASCII characters: 1 column each
+- East Asian wide characters (CJK): 2 columns each
+- Emojis: 2 columns each, including multi-codepoint sequences
+- ANSI escape sequences: 0 columns (invisible)
+- Zero-width characters (combining marks, ZWJ): 0 columns
+
+Every alignment and padding operation depends on knowing the true visual
+width of content. Without correct width calculation, columns misalign and
+borders break.
+
+## Annotations
+
+Annotations are a wrapper type `Annotation<A>` that attaches arbitrary data
+to a box without affecting its dimensions or layout. The generic parameter
+`A` is what makes the system extensible:
+
+- `Box<never>` has no annotations (plain text)
+- `Box<AnsiStyle>` carries terminal styling
+- `Box<HtmlAnnotationData>` carries HTML elements
+- `Box<Reactive>` carries position tracking
+- `Box<AnsiStyle | Reactive>` combines annotation types
+
+Annotations propagate through composition. When boxes are combined with
+`hcat` or `vcat`, their annotations travel with them. The renderer decides
+what to do with each annotation type.
+
+## The renderer pipeline
+
+Rendering is a three-phase process:
+
+1. **Flatten** the box tree, resolving alignments and producing a flat list
+   of positioned text spans with their annotations
+2. **Process** via the renderer's text processor (handles width-aware padding
+   and line breaking)
+3. **Post-process** by applying annotation-specific transformations (wrap in
+   ANSI codes, HTML tags, etc.)
+
+The `Renderer` service is defined as an Effect Context tag:
+
+```typescript
+class Renderer extends Context.Tag("Renderer")<
+  Renderer,
+  {
+    readonly renderContent: <A>(box: Box<A>) => Effect<string[]>;
+    readonly postProcess: <A>(
+      lines: string[],
+      annotation?: Annotation<A>
+    ) => Effect<string[]>;
+    readonly processor: TextProcessor;
+  }
+>() {}
+```
+
+Because it's a service, you inject it via layers:
+
+```typescript
+// Swap renderer without changing layout code
+const program = Box.render(myLayout);
+
+// Terminal output
+Effect.provide(program, Renderer.AnsiRendererLive);
+
+// HTML output
+Effect.provide(program, Renderer.HtmlRendererLive);
+
+// Tests
+Effect.provide(program, Renderer.PlainRendererLive);
+```
+
+## Renderer configuration
+
+Each renderer accepts configuration through Effect's service pattern:
+
+```typescript
+// Custom HTML renderer with pretty-printing
+const CustomHtml = Layer.succeed(
+  HtmlRenderConfig,
+  HtmlRenderConfig.make({
+    indent: true,
+    indentSize: 4,
+    preserveWhitespace: true,
+  })
+);
+```
+
+This lets you create variations (compact vs. pretty HTML) without
+duplicating renderer logic.
+
+## Design decisions
+
+**Why a tree, not immediate string building?**
+Deferred rendering means you can compose first, render later. The same
+layout works for terminal, HTML, or plain text. Testing is straightforward:
+assert on the Box structure or render to plain text for snapshot tests.
+
+**Why annotations instead of inline styles?**
+Separating content from presentation keeps layout code pure. A box doesn't
+know or care what color it is. You can annotate at any level and it
+propagates correctly through composition.
+
+**Why Effect layers for renderers?**
+Dependency injection makes testing simple and allows runtime renderer
+selection. A CLI tool can choose ANSI or plain based on whether stdout
+is a TTY.

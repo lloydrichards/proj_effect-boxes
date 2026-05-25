@@ -1,0 +1,95 @@
+# What is Box?
+
+## The problem
+
+Formatting text for the terminal sounds simple until you need columns,
+alignment, or nested structures. Consider printing a two-column layout:
+
+```txt
+Name        Age
+Alice       30
+Bob         25
+```
+
+With raw strings you track widths manually, pad by hand, and hope nothing
+breaks when content changes. Add ANSI colors and the math gets worse because
+escape sequences are invisible characters that inflate string length without
+adding visual width.
+
+## The mental model
+
+A Box is an immutable rectangle of text with known dimensions. Every box
+knows its width (columns) and height (rows). You compose boxes by placing
+them beside each other or stacking them:
+
+```txt
+hcat:    ██ ██ + ░░      =  ██ ██ ░░
+                 ░░               ░░
+
+vcat:    ██ ██ + ░░ ░░ ░░  =  ██ ██
+                              ░░ ░░ ░░
+```
+
+When boxes have different sizes, alignment controls where the smaller
+box sits within the larger dimension.
+
+Every operation returns a new Box. Nothing mutates. The result is always
+another rectangle you can compose further.
+
+## Annotations separate content from presentation
+
+Boxes hold text. Annotations attach metadata (styling, semantics, identifiers)
+without affecting layout. A Box doesn't know about colors; it knows it has an
+annotation of some type `A`.
+
+This separation means the same layout can render to:
+
+- Plain text, with annotations stripped
+- ANSI terminal output, with annotations interpreted as colors and effects
+- HTML, with annotations interpreted as elements and attributes
+
+The generic type `Box<A>` captures this: `A` is whatever your renderer
+understands.
+
+## Renderers: one layout, many outputs
+
+A Renderer translates `Box<A>` into a string for a specific target. The
+library ships with three:
+
+| Renderer | Reads annotations as | Output                |
+| -------- | -------------------- | --------------------- |
+| Plain    | (ignored)            | Raw text              |
+| Ansi     | `AnsiStyle`          | Terminal escape codes |
+| Html     | `HtmlAnnotationData` | HTML markup           |
+
+Because renderers are injected via Effect layers, you can swap targets
+without changing layout code.
+
+## Where it fits
+
+effect-boxes sits between your data and its display:
+
+```txt
+       ┌───────────────┐   ┌─────────────────┐
+Data → │ compose Boxes │ → │ choose Renderer │ → Output String
+       └───────────────┘   └─────────────────┘
+```
+
+It handles:
+
+- Text measurement (including Unicode, emojis, East Asian characters)
+- Alignment and padding
+- Nested composition at any depth
+- Annotation propagation through the tree
+
+It does not handle:
+
+- Terminal I/O (use Effect's Console or Prompt for that)
+- Input handling (pair with `Prompt.custom` for interactive TUI)
+- Animation or state management
+
+## Next steps
+
+- [Getting Started](/getting-started) for install and first layout
+- [Using Box](/guides/using-box) for the full guide to Box operations
+- [Architecture](/architecture) for how the internals work
