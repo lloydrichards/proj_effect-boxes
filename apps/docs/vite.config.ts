@@ -6,6 +6,7 @@ import {
   transformerNotationHighlight,
 } from "@shikijs/transformers";
 import tailwindcss from "@tailwindcss/vite";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
@@ -19,6 +20,16 @@ export default defineConfig({
       remarkPlugins: [remarkGfm, remarkTocExport],
       rehypePlugins: [
         rehypeSlug,
+        [
+          rehypeAutolinkHeadings,
+          {
+            behavior: "append",
+            properties: {
+              className: ["subheading-anchor"],
+              ariaLabel: "Link to section",
+            },
+          },
+        ],
         [
           rehypePrettyCode,
           {
