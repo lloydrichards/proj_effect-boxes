@@ -485,9 +485,9 @@ export const AnsiRendererLive: Layer.Layer<Renderer> = makeAnsiRenderer;
  * import { Effect, pipe } from "effect"
  *
  * const htmlBox = Box.vcat([
- *   Box.text("Hello World").pipe(Box.annotate(Html.h1)),
- *   Box.text("This is an example of HTML rendering.").pipe(Box.annotate(Html.p)),
- *   Box.text("Goodbye!").pipe(Box.annotate(Html.p))
+ *   Box.text("Hello World").pipe(Box.annotate(Html.h1())),
+ *   Box.text("This is an example of HTML rendering.").pipe(Box.annotate(Html.p())),
+ *   Box.text("Goodbye!").pipe(Box.annotate(Html.p()))
  * ], Box.left)
  *
  * const htmlOutput = pipe(

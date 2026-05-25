@@ -1047,8 +1047,8 @@ export const moveRight: {
  *
  * const long = Box.text("This is a very long piece of text")
  *
- * // Truncate from end (default)
- * const end = pipe(long, Box.truncate(15))
+ * // Truncate from end
+ * const end = pipe(long, Box.truncate(15, Box.left))
  * console.log(Box.renderPlainSync(end))
  * // "This is a very…"
  *
@@ -1308,13 +1308,13 @@ export const renderPlainSync: <A>(self: Box<A>) => string =
  * ```typescript
  * import * as Box from "effect-boxes/Box"
  * import * as Effect from "effect/Effect"
+ * import * as Renderer from "effect-boxes/Renderer"
  *
  * const box = Box.text("Hello, Effect!")
- * const renderedEffect = Box.render(box)
+ * const program = Box.render(box).pipe(Effect.provide(Renderer.PlainRendererLive))
  *
- * // Run the effect to get the Renderer
- * Effect.runPromise(renderedEffect).then((renderer) => {
- *   console.log(renderer.toString())
+ * Effect.runPromise(program).then((result) => {
+ *   console.log(result)
  * })
  * ```
  *
@@ -1338,10 +1338,10 @@ export const render: {
  * ```typescript
  * import * as Box from "effect-boxes/Box"
  * import * as Effect from "effect/Effect"
- * import { PlainRenderer } from "effect-boxes/Renderer"
+ * import { PlainRendererLive } from "effect-boxes/Renderer"
  *
  * const box = Box.text("Hello, Box!")
- * const program = Box.printBox(box).pipe(Effect.provide(PlainRenderer))
+ * const program = Box.printBox(box).pipe(Effect.provide(PlainRendererLive))
  * Effect.runPromise(program)
  * // Hello, Box!
  * ```
