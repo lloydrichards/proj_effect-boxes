@@ -14,6 +14,7 @@ import { ThemeToggle } from "~/components/theme-toggle";
 import { proseComponents } from "~/components/tokens/prose-components";
 import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
 import type { TOCItem } from "~/lib/remark-toc-export";
+import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
 import "./app.css";
 
@@ -55,12 +56,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <SidebarProvider>
           <AppSidebar />
           <div className="flex-1 flex flex-col min-w-0">
-            <header className="flex items-center gap-2 px-8 py-4">
+            <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border/50 bg-background/80 backdrop-blur-sm px-6 py-3">
               <SidebarTrigger />
               <div className="flex-1" />
               <ThemeToggle />
             </header>
-            <main className="flex-1 w-full max-w-4xl xl:max-w-6xl mx-auto px-8 py-8">
+            <main className="flex-1 w-full max-w-[72ch] xl:max-w-none xl:px-12 mx-auto px-6 py-10">
               {children}
             </main>
           </div>
@@ -81,8 +82,8 @@ export default function App() {
   return (
     <MDXProvider components={proseComponents}>
       {hasToc && <TableOfContents toc={toc} />}
-      <div className={hasToc ? "xl:flex xl:items-start xl:gap-8" : undefined}>
-        <div className="flex-1 min-w-0">
+      <div className={hasToc ? "xl:flex xl:items-start xl:gap-16" : undefined}>
+        <div className={cn("flex-1 min-w-0", hasToc && "xl:max-w-[72ch]")}>
           <Outlet />
         </div>
         {hasToc && <TableOfContents toc={toc} desktopOnly />}

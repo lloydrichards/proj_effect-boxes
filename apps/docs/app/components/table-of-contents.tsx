@@ -23,8 +23,8 @@ export function TableOfContents({ toc, desktopOnly }: TableOfContentsProps) {
 
   if (desktopOnly) {
     return (
-      <nav className="hidden xl:block sticky top-20 max-h-[calc(100vh-5rem)] w-56 shrink-0 overflow-y-auto scrollbar-none">
-        <p className="mb-2 text-sm font-semibold text-foreground">
+      <nav className="hidden xl:block sticky top-16 max-h-[calc(100vh-4rem)] w-48 shrink-0 overflow-y-auto scrollbar-none">
+        <p className="mb-3 font-heading text-xs font-medium uppercase tracking-[0.05em] text-muted-foreground">
           On this page
         </p>
         <TOCList toc={toc} activeId={activeId} />
@@ -147,8 +147,8 @@ function TOCNodeItem({
         href={`#${item.id}`}
         onClick={(e) => onClickLink(e, item.id)}
         className={cn(
-          "block py-1 transition-colors hover:text-foreground",
-          isActive ? "text-foreground font-medium" : "text-muted-foreground"
+          "block py-1 transition-colors duration-150 hover:text-foreground",
+          isActive ? "text-primary font-medium" : "text-muted-foreground"
         )}
       >
         {item.value}

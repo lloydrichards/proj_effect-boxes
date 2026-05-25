@@ -5,7 +5,7 @@ import { AnsiHtml } from "fancy-ansi/react";
 import { cn } from "~/lib/utils";
 
 const vscodePalette = {
-  "--ansi-black": "#000000",
+  "--ansi-black": "#1a1a2e",
   "--ansi-red": "#cd3131",
   "--ansi-green": "#0dbc79",
   "--ansi-yellow": "#e5e510",
@@ -36,31 +36,26 @@ export const AnsiTerminal = ({
 }: AnsiTerminalProps) => (
   <div
     className={cn(
-      "my-6 overflow-hidden rounded-md border border-border shadow-lg bg-code",
+      "my-6 overflow-hidden border border-code-block-border bg-code-block",
       className
     )}
   >
     {/* Title bar */}
-    <div className="flex items-center gap-2 bg-code px-3 py-2 border-b border-border">
+    <div className="flex items-center gap-2 bg-code-block px-3 py-2 border-b border-code-block-border">
       <div className="flex gap-1.5">
-        <span className="size-3 rounded-full bg-[#FF5F56]" />
-        <span className="size-3 rounded-full bg-[#FFBD2E]" />
-        <span className="size-3 rounded-full bg-[#27C93F]" />
+        <span className="size-2.5 rounded-full bg-destructive/70" />
+        <span className="size-2.5 rounded-full bg-warning/70" />
+        <span className="size-2.5 rounded-full bg-success/70" />
       </div>
       {title && (
-        <span className="ml-2 text-xs text-muted-foreground">{title}</span>
+        <span className="ml-2 font-heading text-xs text-muted-foreground">
+          {title}
+        </span>
       )}
     </div>
     {/* Terminal body */}
-    <pre
-      className="overflow-x-auto bg-code p-4 text-sm leading-[1.3] text-code-foreground"
-      style={{
-        ...vscodePalette,
-        fontFamily:
-          "Menlo, Consolas, 'Liberation Mono', 'Courier New', monospace",
-      }}
-    >
-      <AnsiHtml text={input} />
+    <pre className="overflow-x-auto bg-code-block p-4 font-mono text-sm leading-[1.4] text-code-block-foreground">
+      <AnsiHtml text={input} style={vscodePalette} />
     </pre>
   </div>
 );
