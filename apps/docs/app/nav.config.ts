@@ -11,7 +11,18 @@ export type NavSection = {
 export const navigation: NavSection[] = [
   {
     title: "Overview",
-    items: [{ label: "Getting Started", href: "/getting-started" }],
+    items: [
+      { label: "Getting Started", href: "/getting-started" },
+      { label: "What is Box?", href: "/what-is-box" },
+      { label: "Architecture", href: "/architecture" },
+    ],
+  },
+  {
+    title: "Tutorials",
+    items: [
+      { label: "Directory Tree", href: "/tutorials/directory-tree" },
+      { label: "Select Prompt", href: "/tutorials/select-prompt" },
+    ],
   },
   {
     title: "Guides",
@@ -21,6 +32,8 @@ export const navigation: NavSection[] = [
       { label: "Using Ansi", href: "/guides/using-ansi" },
       { label: "Using Layout", href: "/guides/using-layout" },
       { label: "Using Cmd", href: "/guides/using-cmd" },
+      { label: "Using Reactive", href: "/guides/using-reactive" },
+      { label: "Using Html", href: "/guides/using-html" },
       { label: "Rendering", href: "/guides/rendering" },
       { label: "Common Patterns", href: "/guides/common-patterns" },
     ],
