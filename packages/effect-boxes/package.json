@@ -45,7 +45,8 @@
   },
   "files": [
     "dist/**",
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "README.md"
   ],
   "keywords": [
     "effect",
@@ -68,6 +69,7 @@
   },
   "scripts": {
     "clean": "git clean -xdf dist node_modules .cache .turbo tsconfig.tsbuildinfo",
+    "prepack": "cp ../../README.md .",
     "build": "tsup && tsc --project tsconfig.build.json",
     "lint": "biome lint .",
     "test": "vitest run",
