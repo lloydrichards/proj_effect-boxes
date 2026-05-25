@@ -37,6 +37,7 @@ export default defineConfig({
               dark: "github-dark",
               light: "github-light",
             },
+            defaultColor: false,
             keepBackground: false,
             transformers: [
               transformerNotationDiff(),

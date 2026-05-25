@@ -11,10 +11,13 @@ export interface TOCItem {
  * Remark plugin that extracts h2-h4 headings from MDX content
  * and injects `export const toc = [...]` into the module.
  */
+// biome-ignore lint/suspicious/noExplicitAny: remark plugins operate on untyped AST nodes
 const remarkTocExport: () => (tree: any) => void = () => {
+  // biome-ignore lint/suspicious/noExplicitAny: remark plugins operate on untyped AST nodes
   return (tree: any) => {
     const headings: TOCItem[] = [];
 
+    // biome-ignore lint/suspicious/noExplicitAny: unist visitor callback uses untyped nodes
     visit(tree, "heading", (node: any) => {
       if (node.depth >= 2 && node.depth <= 4) {
         const value = toString(node);

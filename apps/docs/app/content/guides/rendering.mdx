@@ -16,14 +16,16 @@ export const sampleBox = pipe(Box.text("Hello"), Box.annotate(Ansi.bold))
 export const outPlain = Box.renderPlainSync(sampleBox)
 export const outPretty = Box.renderPrettySync(sampleBox)
 
-<CodeExample layout="side-by-side">
 ```typescript
 import * as Box from "effect-boxes/Box"
 import * as Ansi from "effect-boxes/Ansi"
 import { pipe } from "effect"
 
 const box = pipe(Box.text("Hello"), Box.annotate(Ansi.bold))
+```
 
+<CodeExample layout="side-by-side">
+```typescript
 // Strips all annotations — plain text output
 Box.renderPlainSync(box)
 ```
