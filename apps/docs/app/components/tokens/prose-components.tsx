@@ -3,6 +3,7 @@ import type { ComponentPropsWithoutRef } from "react";
 import { Link } from "react-router";
 
 import { AnsiTerminal } from "~/components/ansi-terminal";
+import { CodeBlock } from "~/components/code-block";
 import { CodeExample } from "~/components/code-example";
 import {
   typefaceAnchor,
@@ -25,11 +26,7 @@ export const proseComponents = {
   ),
   h2: ({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) => (
     <h2
-      className={cn(
-        typefaceHeading2(),
-        "mt-10 scroll-m-20 first:mt-0",
-        className
-      )}
+      className={cn(typefaceHeading2(), "mt-12 scroll-m-20 first:mt-0", className)}
       {...props}
     />
   ),
@@ -59,19 +56,19 @@ export const proseComponents = {
   ),
   p: ({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) => (
     <p
-      className={cn(typefaceBody("[&:not(:first-child)]:mt-6"), className)}
+      className={cn(typefaceBody("[&:not(:first-child)]:mt-5"), className)}
       {...props}
     />
   ),
   ul: ({ className, ...props }: React.HTMLAttributes<HTMLUListElement>) => (
     <ul
-      className={cn(typefaceBody(), "my-6 ml-6 list-disc", className)}
+      className={cn(typefaceBody(), "my-5 ml-6 list-disc", className)}
       {...props}
     />
   ),
   ol: ({ className, ...props }: React.HTMLAttributes<HTMLOListElement>) => (
     <ol
-      className={cn(typefaceBody(), "my-6 ml-6 list-decimal", className)}
+      className={cn(typefaceBody(), "my-5 ml-6 list-decimal", className)}
       {...props}
     />
   ),
@@ -85,14 +82,14 @@ export const proseComponents = {
     <blockquote
       className={cn(
         typefaceBody(),
-        "[&>*]:text-muted-foreground mt-6 border-l-2 pl-6 italic",
+        "[&>*]:text-muted-foreground mt-5 bg-muted/50 px-5 py-4 italic",
         className
       )}
       {...props}
     />
   ),
   strong: (props: ComponentPropsWithoutRef<"strong">) => (
-    <strong className="text-primary font-bold" {...props} />
+    <strong className="font-semibold text-foreground" {...props} />
   ),
   a: ({
     className,
@@ -155,24 +152,26 @@ export const proseComponents = {
       {...props}
     />
   ),
-  pre: ({ className, ...props }: React.HTMLAttributes<HTMLPreElement>) => (
-    <pre
-      className={cn(
-        "bg-code text-code-foreground mb-4 overflow-x-auto rounded-md p-3 font-mono",
-        className
-      )}
-      {...props}
-    />
+  pre: ({ className, children, ...props }: React.HTMLAttributes<HTMLPreElement>) => (
+    <CodeBlock className={className} {...props}>
+      {children}
+    </CodeBlock>
   ),
-  code: ({ className, ...props }: React.HTMLAttributes<HTMLElement>) => (
-    <code
-      className={cn(
-        "bg-code text-code-foreground px-1 font-mono text-sm",
-        className
-      )}
-      {...props}
-    />
-  ),
+  code: ({ className, ...props }: React.HTMLAttributes<HTMLElement>) => {
+    // Code inside pre has data-language from rehype-pretty-code; skip styling
+    if ((props as Record<string, unknown>)["data-language"]) {
+      return <code className={className} {...props} />;
+    }
+    return (
+      <code
+        className={cn(
+          "bg-code text-code-foreground border border-code-border px-1.5 py-0.5 font-mono text-[0.875em]",
+          className
+        )}
+        {...props}
+      />
+    );
+  },
   figure: ({ className, ...props }: React.HTMLAttributes<HTMLElement>) => (
     <figure className={cn("my-6", className)} {...props} />
   ),
