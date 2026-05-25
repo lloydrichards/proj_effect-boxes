@@ -21,7 +21,9 @@ export function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton render={<Link to="/" />}>
-              <span className="text-lg font-bold">effect-boxes</span>
+              <span className="font-heading text-base font-bold tracking-[-0.02em]">
+                effect-boxes
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
