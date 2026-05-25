@@ -5,21 +5,25 @@
 ## 🎯 Core Principles
 
 ### 1. Compilation First
+
 - **All examples MUST compile** via `bun run type-check`
 - **No `any` types, type assertions, or unsafe patterns**
 - **Type-safe examples only** - leverage TypeScript's inference
 
 ### 2. Effect.js Ecosystem Alignment
+
 - Follow Effect.js documentation patterns from `effect-smol` repository
 - Use consistent categorization and tagging
 - Emphasize functional composition and immutability
 
 ### 3. Practical Examples
+
 - **Real-world usage scenarios** over abstract examples
 - **Multiple examples** showing different usage patterns
 - **Functional composition** using `pipe()` for complex operations
 
 ### 4. Mathematical Clarity
+
 - **Preserve existing Haskell references** using `@note Haskell:` format
 - **Include mathematical properties** where relevant (associativity, identity)
 - **Bridge concepts** for developers with varying mathematical backgrounds
@@ -29,6 +33,7 @@
 ### Writing Clear Descriptions
 
 **Core Guidelines:**
+
 - **Start with action verbs**: "Creates", "Combines", "Transforms", "Validates"
 - **Be specific about behavior**: Include edge cases and important side effects
 - **Use present tense**: "Calculates the result" not "Will calculate the result"
@@ -37,8 +42,9 @@
 ### Cognitive Load Principles
 
 **Information Hierarchy:**
+
 1. **Essential function** (what it does)
-2. **Key behavior** (how it behaves) 
+2. **Key behavior** (how it behaves)
 3. **Important constraints** (edge cases, performance)
 4. **Mathematical context** (when applicable)
 
@@ -46,10 +52,10 @@
 // ✅ GOOD: Clear, action-oriented, specific
 /**
  * Horizontally concatenates boxes with specified vertical alignment.
- * 
+ *
  * Combines multiple boxes side-by-side, using alignment to handle
  * boxes of different heights. Returns a single box with combined width.
- * 
+ *
  * @note Haskell: `hcat :: Foldable f => Alignment -> f Box -> Box`
  */
 
@@ -62,6 +68,7 @@
 ### Mathematical Documentation Patterns
 
 **Preserving Haskell References:**
+
 - **Keep existing `@note Haskell:` format** - it's excellent and provides mathematical precision
 - **Add mathematical properties** when they help understanding
 - **Include type theory context** for complex operations
@@ -70,14 +77,14 @@
 ```typescript
 /**
  * Combines two boxes using the semigroup operation.
- * 
+ *
  * **Mathematical Properties**
  * - **Associative**: `combine(combine(a, b), c) ≡ combine(a, combine(b, c))`
  * - **Identity**: `combine(nullBox, a) ≡ combine(a, nullBox) ≡ a`
- * 
+ *
  * @note Haskell: `(<>) :: Box -> Box -> Box`
  * @note Haskell: `instance Semigroup Box where l <> r = hcat top [l,r]`
- * 
+ *
  * @category combinators
  */
 ```
@@ -85,6 +92,7 @@
 ### Technical Accuracy Standards
 
 **Include When Relevant:**
+
 - **Performance characteristics**: For operations with non-trivial complexity
 - **Error conditions**: What can go wrong and when
 - **Side effects**: Mutations, logging, network calls (rare in this library)
@@ -93,14 +101,14 @@
 ```typescript
 /**
  * Moves a box right by the specified number of columns.
- * 
+ *
  * **Details**
- * 
+ *
  * Creates a new box with increased width by prepending spaces to each line.
  * Negative distances will throw an error - use `moveLeft()` instead.
- * 
+ *
  * **Performance**: O(rows × content_length) for content copying
- * 
+ *
  * @note Haskell: `moveRight :: Int -> Box -> Box`
  */
 ```
@@ -109,28 +117,28 @@
 
 **Use this pattern for advanced operations:**
 
-```typescript
+````typescript
 /**
  * Brief one-line summary.
- * 
+ *
  * **Details**
- * 
+ *
  * More comprehensive explanation including behavior notes,
  * when to use vs alternatives, and important constraints.
- * 
+ *
  * **Mathematical Properties** (when applicable)
  * - **Property Name**: Mathematical statement or description
- * 
+ *
  * **Type Theory** (when helpful)
  * ```haskell
  * functionName :: InputType -> OutputType
  * -- Additional Haskell context or constraints
  * ```
- * 
+ *
  * @note Haskell: `original :: signature -> here`
  * @category appropriate_category
  */
-```
+````
 
 ## 📦 Module-Level Documentation
 
@@ -140,7 +148,7 @@ Every public module file (`src/*.ts`) MUST have a module-level JSDoc comment **b
 
 Follow this structure, scaling detail to module complexity:
 
-```typescript
+````typescript
 /**
  * Brief one-line description of the module's purpose.
  *
@@ -181,19 +189,20 @@ Follow this structure, scaling detail to module complexity:
  * @since 0.1.0
  * @module
  */
-```
+````
 
 ### Required Tags
 
-| Tag | Purpose | Required? |
-|-----|---------|-----------|
-| `@since` | Version when module was introduced | Always, second-to-last |
-| `@module` | Marks as module-level doc (not first-export doc) | Always, last tag |
-| `@see` | Cross-references to key exports or related modules | Recommended |
+| Tag       | Purpose                                            | Required?              |
+| --------- | -------------------------------------------------- | ---------------------- |
+| `@since`  | Version when module was introduced                 | Always, second-to-last |
+| `@module` | Marks as module-level doc (not first-export doc)   | Always, last tag       |
+| `@see`    | Cross-references to key exports or related modules | Recommended            |
 
 ### Minimal vs Full Style
 
 **Minimal** (for small/focused modules like `Html.ts`):
+
 ```typescript
 /**
  * HTML rendering for annotated boxes.
@@ -209,7 +218,8 @@ Follow this structure, scaling detail to module complexity:
 ```
 
 **Full** (for core modules like `Box.ts`):
-```typescript
+
+````typescript
 /**
  * Core box data type and layout operations for text-based rendering.
  *
@@ -260,7 +270,7 @@ Follow this structure, scaling detail to module complexity:
  * @since 0.1.0
  * @module
  */
-```
+````
 
 ### Internal Modules
 
@@ -279,15 +289,15 @@ Internal modules (`src/internal/*.ts`) should use a minimal `@internal` module d
 
 ### Public Function Documentation
 
-```typescript
+````typescript
 /**
  * Brief one-line description of functionality.
- * 
+ *
  * **Details** (optional section for complex functions)
- * 
+ *
  * More comprehensive explanation including:
  * - Important behavior notes
- * - Performance characteristics  
+ * - Performance characteristics
  * - When to use vs alternatives
  *
  * **Example** (Basic usage)
@@ -318,11 +328,11 @@ Internal modules (`src/internal/*.ts`) should use a minimal `@internal` module d
  *
  * @category constructors | combinators | utilities | transformations
  */
-```
+````
 
 ### Dual Function Documentation
 
-```typescript
+````typescript
 /**
  * Function supporting both data-first and data-last usage patterns.
  *
@@ -348,8 +358,8 @@ Internal modules (`src/internal/*.ts`) should use a minimal `@internal` module d
 export const functionName = dual<
   (param: Type) => (self: Box<A>) => Box<B>,
   (self: Box<A>, param: Type) => Box<B>
->(2, (self, param) => implementation)
-```
+>(2, (self, param) => implementation);
+````
 
 ### Internal Function Documentation
 
@@ -357,17 +367,17 @@ export const functionName = dual<
 /**
  * @internal
  */
-export const simpleInternalFunction = implementation
+export const simpleInternalFunction = implementation;
 
 // OR for complex internal functions:
 
 /**
  * Internal helper for complex box operations.
- * 
+ *
  * @internal
  * @category utilities
  */
-export const complexInternalFunction = implementation
+export const complexInternalFunction = implementation;
 ```
 
 ## 🏷️ Category Classification
@@ -375,79 +385,92 @@ export const complexInternalFunction = implementation
 ### Required Categories for effect-boxes
 
 #### `@category constructors`
+
 Functions that create new Box instances:
+
 ```typescript
 // Box creation functions
-text, emptyBox, char, nullBox, para, combine
+(text, emptyBox, char, nullBox, para, combine);
 ```
 
-#### `@category combinators`  
+#### `@category combinators`
+
 Functions that combine or transform existing boxes:
+
 ```typescript
 // Box combination and layout functions
-hcat, vcat, hAppend, vAppend, punctuateH, punctuateV
+(hcat, vcat, hAppend, vAppend, punctuateH, punctuateV);
 ```
 
 #### `@category transformations`
+
 Functions that modify box properties or content:
+
 ```typescript
 // Box modification functions
 align*, move*, annotate, reAnnotate, alterAnnotations
 ```
 
 #### `@category utilities`
+
 Helper functions and property accessors:
+
 ```typescript
 // Information and utility functions
-rows, cols, render, match, isBox
+(rows, cols, render, match, isBox);
 ```
 
 #### `@category models` (for type definitions)
+
 ```typescript
 // Type definitions and interfaces
 export interface Box<A>
-export type Alignment 
+export type Alignment
 ```
 
 #### `@category guards` (for type guards)
+
 ```typescript
 // Type checking functions
-export const isBox: <A>(u: unknown) => u is Box<A>
+export const isBox: <A>(u: unknown) => u is Box<A>;
 ```
 
 ## 📖 Import Standards
 
 ### Correct Import Patterns
+
 ```typescript
 // ✅ CORRECT - Effect core imports
-import { pipe, dual } from "effect"
-import { Equal, Hash } from "effect"
+import { pipe, dual } from "effect";
+import { Equal, Hash } from "effect";
 
 // ✅ CORRECT - Local module imports
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi" 
-import * as Annotation from "effect-boxes/Annotation"
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import * as Annotation from "effect-boxes/Annotation";
 
 // ✅ CORRECT - Relative imports within examples
-import * as Box from "../Box"
+import * as Box from "../Box";
 ```
 
 ### Forbidden Patterns
+
 ```typescript
 // ❌ WRONG - Type assertions
-const value = something as Box<string>
+const value = something as Box<string>;
 
 // ❌ WRONG - Any types
-const data: any = someValue
+const data: any = someValue;
 
-// ❌ WRONG - Declare patterns  
-declare const Service: any
+// ❌ WRONG - Declare patterns
+declare const Service: any;
 ```
 
 ## 🎯 Example Quality Standards
 
 ### Basic Function Example
-```typescript
+
+````typescript
 /**
  * Creates a box containing the specified text content.
  *
@@ -467,15 +490,16 @@ declare const Service: any
  * @note Haskell: `text :: String -> Box`
  * @category constructors
  */
-```
+````
 
 ### Complex Composition Example
-```typescript
+
+````typescript
 /**
  * Horizontally concatenates boxes with specified vertical alignment.
  *
  * **Details**
- * 
+ *
  * Combines multiple boxes side-by-side, using alignment to handle boxes
  * of different heights. The resulting box width equals the sum of all
  * input box widths.
@@ -501,14 +525,14 @@ declare const Service: any
  * ```typescript
  * const tall = Box.text("A\nB\nC")
  * const short = Box.text("X")
- * 
+ *
  * // Top alignment
  * const topAligned = Box.hcat([tall, short], Box.top)
  * console.log(Box.render(topAligned))
  * // AX
  * // B
  * // C
- * 
+ *
  * // Center alignment
  * const centered = Box.hcat([tall, short], Box.center1)
  * console.log(Box.render(centered))
@@ -526,7 +550,7 @@ declare const Service: any
  * const header = Box.text("HEADER").pipe(
  *   Box.alignHoriz(Box.center1, 20)
  * )
- * 
+ *
  * const content = pipe(
  *   [Box.text("Left Column"), Box.text("Right Column")],
  *   boxes => Box.hcat(boxes, Box.top),
@@ -539,10 +563,11 @@ declare const Service: any
  * @note Haskell: `hcat :: Foldable f => Alignment -> f Box -> Box`
  * @category combinators
  */
-```
+````
 
 ### Cross-Module Integration Example
-```typescript
+
+````typescript
 /**
  * Renders box content with ANSI color codes.
  *
@@ -566,13 +591,13 @@ declare const Service: any
  *
  * @category utilities
  */
-```
+````
 
 ## 🚨 Common Pitfalls to Avoid
 
 ### Documentation Anti-Patterns
 
-```typescript
+````typescript
 // ❌ WRONG - Vague descriptions
 /**
  * Does box stuff.
@@ -604,11 +629,11 @@ declare const Service: any
  * structure of the underlying algebraic lattice...
  * // Too abstract - make it practical!
  */
-```
+````
 
 ### Correct Patterns
 
-```typescript
+````typescript
 // ✅ CORRECT - Clear, complete documentation with math context
 /**
  * Creates a box containing the specified text content.
@@ -630,19 +655,19 @@ declare const Service: any
 // ✅ CORRECT - Mathematical properties for complex operations
 /**
  * Combines two boxes using the semigroup operation.
- * 
+ *
  * Horizontally concatenates boxes with top alignment, forming the
  * fundamental combining operation for the Box semigroup.
- * 
+ *
  * **Mathematical Properties**
  * - **Associative**: `combine(combine(a, b), c) ≡ combine(a, combine(b, c))`
  * - **Identity**: When combined with `nullBox`, returns the original box
- * 
+ *
  * **Example**
- * 
+ *
  * ```typescript
  * import * as Box from "effect-boxes/Box"
- * 
+ *
  * const left = Box.text("Hello")
  * const right = Box.text("World")
  * const combined = Box.combine(left, right)
@@ -654,7 +679,7 @@ declare const Service: any
  * @note Haskell: `instance Semigroup Box where l <> r = hcat top [l,r]`
  * @category combinators
  */
-```
+````
 
 ## 🔄 Migration Checklist
 
@@ -675,8 +700,9 @@ When updating existing documentation:
 ## 📚 Reference Implementation
 
 See the updated documentation in:
+
 - `/src/Box.ts` - Primary examples of all patterns
-- `/src/Ansi.ts` - Cross-module integration examples  
+- `/src/Ansi.ts` - Cross-module integration examples
 - `/src/Annotation.ts` - Type-safe annotation examples
 
 ## 🔗 Additional Resources

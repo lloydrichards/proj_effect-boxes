@@ -1,6 +1,6 @@
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
 
 # Using Ansi
 
@@ -11,25 +11,32 @@ boxes that renderers convert into ANSI escape sequences.
 
 ## Text Colors
 
-export const outColors = Box.renderPrettySync(Box.vcat([
-  pipe(Box.text("Red text"), Box.annotate(Ansi.red)),
-  pipe(Box.text("Green text"), Box.annotate(Ansi.green)),
-  pipe(Box.text("Blue text"), Box.annotate(Ansi.blue)),
-  pipe(Box.text("Yellow text"), Box.annotate(Ansi.yellow)),
-  pipe(Box.text("Magenta text"), Box.annotate(Ansi.magenta)),
-  pipe(Box.text("Cyan text"), Box.annotate(Ansi.cyan)),
-], Box.left))
+export const outColors = Box.renderPrettySync(
+  Box.vcat(
+    [
+      pipe(Box.text("Red text"), Box.annotate(Ansi.red)),
+      pipe(Box.text("Green text"), Box.annotate(Ansi.green)),
+      pipe(Box.text("Blue text"), Box.annotate(Ansi.blue)),
+      pipe(Box.text("Yellow text"), Box.annotate(Ansi.yellow)),
+      pipe(Box.text("Magenta text"), Box.annotate(Ansi.magenta)),
+      pipe(Box.text("Cyan text"), Box.annotate(Ansi.cyan)),
+    ],
+    Box.left
+  )
+);
 
 <CodeExample>
-```typescript
-import * as Box from "effect-boxes/Box"
-import * as Ansi from "effect-boxes/Ansi"
-import { pipe } from "effect"
 
-const red = pipe(Box.text("Red text"), Box.annotate(Ansi.red))
-const green = pipe(Box.text("Green text"), Box.annotate(Ansi.green))
-const blue = pipe(Box.text("Blue text"), Box.annotate(Ansi.blue))
+```typescript
+import * as Box from "effect-boxes/Box";
+import * as Ansi from "effect-boxes/Ansi";
+import { pipe } from "effect";
+
+const red = pipe(Box.text("Red text"), Box.annotate(Ansi.red));
+const green = pipe(Box.text("Green text"), Box.annotate(Ansi.green));
+const blue = pipe(Box.text("Blue text"), Box.annotate(Ansi.blue));
 ```
+
 <AnsiTerminal input={outColors} />
 </CodeExample>
 
@@ -39,24 +46,40 @@ Available standard colors: `black`, `red`, `green`, `yellow`, `blue`,
 
 ## Background Colors
 
-export const outBg = Box.renderPrettySync(Box.vcat([
-  pipe(Box.text(" Warning "), Box.annotate(Ansi.combine(Ansi.black, Ansi.bgYellow))),
-  pipe(Box.text(" Error   "), Box.annotate(Ansi.combine(Ansi.white, Ansi.bgRed))),
-  pipe(Box.text(" Info    "), Box.annotate(Ansi.combine(Ansi.white, Ansi.bgBlue))),
-], Box.left))
+export const outBg = Box.renderPrettySync(
+  Box.vcat(
+    [
+      pipe(
+        Box.text(" Warning "),
+        Box.annotate(Ansi.combine(Ansi.black, Ansi.bgYellow))
+      ),
+      pipe(
+        Box.text(" Error   "),
+        Box.annotate(Ansi.combine(Ansi.white, Ansi.bgRed))
+      ),
+      pipe(
+        Box.text(" Info    "),
+        Box.annotate(Ansi.combine(Ansi.white, Ansi.bgBlue))
+      ),
+    ],
+    Box.left
+  )
+);
 
 <CodeExample>
+
 ```typescript
 const warning = pipe(
   Box.text(" Warning "),
   Box.annotate(Ansi.combine(Ansi.black, Ansi.bgYellow))
-)
+);
 
 const error = pipe(
   Box.text(" Error   "),
   Box.annotate(Ansi.combine(Ansi.white, Ansi.bgRed))
-)
+);
 ```
+
 <AnsiTerminal input={outBg} />
 </CodeExample>
 
@@ -65,22 +88,29 @@ Background colors follow the same naming: `bgBlack`, `bgRed`, `bgGreen`,
 
 ## Text Effects
 
-export const outEffects = Box.renderPrettySync(Box.vcat([
-  pipe(Box.text("Bold text"), Box.annotate(Ansi.bold)),
-  pipe(Box.text("Dim text"), Box.annotate(Ansi.dim)),
-  pipe(Box.text("Italic text"), Box.annotate(Ansi.italic)),
-  pipe(Box.text("Underlined text"), Box.annotate(Ansi.underlined)),
-  pipe(Box.text("Strikethrough text"), Box.annotate(Ansi.strikethrough)),
-], Box.left))
+export const outEffects = Box.renderPrettySync(
+  Box.vcat(
+    [
+      pipe(Box.text("Bold text"), Box.annotate(Ansi.bold)),
+      pipe(Box.text("Dim text"), Box.annotate(Ansi.dim)),
+      pipe(Box.text("Italic text"), Box.annotate(Ansi.italic)),
+      pipe(Box.text("Underlined text"), Box.annotate(Ansi.underlined)),
+      pipe(Box.text("Strike"), Box.annotate(Ansi.strikethrough)),
+    ],
+    Box.left
+  )
+);
 
 <CodeExample>
+
 ```typescript
-const bold = pipe(Box.text("Bold text"), Box.annotate(Ansi.bold))
-const dim = pipe(Box.text("Dim text"), Box.annotate(Ansi.dim))
-const italic = pipe(Box.text("Italic text"), Box.annotate(Ansi.italic))
-const underlined = pipe(Box.text("Underlined text"), Box.annotate(Ansi.underlined))
-const strikethrough = pipe(Box.text("Strikethrough text"), Box.annotate(Ansi.strikethrough))
+const bold = pipe(Box.text("Bold text"), Box.annotate(Ansi.bold));
+const dim = pipe(Box.text("Dim text"), Box.annotate(Ansi.dim));
+const italic = pipe(Box.text("Italic text"), Box.annotate(Ansi.italic));
+const underlined = pipe(Box.text("Underlined"), Box.annotate(Ansi.underlined));
+const strike = pipe(Box.text("Strike"), Box.annotate(Ansi.strikethrough));
 ```
+
 <AnsiTerminal input={outEffects} />
 </CodeExample>
 
@@ -89,29 +119,45 @@ const strikethrough = pipe(Box.text("Strikethrough text"), Box.annotate(Ansi.str
 Use `Ansi.combine` to merge multiple styles into one annotation. Conflicts
 resolve with a last-wins strategy:
 
-export const outCombined = Box.renderPrettySync(Box.vcat([
-  pipe(Box.text(" CRITICAL "), Box.annotate(Ansi.combine(Ansi.bold, Ansi.white, Ansi.bgRed))),
-  pipe(Box.text(" SUCCESS  "), Box.annotate(Ansi.combine(Ansi.bold, Ansi.white, Ansi.bgGreen))),
-  pipe(Box.text(" PENDING  "), Box.annotate(Ansi.combine(Ansi.bold, Ansi.underlined, Ansi.yellow))),
-], Box.left))
+export const outCombined = Box.renderPrettySync(
+  Box.vcat(
+    [
+      pipe(
+        Box.text(" CRITICAL "),
+        Box.annotate(Ansi.combine(Ansi.bold, Ansi.white, Ansi.bgRed))
+      ),
+      pipe(
+        Box.text(" SUCCESS  "),
+        Box.annotate(Ansi.combine(Ansi.bold, Ansi.white, Ansi.bgGreen))
+      ),
+      pipe(
+        Box.text(" PENDING  "),
+        Box.annotate(Ansi.combine(Ansi.bold, Ansi.underlined, Ansi.yellow))
+      ),
+    ],
+    Box.left
+  )
+);
 
 <CodeExample>
+
 ```typescript
 const critical = pipe(
   Box.text(" CRITICAL "),
   Box.annotate(Ansi.combine(Ansi.bold, Ansi.white, Ansi.bgRed))
-)
+);
 
 const success = pipe(
-  Box.text(" SUCCESS  "),
+  Box.text(" SUCCESS "),
   Box.annotate(Ansi.combine(Ansi.bold, Ansi.white, Ansi.bgGreen))
-)
+);
 
 const pending = pipe(
-  Box.text(" PENDING  "),
+  Box.text(" PENDING "),
   Box.annotate(Ansi.combine(Ansi.bold, Ansi.underlined, Ansi.yellow))
-)
+);
 ```
+
 <AnsiTerminal input={outCombined} />
 </CodeExample>
 
@@ -122,18 +168,22 @@ const pending = pipe(
 Use `Ansi.color256(n)` and `Ansi.bgColor256(n)` for the extended 256-color
 palette (0-255):
 
-export const out256 = Box.renderPrettySync(Box.hcat(
-  Array.from({ length: 12 }, (_, i) =>
-    pipe(Box.text(" "), Box.annotate(Ansi.bgColor256(i * 20)))
-  ),
-  Box.top
-))
+export const out256 = Box.renderPrettySync(
+  Box.hcat(
+    Array.from({ length: 12 }, (_, i) =>
+      pipe(Box.text(" "), Box.annotate(Ansi.bgColor256(i * 20)))
+    ),
+    Box.top
+  )
+);
 
 <CodeExample>
+
 ```typescript
-const purple = pipe(Box.text("Purple"), Box.annotate(Ansi.color256(129)))
-const teal = pipe(Box.text("Teal"), Box.annotate(Ansi.bgColor256(30)))
+const purple = pipe(Box.text("Purple"), Box.annotate(Ansi.color256(129)));
+const teal = pipe(Box.text("Teal"), Box.annotate(Ansi.bgColor256(30)));
 ```
+
 <AnsiTerminal input={out256} />
 </CodeExample>
 
@@ -141,24 +191,34 @@ const teal = pipe(Box.text("Teal"), Box.annotate(Ansi.bgColor256(30)))
 
 For full 24-bit color, use `Ansi.colorRGB(r, g, b)` and `Ansi.bgColorRGB(r, g, b)`:
 
-export const outRgb = Box.renderPrettySync(Box.vcat([
-  pipe(Box.text("Orange text"), Box.annotate(Ansi.colorRGB(255, 165, 0))),
-  pipe(Box.text("Custom teal"), Box.annotate(Ansi.colorRGB(0, 200, 180))),
-  pipe(Box.text(" Gradient background "), Box.annotate(Ansi.combine(Ansi.white, Ansi.bgColorRGB(80, 40, 120)))),
-], Box.left))
+export const outRgb = Box.renderPrettySync(
+  Box.vcat(
+    [
+      pipe(Box.text("Orange text"), Box.annotate(Ansi.colorRGB(255, 165, 0))),
+      pipe(Box.text("Custom teal"), Box.annotate(Ansi.colorRGB(0, 200, 180))),
+      pipe(
+        Box.text(" Gradient background "),
+        Box.annotate(Ansi.combine(Ansi.white, Ansi.bgColorRGB(80, 40, 120)))
+      ),
+    ],
+    Box.left
+  )
+);
 
 <CodeExample>
+
 ```typescript
 const orange = pipe(
   Box.text("Orange text"),
   Box.annotate(Ansi.colorRGB(255, 165, 0))
-)
+);
 
 const custom = pipe(
   Box.text("Custom teal"),
   Box.annotate(Ansi.colorRGB(0, 200, 180))
-)
+);
 ```
+
 <AnsiTerminal input={outRgb} />
 </CodeExample>
 
@@ -166,19 +226,32 @@ const custom = pipe(
 
 Shorthand for RGB using hex strings:
 
-export const outHex = Box.renderPrettySync(Box.vcat([
-  pipe(Box.text("Hex foreground"), Box.annotate(Ansi.colorHex("#ff6600"))),
-  pipe(Box.text(" Hex background "), Box.annotate(Ansi.combine(Ansi.white, Ansi.bgColorHex("#333333")))),
-], Box.left))
+export const outHex = Box.renderPrettySync(
+  Box.vcat(
+    [
+      pipe(Box.text("Hex foreground"), Box.annotate(Ansi.colorHex("#ff6600"))),
+      pipe(
+        Box.text(" Hex background "),
+        Box.annotate(Ansi.combine(Ansi.white, Ansi.bgColorHex("#333333")))
+      ),
+    ],
+    Box.left
+  )
+);
 
 <CodeExample>
+
 ```typescript
-const hexFg = pipe(Box.text("Hex foreground"), Box.annotate(Ansi.colorHex("#ff6600")))
+const hexFg = pipe(
+  Box.text("Hex foreground"),
+  Box.annotate(Ansi.colorHex("#ff6600"))
+);
 const hexBg = pipe(
   Box.text(" Hex background "),
   Box.annotate(Ansi.combine(Ansi.white, Ansi.bgColorHex("#333333")))
-)
+);
 ```
+
 <AnsiTerminal input={outHex} />
 </CodeExample>
 
@@ -188,10 +261,10 @@ ANSI annotations are only visible when rendered with `renderPrettySync` or
 the `AnsiRendererLive` layer. Plain rendering strips all styling:
 
 ```typescript
-const styled = pipe(Box.text("Hello"), Box.annotate(Ansi.red))
+const styled = pipe(Box.text("Hello"), Box.annotate(Ansi.red));
 
-Box.renderPrettySync(styled) // "\x1b[31mHello\x1b[0m\n"
-Box.renderPlainSync(styled)  // "Hello\n"
+Box.renderPrettySync(styled); // "\x1b[31mHello\x1b[0m\n"
+Box.renderPlainSync(styled); // "Hello\n"
 ```
 
 See the [Rendering guide](/guides/rendering) for more on renderer selection.

@@ -46,10 +46,10 @@ import { Box, Ansi } from "effect-boxes";
 // Create a simple box with colored text and positioning
 const myBox = Box.hsep(
   [
-    Box.text("Hello").pipe(Box.annotate(Ansi.green)), 
+    Box.text("Hello").pipe(Box.annotate(Ansi.green)),
     Box.text("\nEffect").pipe(Box.annotate(Ansi.bold)),
     Box.text("Boxes!").pipe(Box.annotate(Ansi.blue)),
-   ],
+  ],
   1,
   Box.left
 );
@@ -58,7 +58,7 @@ const myBox = Box.hsep(
 console.log(Box.renderPrettySync(myBox));
 /**
  *  Hello        Boxes!
- *        Effect 
+ *        Effect
  */
 ```
 
@@ -100,12 +100,12 @@ const table = createTable(
 
 console.log(Box.renderPlainSync(table));
 /**
-*      Name     |     Age      |     City
-*  ------------------------------------------
-*  Alice        | 30           | New York
-*  Bob          | 25           | London
-*  Charlie      | 35           | Tokyo
-*/
+ *      Name     |     Age      |     City
+ *  ------------------------------------------
+ *  Alice        | 30           | New York
+ *  Bob          | 25           | London
+ *  Charlie      | 35           | Tokyo
+ */
 ```
 
 ## Documentation

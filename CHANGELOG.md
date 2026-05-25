@@ -25,7 +25,6 @@
 - [#69](https://github.com/lloydrichards/effect-boxes/pull/69) [`301fc12`](https://github.com/lloydrichards/effect-boxes/commit/301fc12ed44230d4ad9a0ee07384fda2840c3ba3) Thanks [@lloydrichards](https://github.com/lloydrichards)! - Add Layout module (Flex, Container, Grid), closes [#63](https://github.com/lloydrichards/proj_effect-boxes/issues/63)
 
   Higher-level layout combinators built on top of Box for proportional space distribution, container-aware rendering, and grid layouts. All functions are pure and return standard `Box` values, composable with existing primitives like `border`, `annotate`, and `pad`.
-
   - `Flex.row` / `Flex.col` distribute space among fixed, grow, and fill children proportionally with remainder-fair rounding
   - `Flex.spacer` pushes adjacent children apart (like CSS `flex-grow` on an empty element)
   - `Container.make` passes computed inner dimensions to a builder and enforces width on the output
@@ -114,7 +113,6 @@
 - [#53](https://github.com/lloydrichards/effect-boxes/pull/53) [`98229e8`](https://github.com/lloydrichards/effect-boxes/commit/98229e890385047f80b1db08aecf900df275f0f5) Thanks [@lloydrichards](https://github.com/lloydrichards)! - add width and height constraint combinators for responsive terminal layouts, closes [#44](https://github.com/lloydrichards/proj_effect-boxes/issues/44)
 
   Four new functions enforce minimum and maximum dimensions on a box:
-
   - Box.minWidth(n) -- pads with spaces to ensure at least n columns
   - Box.maxWidth(n) -- hard-truncates lines exceeding n columns
   - Box.minHeight(n) -- pads with blank rows to ensure at least n rows
@@ -218,7 +216,6 @@
   New exports: `brightBlack`, `brightRed`, `brightGreen`, `brightYellow`, `brightBlue`, `brightMagenta`, `brightCyan`, `brightWhite`, `bgBrightBlack`, `bgBrightRed`, `bgBrightGreen`, `bgBrightYellow`, `bgBrightBlue`, `bgBrightMagenta`, `bgBrightCyan`, `bgBrightWhite`
 
 - [#46](https://github.com/lloydrichards/effect-boxes/pull/46) [`660f34f`](https://github.com/lloydrichards/effect-boxes/commit/660f34fc93a15bbe00c9adb15b6a3eb5a2b1e802) Thanks [@lloydrichards](https://github.com/lloydrichards)! - Add Box.border() combinator and Box.pad() for box-model styling
-
   - `Box.border()` supports five preset styles (single, double, rounded, thick, ascii) with optional annotation for colored borders.
   - `Box.pad()` provides CSS-like shorthand for adding space around content (uniform, vertical/horizontal, or per-side).
 
