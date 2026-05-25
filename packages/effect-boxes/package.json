@@ -68,19 +68,22 @@
     "url": "https://github.com/lloydrichards/effect-boxes/issues"
   },
   "scripts": {
-    "clean": "git clean -xdf dist node_modules .cache .turbo tsconfig.tsbuildinfo",
+    "clean": "git clean -xdf dist node_modules .cache .turbo docs tsconfig.tsbuildinfo",
     "prepack": "cp ../../README.md .",
     "build": "tsup && tsc --project tsconfig.build.json",
     "lint": "biome lint .",
     "test": "vitest run",
     "type-check": "tsc --noEmit",
-    "docs:check": "bun run scripts/check-tsdoc.ts",
+    "docs:check": "bun run scripts/check-tsdoc.ts && bun run scripts/extract-examples.ts && tsc --noEmit -p docs/examples/tsconfig.json",
+    "docgen": "docgen",
     "benchmark": "vitest bench --run"
   },
   "peerDependencies": {
     "effect": ">=4.0.0-beta.59"
   },
   "devDependencies": {
+    "@effect/docgen": "^0.5.2",
+    "@effect/platform-bun": "^4.0.0-beta.66",
     "@microsoft/tsdoc": "^0.16.0",
     "@microsoft/tsdoc-config": "^0.18.1",
     "@repo/config-typescript": "workspace:*",
@@ -88,6 +91,7 @@
     "@vitest/coverage-v8": "4.1.7",
     "tinybench": "^6.0.2",
     "tsup": "^8.5.1",
+    "tsx": "^4.22.3",
     "vitest": "^4.1.6"
   }
 }
