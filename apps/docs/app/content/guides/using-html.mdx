@@ -1,0 +1,165 @@
+import * as Box from "effect-boxes/Box";
+import * as Html from "effect-boxes/Html";
+import * as Renderer from "effect-boxes/Renderer";
+import { pipe, Effect } from "effect";
+
+# Using Html
+
+The `Html` module provides annotations that the HTML renderer interprets as
+markup. Annotate boxes with HTML element types and attributes, then render
+with `HtmlRendererLive` to produce structured HTML output.
+
+## Basic HTML annotations
+
+Annotate a box with an HTML element using constructors like `Html.div`,
+`Html.span`, `Html.p`:
+
+```typescript
+import * as Box from "effect-boxes/Box";
+import * as Html from "effect-boxes/Html";
+import * as Renderer from "effect-boxes/Renderer";
+import { pipe, Effect } from "effect";
+
+const heading = pipe(Box.text("Hello World"), Box.annotate(Html.h1()));
+
+const paragraph = pipe(
+  Box.text("Welcome to the docs."),
+  Box.annotate(Html.p())
+);
+
+const page = Box.vcat([heading, paragraph], Box.left);
+
+// Render to HTML
+const html = pipe(
+  Box.render(page),
+  Effect.provide(Renderer.HtmlRendererLive),
+  Effect.runSync
+);
+// <h1>Hello World</h1><p>Welcome to the docs.</p>
+```
+
+## Adding attributes
+
+Every HTML constructor accepts an optional `attributes` record:
+
+```typescript
+const link = pipe(
+  Box.text("Click here"),
+  Box.annotate(Html.a({ href: "https://example.com", target: "_blank" }))
+);
+// <a href="https://example.com" target="_blank">Click here</a>
+
+const styledDiv = pipe(
+  Box.text("Highlighted"),
+  Box.annotate(Html.div({ class: "highlight", id: "main" }))
+);
+// <div class="highlight" id="main">Highlighted</div>
+```
+
+## Available elements
+
+The module provides constructors for common HTML elements:
+
+| Constructor      | Element       | Typical use            |
+| ---------------- | ------------- | ---------------------- |
+| `div`            | `<div>`       | Block container        |
+| `span`           | `<span>`      | Inline container       |
+| `p`              | `<p>`         | Paragraph              |
+| `h1`-`h6`        | `<h1>`-`<h6>` | Headings               |
+| `section`        | `<section>`   | Document section       |
+| `article`        | `<article>`   | Self-contained content |
+| `header`         | `<header>`    | Introductory content   |
+| `footer`         | `<footer>`    | Footer content         |
+| `main`           | `<main>`      | Main content           |
+| `nav`            | `<nav>`       | Navigation             |
+| `aside`          | `<aside>`     | Sidebar content        |
+| `ul`, `ol`, `li` | Lists         | List structures        |
+| `a`              | `<a>`         | Hyperlinks             |
+| `strong`         | `<strong>`    | Bold emphasis          |
+| `em`             | `<em>`        | Italic emphasis        |
+| `code`           | `<code>`      | Inline code            |
+| `pre`            | `<pre>`       | Preformatted text      |
+| `br`             | `<br>`        | Line break             |
+| `hr`             | `<hr>`        | Horizontal rule        |
+
+## Composing HTML layouts
+
+Compose annotated boxes the same way as any other layout. The HTML renderer
+wraps each annotated region in its element:
+
+```typescript
+const nav = pipe(
+  Box.hcat(
+    [
+      pipe(Box.text("Home"), Box.annotate(Html.a({ href: "/" }))),
+      pipe(Box.text("About"), Box.annotate(Html.a({ href: "/about" }))),
+      pipe(Box.text("Contact"), Box.annotate(Html.a({ href: "/contact" }))),
+    ],
+    Box.top
+  ),
+  Box.annotate(Html.nav({ class: "main-nav" }))
+);
+
+const content = pipe(
+  Box.vcat(
+    [
+      pipe(Box.text("Welcome"), Box.annotate(Html.h1())),
+      pipe(Box.text("This is the homepage."), Box.annotate(Html.p())),
+    ],
+    Box.left
+  ),
+  Box.annotate(Html.main())
+);
+
+const page = Box.vcat([nav, content], Box.left);
+```
+
+Annotations nest naturally: inner elements appear inside outer elements
+in the output.
+
+## Renderer configuration
+
+The HTML renderer supports configuration for formatting:
+
+```typescript
+import * as Renderer from "effect-boxes/Renderer";
+import { Effect, Layer } from "effect";
+
+// Compact output (default)
+const compact = pipe(
+  Box.render(page),
+  Effect.provide(Renderer.HtmlRendererLive),
+  Effect.runSync
+);
+
+// Pretty-printed with indentation
+const pretty = pipe(
+  Box.render(page),
+  Effect.provide(Renderer.HtmlPrettyRendererLive),
+  Effect.runSync
+);
+```
+
+`HtmlPrettyRendererLive` adds indentation and newlines for readable output.
+Use `HtmlRendererLive` for production where size matters.
+
+## Escaping content
+
+Use `Html.escapeHtml` when you need to safely include user-provided text:
+
+```typescript
+import * as Html from "effect-boxes/Html";
+
+const userInput = "<script>alert('xss')</script>";
+const safe = Html.escapeHtml(userInput);
+// &lt;script&gt;alert(&#039;xss&#039;)&lt;/script&gt;
+```
+
+The renderer handles escaping of box text content automatically. Use
+`escapeHtml` directly only when constructing attributes or raw strings
+outside the box system.
+
+## API reference
+
+See the full [Html API reference](/api/html) for all constructors and
+type definitions.
