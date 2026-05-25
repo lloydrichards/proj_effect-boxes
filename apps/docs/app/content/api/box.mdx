@@ -1,3 +1,1820 @@
-# Box API Reference
+# Box overview
 
-Coming soon.
+---
+
+## combinators
+
+### border
+
+Wraps a box with a border using the specified style.
+
+Draws a border around the box using Unicode box-drawing characters.
+Supports multiple preset styles and optional annotation (color) for
+the border characters.
+
+**Signature**
+
+```ts
+export declare const border: {
+  <B>(style?: BorderStyle, options?: BorderOptions<B>): <A>(self: Box<A>) => Box<A | B>
+  <A, B>(self: Box<A>, style?: BorderStyle, options?: BorderOptions<B>): Box<A | B>
+}
+```
+
+**Example**
+
+```typescript
+import { pipe } from "effect"
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+
+// Default single border
+const bordered = pipe(Box.text("Hello"), Box.border())
+console.log(Box.renderPlainSync(bordered))
+// ┌─────┐
+// │Hello│
+// └─────┘
+
+// Rounded border with color
+const fancy = pipe(Box.text("Warning"), Box.border("rounded", { annotation: Ansi.yellow }))
+console.log(Box.renderPrettySync(fancy))
+```
+
+### combine
+
+Combines two boxes horizontally using the Semigroup instance.
+
+The fundamental combining operation that forms the basis of the Box
+semigroup. Concatenates boxes horizontally with top alignment.
+
+**Mathematical Properties**
+
+- **Associative**: `combine(combine(a, b), c) ≡ combine(a, combine(b, c))`
+- **Identity**: `combine(nullBox, a) ≡ combine(a, nullBox) ≡ a`
+
+**Signature**
+
+```ts
+export declare const combine: {
+  <B>(that: Box<B>): <A>(self: Box<A>) => Box<A | B>
+  <A, B>(self: Box<A>, that: Box<B>): Box<A | B>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const left = Box.text("Hello")
+const right = Box.text("World")
+const combined = Box.combine(left, right)
+console.log(Box.renderPlainSync(combined))
+// HelloWorld
+```
+
+### combineAll
+
+Combines all boxes in a collection horizontally, returning nullBox if empty.
+
+Implements the Monoid instance for Box, providing a way to combine
+any number of boxes into a single horizontal layout.
+
+**Signature**
+
+```ts
+export declare const combineAll: <T extends readonly Box<unknown>[]>(collection: T) => Box<BoxAnnotations<T>>
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const boxes = [Box.text("A"), Box.text("B"), Box.text("C")]
+const combined = Box.combineAll(boxes)
+console.log(Box.renderPlainSync(combined))
+// ABC
+
+const empty = Box.combineAll([])
+console.log(empty === Box.nullBox) // structural equality via Effect
+```
+
+### combineMany
+
+Combines multiple boxes with a starting box using the Semigroup operation.
+
+**Signature**
+
+```ts
+export declare const combineMany: {
+  <A>(start: Box<A>): <B>(self: Iterable<Box<B>>) => Box<A | B>
+  <A, B>(self: Iterable<Box<B>>, start: Box<A>): Box<A | B>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const boxes = [Box.text("B"), Box.text("C")]
+const result = Box.combineMany(boxes, Box.text("A"))
+console.log(Box.renderPlainSync(result))
+// ABC
+```
+
+### hAppend
+
+Places two boxes side by side horizontally.
+
+A simple binary operation for combining two boxes horizontally with
+top alignment. Equivalent to `hcat([left, right], top)` but optimized
+for the two-box case.
+
+**Signature**
+
+```ts
+export declare const hAppend: {
+  <B>(that: Box<B>): <A>(self: Box<A>) => Box<A | B>
+  <A, B>(self: Box<A>, that: Box<B>): Box<A | B>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const left = Box.text("Left")
+const right = Box.text("Right")
+const combined = Box.hAppend(left, right)
+console.log(Box.renderPlainSync(combined))
+// LeftRight
+```
+
+### hcat
+
+Arranges boxes horizontally in a row with the specified vertical alignment.
+
+The most fundamental layout combinator for creating horizontal layouts.
+The alignment parameter controls how boxes of different heights are
+positioned relative to each other.
+
+**Mathematical Properties**
+
+- **Associative**: `hcat(a, [hcat(a, [x, y]), z]) ≡ hcat(a, [x, hcat(a, [y, z])])`
+- **Identity**: `hcat(a, [nullBox, x]) ≡ hcat(a, [x, nullBox]) ≡ x`
+
+**Signature**
+
+```ts
+export declare const hcat: {
+  <T extends readonly Box<unknown>[]>(a: Alignment): (self: T) => Box<BoxAnnotations<T>>
+  <T extends readonly Box<unknown>[]>(self: T, a: Alignment): Box<BoxAnnotations<T>>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const boxes = [Box.text("Left"), Box.text("Middle"), Box.text("Right")]
+const horizontal = Box.hcat(boxes, Box.top)
+console.log(Box.renderPlainSync(horizontal))
+// LeftMiddleRight
+```
+
+### hcatWithSpace
+
+Places two boxes side by side with a single space column between them.
+
+Convenience function for horizontal concatenation with automatic spacing.
+Equivalent to `hAppend(left, hAppend(space, right))` where space is a
+single-character space box.
+
+**Signature**
+
+```ts
+export declare const hcatWithSpace: {
+  <B>(that: Box<B>): <A>(self: Box<A>) => Box<A | B>
+  <A, B>(self: Box<A>, that: Box<B>): Box<A | B>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const left = Box.text("Hello")
+const right = Box.text("World")
+const spaced = Box.hcatWithSpace(left, right)
+console.log(Box.renderPlainSync(spaced))
+// Hello World
+
+// Compare with hAppend (no space)
+const noSpace = Box.hAppend(left, right)
+console.log(Box.renderPlainSync(noSpace))
+// HelloWorld
+```
+
+### hsep
+
+Arranges boxes horizontally with the specified amount of space between each.
+
+**Signature**
+
+```ts
+export declare const hsep: {
+  (sep: number, a: Alignment): <A>(self: readonly Box<A>[]) => Box<A>
+  <A>(self: readonly Box<A>[], sep: number, a: Alignment): Box<A>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const items = [Box.text("A"), Box.text("B"), Box.text("C")]
+const row = Box.hsep(items, 2, Box.top)
+console.log(Box.renderPlainSync(row))
+// A  B  C
+```
+
+### punctuateH
+
+Arranges boxes horizontally with a separator box placed between each pair.
+
+Useful for creating lists, navigation bars, or any horizontal sequence
+where items need consistent separation. The separator is inserted between
+each adjacent pair of boxes, but not at the beginning or end.
+
+**Signature**
+
+```ts
+export declare const punctuateH: {
+  <A, T extends readonly Box<unknown>[]>(a: Alignment, p: Box<A>): (self: T) => Box<A | BoxAnnotations<T>>
+  <A, T extends readonly Box<unknown>[]>(self: T, a: Alignment, p: Box<A>): Box<A | BoxAnnotations<T>>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const items = [Box.text("Home"), Box.text("About"), Box.text("Contact")]
+const separator = Box.text(" | ")
+const navbar = Box.punctuateH(items, Box.center1, separator)
+console.log(Box.renderPlainSync(navbar))
+// Home | About | Contact
+```
+
+### punctuateV
+
+Arranges boxes vertically with a separator box placed between each pair.
+
+The vertical counterpart to `punctuateH`, useful for creating vertical
+lists, menus, or content sections with consistent separation between items.
+
+**Signature**
+
+```ts
+export declare const punctuateV: {
+  <A, T extends readonly Box<unknown>[]>(a: Alignment, p: Box<A>): (self: T) => Box<A | BoxAnnotations<T>>
+  <A, T extends readonly Box<unknown>[]>(self: T, a: Alignment, p: Box<A>): Box<A | BoxAnnotations<T>>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const menuItems = [Box.text("File"), Box.text("Edit"), Box.text("View"), Box.text("Help")]
+const separator = Box.text("---")
+const menu = Box.punctuateV(menuItems, Box.left, separator)
+console.log(Box.renderPlainSync(menu))
+// File
+// ---
+// Edit
+// ---
+// View
+// ---
+// Help
+```
+
+### vAppend
+
+Stacks two boxes vertically, one above the other.
+
+The vertical counterpart to `hAppend`, combining two boxes in a column
+with left alignment. Optimized for the two-box case.
+
+**Signature**
+
+```ts
+export declare const vAppend: {
+  <B>(that: Box<B>): <A>(self: Box<A>) => Box<A | B>
+  <A, B>(self: Box<A>, that: Box<B>): Box<A | B>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const top = Box.text("Top")
+const bottom = Box.text("Bottom")
+const stacked = Box.vAppend(top, bottom)
+console.log(Box.renderPlainSync(stacked))
+// Top
+// Bottom
+```
+
+### vcat
+
+Arranges boxes vertically in a column with the specified horizontal alignment.
+
+The vertical counterpart to `hcat`, essential for creating column-based layouts.
+The alignment parameter controls how boxes of different widths are positioned
+relative to each other.
+
+**Signature**
+
+```ts
+export declare const vcat: {
+  <T extends readonly Box<unknown>[]>(a: Alignment): (self: T) => Box<BoxAnnotations<T>>
+  <T extends readonly Box<unknown>[]>(self: T, a: Alignment): Box<BoxAnnotations<T>>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const boxes = [Box.text("Top"), Box.text("Middle"), Box.text("Bottom")]
+const vertical = Box.vcat(boxes, Box.left)
+console.log(Box.renderPlainSync(vertical))
+// Top
+// Middle
+// Bottom
+```
+
+### vcatWithSpace
+
+Stacks two boxes vertically with a single empty row between them.
+
+Convenience function for vertical concatenation with automatic spacing.
+Adds visual separation between vertically stacked content.
+
+**Signature**
+
+```ts
+export declare const vcatWithSpace: {
+  <B>(that: Box<B>): <A>(self: Box<A>) => Box<A | B>
+  <A, B>(self: Box<A>, that: Box<B>): Box<A | B>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const top = Box.text("First section")
+const bottom = Box.text("Second section")
+const spaced = Box.vcatWithSpace(top, bottom)
+console.log(Box.renderPlainSync(spaced))
+// First section
+//
+// Second section
+
+// Compare with vAppend (no space)
+const noSpace = Box.vAppend(top, bottom)
+console.log(Box.renderPlainSync(noSpace))
+// First section
+// Second section
+```
+
+### vsep
+
+Arranges boxes vertically with the specified amount of space between each.
+
+**Signature**
+
+```ts
+export declare const vsep: {
+  (sep: number, a: Alignment): <A>(self: readonly Box<A>[]) => Box<A>
+  <A>(self: readonly Box<A>[], sep: number, a: Alignment): Box<A>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const items = [Box.text("A"), Box.text("B"), Box.text("C")]
+const column = Box.vsep(items, 1, Box.left)
+console.log(Box.renderPlainSync(column))
+// A
+//
+// B
+//
+// C
+```
+
+## constructors
+
+### asciiBorder
+
+ASCII-only border character set.
+
+**Signature**
+
+```ts
+export declare const asciiBorder: internal.BorderChars
+```
+
+### bottom
+
+Align boxes along their bottoms.
+
+**Signature**
+
+```ts
+export declare const bottom: Alignment
+```
+
+### center1
+
+Align boxes centered, but biased to the left/top in case of unequal parities.
+
+**Signature**
+
+```ts
+export declare const center1: Alignment
+```
+
+### center2
+
+Align boxes centered, but biased to the right/bottom in case of unequal parities.
+
+**Signature**
+
+```ts
+export declare const center2: Alignment
+```
+
+### char
+
+Creates a 1x1 box containing a single character.
+
+If the string is longer than one character, only the first character
+is used. Useful for creating single-character elements or borders.
+
+**Signature**
+
+```ts
+export declare const char: (c: string) => Box<never>
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const asterisk = Box.char("*")
+console.log(`Dimensions: ${Box.rows(asterisk)} x ${Box.cols(asterisk)}`)
+// Dimensions: 1 x 1
+console.log(Box.renderPlainSync(asterisk))
+// *
+
+const unicode = Box.char("🌟")
+console.log(Box.renderPlainSync(unicode))
+// 🌟
+```
+
+### doubleBorder
+
+Double-line border character set.
+
+**Signature**
+
+```ts
+export declare const doubleBorder: internal.BorderChars
+```
+
+### emptyBox
+
+Creates an empty box with the specified dimensions.
+
+Useful for creating spacers or placeholders in layouts where you need
+specific dimensions without visible content.
+
+**Signature**
+
+```ts
+export declare const emptyBox: (rows?: number, cols?: number) => Box<never>
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const spacer = Box.emptyBox(3, 10)
+console.log(`Dimensions: ${Box.rows(spacer)} x ${Box.cols(spacer)}`)
+// Dimensions: 3 x 10
+console.log(Box.renderPlainSync(spacer))
+//
+//
+//
+```
+
+### left
+
+Align boxes to the left.
+
+**Signature**
+
+```ts
+export declare const left: Alignment
+```
+
+### line
+
+Creates a single-line box from a string, removing any line breaks.
+
+Forces the text onto a single line by replacing newlines with spaces.
+Useful when you need to ensure text appears on one line regardless
+of the input string's formatting.
+
+**Signature**
+
+```ts
+export declare const line: (s: string) => Box<never>
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const multilineInput = "Hello\nWorld\nExample"
+const singleLine = Box.line(multilineInput)
+console.log(`Dimensions: ${Box.rows(singleLine)} x ${Box.cols(singleLine)}`)
+// Dimensions: 1 x 19
+console.log(Box.renderPlainSync(singleLine))
+// Hello World Example
+```
+
+### make
+
+Creates a box with the specified dimensions and content.
+
+**Signature**
+
+```ts
+export declare const make: <A>(self: {
+  rows: number
+  cols: number
+  content: Content<A>
+  annotation?: Annotation<A> | undefined
+}) => Box<A>
+```
+
+### nullBox
+
+Creates an empty box with no content.
+
+Serves as the identity element for Box combinations and the base
+case for building more complex layouts.
+
+**Signature**
+
+```ts
+export declare const nullBox: Box<never>
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const empty = Box.nullBox
+console.log(`Dimensions: ${Box.rows(empty)} x ${Box.cols(empty)}`)
+// Dimensions: 0 x 0
+console.log(Box.renderPlainSync(empty))
+// (empty string)
+```
+
+### para
+
+Creates a paragraph box with text flowed to fit within the specified width.
+
+Breaks text into lines that fit within the given width, applying the
+specified alignment to each line within the paragraph.
+
+**Signature**
+
+```ts
+export declare const para: {
+  (a: Alignment, w: number): (self: string) => Box<never>
+  (self: string, a: Alignment, w: number): Box<never>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const longText = "This is a very long sentence that needs to be wrapped to fit within a specific width"
+const paragraph = Box.para(longText, Box.left, 20)
+console.log(Box.renderPlainSync(paragraph))
+// This is a very long
+// sentence that needs to
+// be wrapped to fit
+// within a specific
+// width
+```
+
+### right
+
+Align boxes to the right.
+
+**Signature**
+
+```ts
+export declare const right: Alignment
+```
+
+### roundedBorder
+
+Rounded-corner border character set.
+
+**Signature**
+
+```ts
+export declare const roundedBorder: internal.BorderChars
+```
+
+### singleBorder
+
+Single-line border character set.
+
+**Signature**
+
+```ts
+export declare const singleBorder: internal.BorderChars
+```
+
+### text
+
+Creates a box containing multi-line text, splitting on newlines.
+
+The most commonly used constructor for creating text-based boxes.
+Automatically handles line breaks and calculates proper dimensions.
+
+**Signature**
+
+```ts
+export declare const text: (s: string) => Box<never>
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const greeting = Box.text("Hello\nWorld")
+console.log(`Dimensions: ${Box.rows(greeting)} x ${Box.cols(greeting)}`)
+// Dimensions: 2 x 5
+console.log(Box.renderPlainSync(greeting))
+// Hello
+// World
+
+const singleLine = Box.text("Simple text")
+console.log(`Dimensions: ${Box.rows(singleLine)} x ${Box.cols(singleLine)}`)
+// Dimensions: 1 x 11
+```
+
+### thickBorder
+
+Thick/bold border character set.
+
+**Signature**
+
+```ts
+export declare const thickBorder: internal.BorderChars
+```
+
+### top
+
+Align boxes along their tops.
+
+**Signature**
+
+```ts
+export declare const top: Alignment
+```
+
+## guards
+
+### isBox
+
+Type guard to determine if a value is a Box.
+
+**Signature**
+
+```ts
+export declare const isBox: <A>(u: unknown) => u is Box<A>
+```
+
+## models
+
+### Alignment (type alias)
+
+**Signature**
+
+```ts
+export type Alignment = "AlignFirst" | "AlignCenter1" | "AlignCenter2" | "AlignLast"
+```
+
+### Blank (type alias)
+
+**Signature**
+
+```ts
+export type Blank = { _tag: "Blank" }
+```
+
+### BorderChars (type alias)
+
+Characters used to draw a border around a box.
+
+**Signature**
+
+```ts
+export type BorderChars = internal.BorderChars
+```
+
+### BorderOptions (type alias)
+
+Options for the `border` combinator.
+
+**Signature**
+
+```ts
+export type BorderOptions<A> = internal.BorderOptions<A>
+```
+
+### BorderStyle (type alias)
+
+Named border style presets.
+
+- `"single"` — thin single-line border (`┌─┐│└┘`)
+- `"double"` — double-line border (`╔═╗║╚╝`)
+- `"rounded"` — rounded corners (`╭─╮│╰╯`)
+- `"thick"` — bold/thick lines (`┏━┓┃┗┛`)
+- `"ascii"` — ASCII-only (`+-+|`)
+
+**Signature**
+
+```ts
+export type BorderStyle = internal.BorderStyle
+```
+
+### Box (interface)
+
+The Box data type, representing a rectangular area of text with various combinators for layout and alignment.
+
+**Signature**
+
+```ts
+export interface Box<out A = never> extends Pipeable, Equal.Equal, Hash.Hash, Inspectable.Inspectable {
+  readonly [BoxTypeId]: {
+    readonly _A: Types.Covariant<A>
+  }
+  readonly rows: number
+  readonly cols: number
+  readonly content: Content<A>
+  readonly annotation?: Annotation<A> | undefined
+}
+```
+
+### BoxAnnotations (type alias)
+
+**Signature**
+
+```ts
+export type BoxAnnotations<T extends readonly unknown[]> = T extends readonly [infer Head, ...infer Tail]
+  ? Head extends Box<infer A>
+    ? A | BoxAnnotations<Tail>
+    : never
+  : never
+```
+
+### BoxTypeId
+
+Symbol used to identify Box values at runtime.
+
+**Signature**
+
+```ts
+export declare const BoxTypeId: typeof BoxTypeId
+```
+
+### BoxTypeId (type alias)
+
+**Signature**
+
+```ts
+export type BoxTypeId = typeof BoxTypeId
+```
+
+### Col (type alias)
+
+**Signature**
+
+```ts
+export type Col<A = never> = { _tag: "Col"; boxes: Box<A>[] }
+```
+
+### Content (type alias)
+
+**Signature**
+
+```ts
+export type Content<A = never> = Blank | Text | Row<A> | Col<A> | SubBox<A>
+```
+
+### Row (type alias)
+
+**Signature**
+
+```ts
+export type Row<A = never> = { _tag: "Row"; boxes: Box<A>[] }
+```
+
+### SubBox (type alias)
+
+**Signature**
+
+```ts
+export type SubBox<A = never> = {
+  _tag: "SubBox"
+  xAlign: Alignment
+  yAlign: Alignment
+  box: Box<A>
+}
+```
+
+### Text (type alias)
+
+**Signature**
+
+```ts
+export type Text = { _tag: "Text"; text: string }
+```
+
+## transformations
+
+### align
+
+Aligns a box within specified dimensions using both horizontal and vertical alignment.
+
+**Signature**
+
+```ts
+export declare const align: {
+  (ah: Alignment, av: Alignment, r: number, c: number): <A>(self: Box<A>) => Box<A>
+  <A>(self: Box<A>, ah: Alignment, av: Alignment, r: number, c: number): Box<A>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const value = Box.align(Box.text("X"), Box.center1, Box.center1, 3, 5)
+console.log(Box.rows(value), Box.cols(value))
+// 3 5
+```
+
+### alignHoriz
+
+Horizontally aligns a box within a specified width.
+
+**Signature**
+
+```ts
+export declare const alignHoriz: {
+  (a: Alignment, c: number): <A>(self: Box<A>) => Box<A>
+  <A>(self: Box<A>, a: Alignment, c: number): Box<A>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const value = Box.alignHoriz(Box.text("X"), Box.center1, 5)
+console.log(Box.renderPlainSync(value))
+//   X
+```
+
+### alignLeft
+
+Aligns a box to the left within its container.
+
+Ensures left alignment without changing the box dimensions. Useful
+as a convenience function when you need explicit left alignment.
+
+**Signature**
+
+```ts
+export declare const alignLeft: <A>(self: Box<A>) => Box<A>
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const box = Box.text("Hello\nWorld")
+const leftAligned = Box.alignLeft(box)
+console.log(Box.renderPlainSync(leftAligned))
+// Hello
+// World
+```
+
+### alignVert
+
+Vertically aligns a box within a specified height.
+
+**Signature**
+
+```ts
+export declare const alignVert: {
+  (a: Alignment, r: number): <A>(self: Box<A>) => Box<A>
+  <A>(self: Box<A>, a: Alignment, r: number): Box<A>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const value = Box.alignVert(Box.text("X"), Box.bottom, 3)
+console.log(Box.rows(value))
+// 3
+```
+
+### alterAnnotation
+
+Applies a function to modify annotations within a box structure, creating multiple boxes.
+
+The alter function receives an annotation and returns an array of new annotations.
+Returns an array of boxes, one for each annotation returned by the alter function.
+If the box has no annotation, throws an error.
+
+**Signature**
+
+```ts
+export declare const alterAnnotation: {
+  <A, B>(alter: (annotation: A) => B[]): (self: Box<A>) => Box<B>[]
+  <A, B>(self: Box<A>, alter: (annotation: A) => B[]): Box<B>[]
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Annotation from "effect-boxes/Annotation"
+import * as Ansi from "effect-boxes/Ansi"
+
+const baseBox = Box.annotate(Box.text("Message"), Ansi.red)
+
+// Create multiple color variations
+const variations = Box.alterAnnotation(baseBox, (ann) => [Ansi.red, Ansi.green, Ansi.blue])
+// Returns array of 3 boxes with different colors
+```
+
+### annotate
+
+Adds an annotation to a box.
+
+Annotations provide a way to attach additional data (like styling information)
+to boxes without affecting their layout properties. Commonly used with the
+Ansi module for colored terminal output.
+
+**Signature**
+
+```ts
+export declare const annotate: {
+  <B>(annotation: Annotation<B>): <A>(self: Box<A>) => Box<B>
+  <A, B>(self: Box<A>, annotation: Annotation<B>): Box<B>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Annotation from "effect-boxes/Annotation"
+import * as Ansi from "effect-boxes/Ansi"
+
+const coloredBox = Box.annotate(Box.text("Hello World"), Ansi.red)
+```
+
+### maxHeight
+
+Caps a box at `n` rows tall, keeping only the first `n` rows.
+
+**Signature**
+
+```ts
+export declare const maxHeight: { (n: number): <A>(self: Box<A>) => Box<A>; <A>(self: Box<A>, n: number): Box<A> }
+```
+
+**Example**
+
+```typescript
+import { pipe } from "effect"
+import * as Box from "effect-boxes/Box"
+
+const result = pipe(Box.text("A\nB\nC\nD\nE"), Box.maxHeight(3))
+console.log(Box.rows(result))
+// 3
+```
+
+### maxWidth
+
+Caps a box at `n` columns wide, truncating lines that exceed the limit.
+
+**Signature**
+
+```ts
+export declare const maxWidth: { (n: number): <A>(self: Box<A>) => Box<A>; <A>(self: Box<A>, n: number): Box<A> }
+```
+
+**Example**
+
+```typescript
+import { pipe } from "effect"
+import * as Box from "effect-boxes/Box"
+
+const result = pipe(Box.text("Hello World"), Box.maxWidth(5))
+console.log(Box.cols(result))
+// 5
+```
+
+### minHeight
+
+Ensures a box is at least `n` rows tall, padding with blank rows at the
+bottom if the box is shorter.
+
+**Signature**
+
+```ts
+export declare const minHeight: { (n: number): <A>(self: Box<A>) => Box<A>; <A>(self: Box<A>, n: number): Box<A> }
+```
+
+**Example**
+
+```typescript
+import { pipe } from "effect"
+import * as Box from "effect-boxes/Box"
+
+const result = pipe(Box.text("X"), Box.minHeight(5))
+console.log(Box.rows(result))
+// 5
+```
+
+### minWidth
+
+Ensures a box is at least `n` columns wide, padding with spaces on the right
+if the box is narrower.
+
+**Signature**
+
+```ts
+export declare const minWidth: { (n: number): <A>(self: Box<A>) => Box<A>; <A>(self: Box<A>, n: number): Box<A> }
+```
+
+**Example**
+
+```typescript
+import { pipe } from "effect"
+import * as Box from "effect-boxes/Box"
+
+const result = pipe(Box.text("Hi"), Box.minWidth(10))
+console.log(Box.cols(result))
+// 10
+```
+
+### moveDown
+
+Moves a box down by adding empty rows above it.
+
+Increases the total height of the box by adding blank rows at the top,
+effectively moving the content downward within a larger container.
+
+**Signature**
+
+```ts
+export declare const moveDown: { (n: number): <A>(self: Box<A>) => Box<A>; <A>(self: Box<A>, n: number): Box<A> }
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const content = Box.text("Main content")
+const withSpacing = Box.moveDown(content, 2)
+console.log(Box.renderPlainSync(withSpacing))
+//
+//
+// Main content
+```
+
+### moveLeft
+
+Moves a box left by adding empty columns to the right.
+
+Increases the total width of the box by adding spaces to the right,
+effectively moving the content leftward within a larger container.
+
+**Signature**
+
+```ts
+export declare const moveLeft: { (n: number): <A>(self: Box<A>) => Box<A>; <A>(self: Box<A>, n: number): Box<A> }
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const box = Box.text("Hello")
+const moved = Box.moveLeft(box, 3)
+console.log(`Original: ${Box.cols(box)} cols`)
+// Original: 5 cols
+console.log(`Moved: ${Box.cols(moved)} cols`)
+// Moved: 8 cols
+console.log(`"${Box.renderPlainSync(moved)}"`)
+// "Hello   "
+```
+
+### moveRight
+
+Moves a box right by adding empty columns to the left.
+
+Increases the total width of the box by adding spaces to the left,
+effectively moving the content rightward within a larger container.
+
+**Signature**
+
+```ts
+export declare const moveRight: { (n: number): <A>(self: Box<A>) => Box<A>; <A>(self: Box<A>, n: number): Box<A> }
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const text = Box.text("Indented content")
+const indented = Box.moveRight(text, 4)
+console.log(`"${Box.renderPlainSync(indented)}"`)
+// "    Indented content"
+```
+
+### moveUp
+
+Moves a box up by adding empty rows below it.
+
+Increases the total height of the box by adding blank rows at the bottom,
+effectively moving the content upward within a larger container.
+
+**Signature**
+
+```ts
+export declare const moveUp: { (n: number): <A>(self: Box<A>) => Box<A>; <A>(self: Box<A>, n: number): Box<A> }
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const box = Box.text("Content")
+const moved = Box.moveUp(box, 2)
+console.log(`Original: ${Box.rows(box)} rows`)
+// Original: 1 rows
+console.log(`Moved: ${Box.rows(moved)} rows`)
+// Moved: 3 rows
+console.log(Box.renderPlainSync(moved))
+// Content
+//
+//
+```
+
+### pad
+
+Adds padding (empty space) around a box.
+
+Supports CSS-like shorthand for specifying padding per side.
+Padding adds space between the content and any surrounding border.
+
+- `pad(all)` — uniform padding on all sides
+- `pad(vertical, horizontal)` — vertical (top/bottom) and horizontal (left/right)
+- `pad(top, right, bottom, left)` — per-side, CSS order
+
+**Signature**
+
+```ts
+export declare const pad: {
+  (all: number): <A>(self: Box<A>) => Box<A>
+  (vertical: number, horizontal: number): <A>(self: Box<A>) => Box<A>
+  (top: number, right: number, bottom: number, left: number): <A>(self: Box<A>) => Box<A>
+  <A>(self: Box<A>, all: number): Box<A>
+  <A>(self: Box<A>, vertical: number, horizontal: number): Box<A>
+  <A>(self: Box<A>, top: number, right: number, bottom: number, left: number): Box<A>
+}
+```
+
+**Example**
+
+```typescript
+import { pipe } from "effect"
+import * as Box from "effect-boxes/Box"
+
+// Uniform padding of 1 on all sides
+const padded = pipe(Box.text("Hi"), Box.pad(1))
+console.log(Box.renderPlainSync(padded).replaceAll(" ", "."))
+// ....
+// .Hi.
+// ....
+
+// Padding with border
+const panel = pipe(Box.text("Hi"), Box.pad(1, 2), Box.border("rounded"))
+console.log(Box.renderPlainSync(panel))
+// ╭──────╮
+// │      │
+// │  Hi  │
+// │      │
+// ╰──────╯
+```
+
+### reAnnotate
+
+Transforms the annotation of a box using a provided function.
+
+Applies a transformation function to the box's annotation, allowing you
+to modify or convert annotation data. If the box has no annotation,
+returns the box unchanged.
+
+**Signature**
+
+```ts
+export declare const reAnnotate: {
+  <A, B>(transform: (annotation: A) => B): (self: Box<A>) => Box<B>
+  <A, B>(self: Box<A>, transform: (annotation: A) => B): Box<B>
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Annotation from "effect-boxes/Annotation"
+import * as Ansi from "effect-boxes/Ansi"
+
+const redBox = Box.annotate(Box.text("Text"), Ansi.red)
+
+// Transform red to blue
+const blueBox = Box.reAnnotate(redBox, (ann) => Ansi.blue)
+```
+
+### truncate
+
+Truncates each line of a box to a maximum width, inserting an ellipsis
+character (`…`) where content was removed.
+
+The `position` parameter uses the existing `Alignment` type to control
+where content is preserved:
+
+- `AlignFirst` / `left` — keep the beginning, truncate the end (default)
+- `AlignLast` / `right` — keep the end, truncate the beginning
+- `AlignCenter1` / `AlignCenter2` — keep both ends, truncate the middle
+
+When the box's width is already within the target width, the box is
+returned unchanged. The ellipsis counts as one column toward the width.
+
+**Signature**
+
+```ts
+export declare const truncate: {
+  (width: number, position: Alignment): <A>(self: Box<A>) => Box<A>
+  <A>(self: Box<A>, width: number, position: Alignment): Box<A>
+}
+```
+
+**Example**
+
+```typescript
+import { pipe } from "effect"
+import * as Box from "effect-boxes/Box"
+
+const long = Box.text("This is a very long piece of text")
+
+// Truncate from end (default)
+const end = pipe(long, Box.truncate(15, Box.left))
+console.log(Box.renderPlainSync(end))
+// "This is a very…"
+
+// Truncate from start
+const start = pipe(long, Box.truncate(15, Box.right))
+console.log(Box.renderPlainSync(start))
+// "…piece of text"
+
+// Truncate from middle
+const middle = pipe(long, Box.truncate(15, Box.center1))
+console.log(Box.renderPlainSync(middle))
+// "This is…of text"
+```
+
+### unAnnotate
+
+Removes the annotation from a box, returning a `Box<never>`.
+
+Strips all annotation data from a box, leaving only the layout structure
+and content. Useful when you need a plain box without styling.
+
+**Signature**
+
+```ts
+export declare const unAnnotate: <A>(self: Box<A>) => Box<never>
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Annotation from "effect-boxes/Annotation"
+import * as Ansi from "effect-boxes/Ansi"
+
+const annotatedBox = Box.annotate(Box.text("Styled text"), Ansi.red)
+
+const plainBox = Box.unAnnotate(annotatedBox)
+// Now plainBox has no color annotation
+```
+
+## utilities
+
+### blanks
+
+Creates a string of spaces with the specified length.
+
+**Signature**
+
+```ts
+export declare const blanks: (n: number) => string
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const spaces = Box.blanks(5)
+console.log(`|${spaces}|`)
+// |     |
+```
+
+### cols
+
+Gets the number of columns in a box.
+
+Returns the width of the box in terms of character columns.
+For multi-line text, returns the width of the longest line.
+
+**Signature**
+
+```ts
+export declare const cols: <A>(self: Box<A>) => number
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const text = Box.text("Short\nLonger line\nShort")
+console.log(Box.cols(text))
+// 11 (width of "Longer line")
+
+const single = Box.text("Hello")
+console.log(Box.cols(single))
+// 5
+
+const empty = Box.nullBox
+console.log(Box.cols(empty))
+// 0
+```
+
+### columns
+
+Flows text into multiple columns of specified width and height.
+
+**Signature**
+
+```ts
+export declare const columns: {
+  (a: Alignment, w: number, h: number): (self: string) => Box[]
+  (self: string, a: Alignment, w: number, h: number): Box[]
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const text = "one two three four five six seven eight"
+const cols = Box.columns(text, Box.left, 10, 2)
+console.log(cols.length)
+```
+
+### defaultRenderConfig
+
+Default render configuration for backwards compatibility (plain mode).
+
+**Signature**
+
+```ts
+export declare const defaultRenderConfig: Renderer.RenderStyle
+```
+
+### match
+
+Pattern matching utility for Box content.
+
+**Signature**
+
+```ts
+export declare const match: {
+  <A, R>(patterns: {
+    readonly blank: () => R
+    readonly text: (text: string) => R
+    readonly row: (boxes: Box<A>[]) => R
+    readonly col: (boxes: Box<A>[]) => R
+    readonly subBox: (box: Box<A>, xAlign: Alignment, yAlign: Alignment) => R
+  }): (self: Box<A>) => R
+  <A, R>(
+    self: Box<A>,
+    patterns: {
+      readonly blank: () => R
+      readonly text: (text: string) => R
+      readonly row: (boxes: Box<A>[]) => R
+      readonly col: (boxes: Box<A>[]) => R
+      readonly subBox: (box: Box<A>, xAlign: Alignment, yAlign: Alignment) => R
+    }
+  ): R
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const box = Box.text("Hello")
+const result = Box.match(box, {
+  blank: () => "blank",
+  text: (t) => `text: ${t}`,
+  row: (boxes) => `row of ${boxes.length}`,
+  col: (boxes) => `col of ${boxes.length}`,
+  subBox: () => "subBox"
+})
+console.log(result)
+// text: Hello
+```
+
+### merge
+
+Merges multiple arrays of rendered text lines into a single array.
+
+**Signature**
+
+```ts
+export declare const merge: (renderedBoxes: string[][]) => string[]
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const renderedBoxes = [
+  ["AB", "CD"],
+  ["12", "34"]
+]
+const merged = Box.merge(renderedBoxes)
+console.log(merged)
+// ["AB12", "CD34"]
+```
+
+### printBox
+
+Prints a box to the console using the Effect Console.
+
+**Signature**
+
+```ts
+export declare const printBox: <A>(self: Box<A>) => Effect.Effect<void, never, Renderer.Renderer>
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Effect from "effect/Effect"
+import * as Renderer from "effect-boxes/Renderer"
+
+const box = Box.text("Hello, Box!")
+const program = Box.printBox(box).pipe(Effect.provide(Renderer.PlainRendererLive))
+// Effect.runPromise(program) prints: Hello, Box!
+```
+
+### render
+
+Renders a box to a Renderer within an Effect context.
+
+Asynchronous rendering that supports complex rendering strategies
+and configurations. Returns an Effect that produces a Renderer.
+
+**Signature**
+
+```ts
+export declare const render: {
+  <A>(config?: Renderer.RenderConfig | undefined): (self: Box<A>) => Effect.Effect<string, never, Renderer.Renderer>
+  <A>(self: Box<A>, config?: Renderer.RenderConfig): Effect.Effect<string, never, Renderer.Renderer>
+}
+```
+
+**Example**
+
+```typescript
+import { pipe } from "effect"
+import * as Box from "effect-boxes/Box"
+import * as Renderer from "effect-boxes/Renderer"
+import * as Effect from "effect/Effect"
+
+const box = Box.text("Hello, Effect!")
+const program = pipe(box, Box.render(), Effect.provide(Renderer.PlainRendererLive))
+```
+
+### renderPlain
+
+Renders a box to a plain string without any special formatting within an
+Effect context.
+
+Uses the plain renderer to produce unformatted output with whitespace
+preserved. Useful when styling is not needed or output will be processed
+further.
+
+**Signature**
+
+```ts
+export declare const renderPlain: <A>(self: Box<A>) => Effect.Effect<string>
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Effect from "effect/Effect"
+
+const box = Box.text("Hello\nWorld")
+const program = Box.renderPlain(box)
+const output = Effect.runSync(program)
+// Hello
+// World
+```
+
+### renderPlainSync
+
+Renders a box to a plain string without any special formatting.
+
+Synchronous version of render for quick rendering without Effect.
+
+**Signature**
+
+```ts
+export declare const renderPlainSync: <A>(self: Box<A>) => string
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const box = Box.text("Hello\nWorld")
+const output = Box.renderPlainSync(box)
+console.log(output)
+// Hello
+// World
+```
+
+### renderPretty
+
+Renders a box to a string with ANSI styling within an Effect context.
+
+Uses the ANSI renderer to produce styled output with escape codes for
+bold, color, and other terminal formatting. Whitespace is not preserved.
+
+**Signature**
+
+```ts
+export declare const renderPretty: <A>(self: Box<A>) => Effect.Effect<string>
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+import * as Effect from "effect/Effect"
+
+const box = Box.annotate(Box.text("Hello"), Ansi.bold)
+const program = Box.renderPretty(box)
+const output = Effect.runSync(program)
+// Outputs bold "Hello" with ANSI escape codes
+```
+
+### renderPrettySync
+
+Renders a box to a pretty string with ANSI styling.
+
+Synchronous version of render for quick rendering without Effect.
+
+**Signature**
+
+```ts
+export declare const renderPrettySync: <A>(self: Box<A>) => string
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+
+const box = Box.annotate(Box.text("Hello"), Ansi.bold)
+const output = Box.renderPrettySync(box)
+console.log(output)
+// Outputs bold "Hello" with ANSI escape codes
+```
+
+### resizeBox
+
+Adjusts the size of rendered text lines to specific dimensions.
+
+**Signature**
+
+```ts
+export declare const resizeBox: {
+  (r: number, c: number): (self: string[]) => string[]
+  (self: string[], r: number, c: number): string[]
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const lines = ["AB", "CD"]
+const resized = Box.resizeBox(lines, 3, 4)
+console.log(resized)
+// ["AB  ", "CD  ", "    "]
+```
+
+### resizeBoxAligned
+
+Adjusts the size of rendered text lines with alignment options.
+
+**Signature**
+
+```ts
+export declare const resizeBoxAligned: (
+  r: number,
+  c: number,
+  ha: Alignment,
+  va: Alignment
+) => (self: string[]) => string[]
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const lines = ["A", "B"]
+const resized = Box.resizeBoxAligned(3, 4, Box.center1, Box.center1)(lines)
+console.log(resized.length)
+// 3
+```
+
+### rows
+
+Gets the number of rows in a box.
+
+Returns the height of the box in terms of text lines.
+
+**Signature**
+
+```ts
+export declare const rows: <A>(self: Box<A>) => number
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const multiLine = Box.text("Line 1\nLine 2\nLine 3")
+console.log(Box.rows(multiLine))
+// 3
+
+const singleLine = Box.text("One line")
+console.log(Box.rows(singleLine))
+// 1
+
+const empty = Box.nullBox
+console.log(Box.rows(empty))
+// 0
+```
+
+### takeP
+
+Takes up to n elements from an array, padding with a default value if needed.
+
+**Signature**
+
+```ts
+export declare const takeP: {
+  <A>(a: A, n: number): (self: readonly A[]) => A[]
+  <A>(self: readonly A[], a: A, n: number): A[]
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const arr = ["a", "b"]
+const result = Box.takeP(arr, "-", 4)
+console.log(result)
+// ["a", "b", "-", "-"]
+```
+
+### takePA
+
+Takes elements from an array with alignment, padding as needed.
+
+**Signature**
+
+```ts
+export declare const takePA: {
+  <A>(alignment: Alignment, a: A, n: number): (self: readonly A[]) => A[]
+  <A>(self: readonly A[], alignment: Alignment, a: A, n: number): A[]
+}
+```
+
+**Example**
+
+```typescript
+import * as Box from "effect-boxes/Box"
+
+const arr = ["a", "b"]
+const result = Box.takePA(arr, Box.center1, "-", 5)
+console.log(result)
+// ["-", "a", "b", "-", "-"]
+```
