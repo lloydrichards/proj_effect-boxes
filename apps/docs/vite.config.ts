@@ -5,12 +5,13 @@ import rehypePrettyCode from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
 import { defineConfig } from "vite";
+import remarkTocExport from "./app/lib/remark-toc-export";
 
 export default defineConfig({
   plugins: [
     mdx({
       providerImportSource: "@mdx-js/react",
-      remarkPlugins: [remarkGfm],
+      remarkPlugins: [remarkGfm, remarkTocExport],
       rehypePlugins: [
         rehypeSlug,
         [
