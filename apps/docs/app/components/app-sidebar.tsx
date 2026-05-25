@@ -1,7 +1,10 @@
+import { Package } from "lucide-react";
 import { Link, useLocation } from "react-router";
+import { GithubIcon } from "~/components/icons";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -50,6 +53,39 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
+
+      <SidebarFooter>
+        <div className="flex items-center justify-between py-2">
+          <a
+            href="https://lloydrichards.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            lloydrichards.dev
+          </a>
+          <div className="flex items-center gap-3">
+            <a
+              href="https://github.com/lloydrichards/effect-boxes"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              title="GitHub"
+            >
+              <GithubIcon className="size-4" />
+            </a>
+            <a
+              href="https://www.npmjs.com/package/effect-boxes"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              title="npm"
+            >
+              <Package className="size-4" />
+            </a>
+          </div>
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }

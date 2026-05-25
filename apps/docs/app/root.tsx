@@ -1,6 +1,8 @@
 import { MDXProvider } from "@mdx-js/react";
+import { GithubIcon } from "~/components/icons";
 import {
   isRouteErrorResponse,
+  Link,
   Links,
   Meta,
   Outlet,
@@ -9,10 +11,15 @@ import {
   useMatches,
 } from "react-router";
 import { AppSidebar } from "~/components/app-sidebar";
+import { DocFooter } from "~/components/doc-footer";
 import { TableOfContents } from "~/components/table-of-contents";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { proseComponents } from "~/components/tokens/prose-components";
-import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
+import {
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from "~/components/ui/sidebar";
 import type { TOCItem } from "~/lib/remark-toc-export";
 import { cn } from "~/lib/utils";
 import type { Route } from "./+types/root";
@@ -56,11 +63,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <SidebarProvider>
           <AppSidebar />
           <div className="flex-1 flex flex-col min-w-0">
-            <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border/50 bg-background/80 backdrop-blur-sm px-6 py-3">
-              <SidebarTrigger />
-              <div className="flex-1" />
-              <ThemeToggle />
-            </header>
+            <SiteHeader />
             <main className="flex-1 w-full max-w-[72ch] xl:max-w-none xl:px-12 mx-auto px-6 py-10">
               {children}
             </main>
@@ -85,6 +88,7 @@ export default function App() {
       <div className={hasToc ? "xl:flex xl:items-start xl:gap-16" : undefined}>
         <div className={cn("flex-1 min-w-0", hasToc && "xl:max-w-[72ch]")}>
           <Outlet />
+          <DocFooter />
         </div>
         {hasToc && <TableOfContents toc={toc} desktopOnly />}
       </div>
@@ -118,5 +122,35 @@ export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {
         </pre>
       )}
     </main>
+  );
+}
+
+function SiteHeader() {
+  const { state, isMobile } = useSidebar();
+  const sidebarVisible = state === "expanded" && !isMobile;
+
+  return (
+    <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-border/50 bg-background/80 backdrop-blur-sm px-6 py-3">
+      <SidebarTrigger />
+      {!sidebarVisible && (
+        <Link
+          to="/"
+          className="font-heading text-base font-bold tracking-[-0.02em]"
+        >
+          effect-boxes
+        </Link>
+      )}
+      <div className="flex-1" />
+      <a
+        href="https://github.com/lloydrichards/effect-boxes"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-muted-foreground hover:text-foreground transition-colors"
+        aria-label="GitHub"
+      >
+        <GithubIcon className="size-5" />
+      </a>
+      <ThemeToggle />
+    </header>
   );
 }
