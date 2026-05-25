@@ -37,6 +37,6 @@ export const printBox = (
   self: Box.Box<unknown>
 ): Effect.Effect<void, never, Renderer.Renderer> =>
   Effect.gen(function* () {
-    const rendered = yield* render(self);
+    const rendered = yield* render(self, undefined);
     yield* Console.log(rendered);
   });
