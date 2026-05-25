@@ -1,3 +1,21 @@
+/**
+ * Reactive annotations for interactive terminal UIs.
+ *
+ * Extends the annotation system with position-aware metadata, enabling
+ * hit-testing and cursor-to-element mapping. Useful for building
+ * interactive CLI applications where boxes respond to user input.
+ *
+ * ## Common tasks
+ *
+ * - **Create** reactive boxes: {@link make}, {@link reactive}
+ * - **Query** positions: {@link getPositions}, {@link cursorToReactive}
+ * - **Check** type: {@link isReactive}
+ *
+ * @see {@link make} — create a reactive annotation
+ * @see {@link cursorToReactive} — map cursor position to element
+ *
+ * @module
+ */
 import type { HashMap, Option } from "effect";
 import type { Annotation } from "./Annotation";
 import type { AnsiStyle } from "./Ansi";

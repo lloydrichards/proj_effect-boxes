@@ -1,5 +1,25 @@
 # Ansi overview
 
+ANSI terminal styling and colored box rendering.
+
+Provides a complete set of ANSI escape code utilities for styling text
+in terminal environments. Includes foreground/background colors (standard,
+bright, 256-color, and RGB), text attributes (bold, italic, underline, etc.),
+and a renderer that converts annotated boxes into ANSI-escaped strings.
+
+### Common tasks
+
+- **Style text**: `bold`, `italic`, `underlined`
+- **Foreground colors**: `red`, `green`, `blue`, `colorRGB`
+- **Background colors**: `bgRed`, `bgGreen`, `bgColorHex`
+- **Combine styles**: `combine`
+- **Render**: `renderAnnotatedBox`
+
+### Gotchas
+
+- Styles are combined additively — later attributes override earlier ones of the same kind
+- `truncatePreservingAnsi` handles width-truncation without breaking escape sequences
+
 ---
 
 ## combinators

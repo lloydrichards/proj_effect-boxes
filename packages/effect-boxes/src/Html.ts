@@ -1,3 +1,16 @@
+/**
+ * HTML element annotations for web-based box rendering.
+ *
+ * Provides annotation constructors for common HTML elements (div, span, p,
+ * headings, etc.) that the HTML renderer interprets as markup. Use these
+ * to produce styled HTML output from annotated boxes.
+ *
+ * @see {@link div} — annotate with a div element
+ * @see {@link span} — annotate with a span element
+ * @see {@link escapeHtml} — safely escape HTML entities
+ *
+ * @module
+ */
 import type * as Annotation from "./Annotation";
 import * as internal from "./internal/html";
 import type * as Renderer from "./Renderer";

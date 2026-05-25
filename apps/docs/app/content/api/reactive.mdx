@@ -1,5 +1,17 @@
 # Reactive overview
 
+Reactive annotations for interactive terminal UIs.
+
+Extends the annotation system with position-aware metadata, enabling
+hit-testing and cursor-to-element mapping. Useful for building
+interactive CLI applications where boxes respond to user input.
+
+### Common tasks
+
+- **Create** reactive boxes: `make`, `reactive`
+- **Query** positions: `getPositions`, `cursorToReactive`
+- **Check** type: `isReactive`
+
 ---
 
 ## constructors
@@ -82,12 +94,13 @@ export declare const isReactive: (value: unknown) => value is Reactive
 ```typescript
 import * as Reactive from "effect-boxes/Reactive"
 
-const data = { _tag: "Reactive", id: "button-1" }
-console.log(Reactive.isReactive(data))
-// true
+console.log(Reactive.isReactive({ id: "btn", kind: "reactive" }))
+// false (not a valid Reactive instance)
 
-console.log(Reactive.isReactive("not reactive"))
-// false
+const r = Reactive.reactive("button-1")
+import * as Annotation from "effect-boxes/Annotation"
+console.log(Reactive.isReactive(Annotation.getAnnotationData(r)))
+// true
 ```
 
 ## models

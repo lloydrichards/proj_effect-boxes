@@ -1,3 +1,27 @@
+/**
+ * Type-safe annotation system for attaching metadata to boxes.
+ *
+ * Annotations allow boxes to carry arbitrary typed data (colors, styles,
+ * semantic tags) that renderers can interpret. The annotation type parameter
+ * `A` on `Box<A>` flows through all composition operations.
+ *
+ * ## Mental model
+ *
+ * - **`Annotation<A>`** — a wrapper holding metadata of type `A`
+ * - Annotations are **structural** — they implement `Equal` and `Hash`
+ * - They compose via {@link combineAnnotations} for layered styling
+ *
+ * ## Common tasks
+ *
+ * - **Create** an annotation: {@link createAnnotation}, {@link empty}
+ * - **Inspect**: {@link isAnnotation}, {@link getAnnotationData}
+ * - **Transform**: {@link mapAnnotationData}, {@link combineAnnotations}
+ *
+ * @see {@link createAnnotation} — primary constructor
+ * @see {@link combineAnnotations} — merge multiple annotations
+ *
+ * @module
+ */
 import type * as Equal from "effect/Equal";
 import type * as Hash from "effect/Hash";
 import type { Pipeable } from "effect/Pipeable";

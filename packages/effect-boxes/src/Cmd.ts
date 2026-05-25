@@ -1,3 +1,16 @@
+/**
+ * Terminal command sequences for cursor control and screen manipulation.
+ *
+ * Provides ANSI escape sequences as pure string values for cursor movement,
+ * screen clearing, and alternate screen buffer management. Intended for
+ * composing terminal UIs alongside box rendering.
+ *
+ * @see {@link cursorTo} — move cursor to absolute position
+ * @see {@link clearScreen} — clear entire terminal screen
+ * @see {@link altScreenEnter} — switch to alternate screen buffer
+ *
+ * @module
+ */
 import type { AnsiStyle } from "./Ansi";
 import type { Box } from "./Box";
 import * as internalAnsi from "./internal/cmd";

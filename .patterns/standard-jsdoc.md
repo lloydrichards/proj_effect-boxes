@@ -132,6 +132,149 @@
  */
 ```
 
+## 📦 Module-Level Documentation
+
+Every public module file (`src/*.ts`) MUST have a module-level JSDoc comment **before any imports**. This comment describes the module as a whole and is used by documentation generators.
+
+### Structure (Effect Ecosystem Pattern)
+
+Follow this structure, scaling detail to module complexity:
+
+```typescript
+/**
+ * Brief one-line description of the module's purpose.
+ *
+ * Extended description explaining what problems this module solves
+ * and its role in the library.
+ *
+ * ## Mental model
+ *
+ * - **Key concept 1** — brief explanation
+ * - **Key concept 2** — brief explanation
+ *
+ * ## Common tasks
+ *
+ * - Create: {@link constructor1}, {@link constructor2}
+ * - Transform: {@link transform1}, {@link transform2}
+ * - Combine: {@link combinator1}, {@link combinator2}
+ *
+ * ## Gotchas
+ *
+ * - Important edge case or surprising behavior
+ * - Common mistake to avoid
+ *
+ * ## Quickstart
+ *
+ * **Example** (Basic usage)
+ *
+ * ```ts
+ * import * as ModuleName from "effect-boxes/ModuleName"
+ *
+ * const result = ModuleName.someFunction(args)
+ * console.log(ModuleName.render(result))
+ * // Expected output
+ * ```
+ *
+ * @see {@link keyExport1} — brief description
+ * @see {@link keyExport2} — brief description
+ *
+ * @since 0.1.0
+ * @module
+ */
+```
+
+### Required Tags
+
+| Tag | Purpose | Required? |
+|-----|---------|-----------|
+| `@since` | Version when module was introduced | Always, second-to-last |
+| `@module` | Marks as module-level doc (not first-export doc) | Always, last tag |
+| `@see` | Cross-references to key exports or related modules | Recommended |
+
+### Minimal vs Full Style
+
+**Minimal** (for small/focused modules like `Html.ts`):
+```typescript
+/**
+ * HTML rendering for annotated boxes.
+ *
+ * Converts boxes with annotations into HTML markup with inline styles
+ * or CSS classes for terminal-style rendering in web contexts.
+ *
+ * @see {@link render} — main entry point
+ *
+ * @since 0.1.0
+ * @module
+ */
+```
+
+**Full** (for core modules like `Box.ts`):
+```typescript
+/**
+ * Core box data type and layout operations for text-based rendering.
+ *
+ * The `Box` module provides an immutable 2D text layout system inspired by
+ * Haskell's `boxes` library. Boxes are rectangular blocks of text that can
+ * be composed horizontally, vertically, aligned, and annotated.
+ *
+ * ## Mental model
+ *
+ * - **`Box<A>`** — a rectangular grid of characters with optional annotations of type `A`
+ * - All operations are **pure** — they return new boxes, never mutate
+ * - Most functions are **dual** — support both data-first and pipe-based usage
+ *
+ * ## Common tasks
+ *
+ * - **Create** a box: {@link text}, {@link emptyBox}, {@link char}, {@link nullBox}
+ * - **Combine** boxes: {@link hcat}, {@link vcat}, {@link hAppend}, {@link vAppend}
+ * - **Align** content: {@link alignHoriz}, {@link alignVert}
+ * - **Move** position: {@link moveRight}, {@link moveDown}, {@link moveLeft}, {@link moveUp}
+ * - **Render** to string: {@link render}
+ *
+ * ## Gotchas
+ *
+ * - Text trailing spaces are trimmed per line by {@link text}
+ * - {@link nullBox} is the identity for {@link hcat} and {@link vcat}
+ *
+ * ## Quickstart
+ *
+ * **Example** (Composing a simple layout)
+ *
+ * ```ts
+ * import { pipe } from "effect"
+ * import * as Box from "effect-boxes/Box"
+ *
+ * const layout = pipe(
+ *   Box.text("Hello"),
+ *   Box.moveRight(2),
+ *   Box.alignHoriz(Box.center1, 20)
+ * )
+ * console.log(Box.render(layout))
+ * ```
+ *
+ * @see {@link text} — create a box from a string
+ * @see {@link hcat} — horizontal concatenation
+ * @see {@link vcat} — vertical concatenation
+ * @see {@link render} — convert to string
+ *
+ * @since 0.1.0
+ * @module
+ */
+```
+
+### Internal Modules
+
+Internal modules (`src/internal/*.ts`) should use a minimal `@internal` module doc:
+
+```typescript
+/**
+ * @internal
+ * @module
+ */
+```
+
+---
+
 ## 📋 Standard JSDoc Template
 
 ### Public Function Documentation
