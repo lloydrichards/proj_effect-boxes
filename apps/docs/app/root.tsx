@@ -6,11 +6,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useMatches,
 } from "react-router";
 import { AppSidebar } from "~/components/app-sidebar";
+import { TableOfContents } from "~/components/table-of-contents";
 import { ThemeToggle } from "~/components/theme-toggle";
 import { proseComponents } from "~/components/tokens/prose-components";
 import { SidebarProvider, SidebarTrigger } from "~/components/ui/sidebar";
+import type { TOCItem } from "~/lib/remark-toc-export";
 import type { Route } from "./+types/root";
 import "./app.css";
 
@@ -51,13 +54,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <body>
         <SidebarProvider>
           <AppSidebar />
-          <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
+          <div className="flex-1 flex flex-col min-w-0">
             <header className="flex items-center gap-2 px-8 py-4">
               <SidebarTrigger />
               <div className="flex-1" />
               <ThemeToggle />
             </header>
-            <main className="flex-1 w-full max-w-4xl mx-auto px-8 py-8 overflow-x-auto">
+            <main className="flex-1 w-full max-w-4xl xl:max-w-6xl mx-auto px-8 py-8">
               {children}
             </main>
           </div>
@@ -70,9 +73,20 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const matches = useMatches();
+  const lastMatch = matches[matches.length - 1];
+  const toc: TOCItem[] = (lastMatch?.handle as any)?.toc ?? [];
+  const hasToc = toc.length > 0;
+
   return (
     <MDXProvider components={proseComponents}>
-      <Outlet />
+      {hasToc && <TableOfContents toc={toc} />}
+      <div className={hasToc ? "xl:flex xl:items-start xl:gap-8" : undefined}>
+        <div className="flex-1 min-w-0">
+          <Outlet />
+        </div>
+        {hasToc && <TableOfContents toc={toc} desktopOnly />}
+      </div>
     </MDXProvider>
   );
 }
