@@ -77,7 +77,6 @@ tests/
 ├── ansi.test.ts    # ANSI integration tests
 └── *.test.ts       # Additional test suites
 scratchpad/         # Development playground
-docs/               # Module documentation
 ```
 
 ## Development Workflow
@@ -174,7 +173,8 @@ This creates a markdown file in `.changeset/`.
 
 ## Getting Help
 
-- Check the [documentation](./docs/) for module guides
+- Review inline TSDoc comments in `src/` for API documentation
+- Check the [API Reference](https://effect-boxes.lloydrichards.dev/api/box) for module guides
 - Review [AGENTS.md](./AGENTS.md) for detailed coding patterns (useful for AI
   assistants)
 - Open an issue for bugs or feature requests
