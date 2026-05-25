@@ -1,3 +1,167 @@
+import * as Box from "effect-boxes/Box"
+import * as Annotation from "effect-boxes/Annotation"
+import * as Ansi from "effect-boxes/Ansi"
+import { pipe } from "effect"
+
 # Using Annotation
 
-Coming soon.
+The `Annotation` module provides a type-safe system for attaching metadata to
+boxes. Annotations are how effect-boxes adds styling, interactivity, and
+custom data to text layouts.
+
+## How Annotations Work
+
+A `Box<A>` is parameterized by its annotation type `A`. When you create a
+plain box with `Box.text("hello")`, it has type `Box<never>` — no annotations.
+When you attach an annotation, the box's type reflects what kind of metadata
+it carries.
+
+export const outBasic = Box.renderPrettySync(pipe(
+  Box.text("Hello"),
+  Box.annotate(Ansi.red)
+))
+
+<CodeExample>
+```typescript
+import * as Box from "effect-boxes/Box"
+import * as Ansi from "effect-boxes/Ansi"
+import { pipe } from "effect"
+
+// Box<never> — no annotation
+const plain = Box.text("Hello")
+
+// Box<AnsiStyle> — carries ANSI styling
+const styled = pipe(plain, Box.annotate(Ansi.red))
+```
+<AnsiTerminal input={outBasic} />
+</CodeExample>
+
+Renderers interpret annotations at render time. The `AnsiRendererLive` knows
+how to turn `AnsiStyle` annotations into escape codes. The `PlainRendererLive`
+strips all annotations.
+
+## Creating Annotations
+
+Use `Annotation.createAnnotation` to wrap any data as an annotation:
+
+```typescript
+import * as Annotation from "effect-boxes/Annotation"
+
+// Simple string metadata
+const tag = Annotation.createAnnotation("important")
+
+// Structured data
+const metadata = Annotation.createAnnotation({
+  id: "submit-btn",
+  action: "submit-form",
+  enabled: true,
+})
+```
+
+Annotations implement Effect's `Equal` and `Hash` interfaces, so two
+annotations with the same data are structurally equal.
+
+## Attaching Annotations to Boxes
+
+Use `Box.annotate` (dual function — works data-first or data-last):
+
+export const outAnnotated = Box.renderPrettySync(Box.vcat([
+  pipe(Box.text("Success!"), Box.annotate(Ansi.combine(Ansi.bold, Ansi.green))),
+  pipe(Box.text("Error!"), Box.annotate(Ansi.red)),
+], Box.left))
+
+<CodeExample>
+```typescript
+// Data-last with pipe
+const success = pipe(
+  Box.text("Success!"),
+  Box.annotate(Ansi.combine(Ansi.bold, Ansi.green))
+)
+
+// Data-first
+const error = Box.annotate(Box.text("Error!"), Ansi.red)
+
+Box.vcat([success, error], Box.left)
+```
+<AnsiTerminal input={outAnnotated} />
+</CodeExample>
+
+## Manipulating Annotations
+
+### Removing Annotations
+
+```typescript
+// Strip all annotations from a box
+const plain = Box.unAnnotate(styledBox)
+```
+
+### Transforming Annotation Data
+
+```typescript
+// Transform the annotation data on a box
+const updated = Box.reAnnotate(annotatedBox, (data) =>
+  data.toUpperCase()
+)
+```
+
+## Nested Annotations
+
+When boxes with different annotations are composed, each region keeps its
+own annotation. The innermost annotation takes precedence during rendering:
+
+export const outNested = Box.renderPrettySync(
+  Box.hcat([
+    pipe(Box.text("Red "), Box.annotate(Ansi.red)),
+    pipe(Box.text("Green "), Box.annotate(Ansi.green)),
+    pipe(Box.text("Blue"), Box.annotate(Ansi.blue)),
+  ], Box.top)
+)
+
+<CodeExample>
+```typescript
+const multiColor = Box.hcat([
+  pipe(Box.text("Red "), Box.annotate(Ansi.red)),
+  pipe(Box.text("Green "), Box.annotate(Ansi.green)),
+  pipe(Box.text("Blue"), Box.annotate(Ansi.blue)),
+], Box.top)
+```
+<AnsiTerminal input={outNested} />
+</CodeExample>
+
+## Annotation Utilities
+
+The `Annotation` module provides utilities for working with annotation values
+directly:
+
+```typescript
+import * as Annotation from "effect-boxes/Annotation"
+
+// Type guards
+Annotation.isAnnotation(value)
+Annotation.isAnnotationWithData(value, (d): d is MyType => /* ... */)
+
+// Transform annotation data
+Annotation.mapAnnotationData(annotation, (d) => transform(d))
+
+// Combine two annotations with a merger function
+Annotation.combineAnnotations(a, b, (dataA, dataB) => merged)
+
+// Conditionally keep an annotation
+Annotation.filterAnnotation(annotation, (data) => data.enabled)
+
+// Batch create from array
+Annotation.createAnnotations(["a", "b", "c"])
+```
+
+## Built-in Annotation Types
+
+effect-boxes provides three annotation modules:
+
+| Module | Type | Purpose |
+|--------|------|---------|
+| [Ansi](/guides/using-ansi) | `AnsiStyle` | Terminal colors and text effects |
+| Cmd | `AnsiStyle` | Terminal control sequences (cursor, screen) |
+| Html | `HtmlAnnotationData` | HTML elements for web rendering |
+
+Each has a corresponding renderer that interprets its annotations at render
+time. See the [Rendering guide](/guides/rendering) for details.
