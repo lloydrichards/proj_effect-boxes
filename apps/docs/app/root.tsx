@@ -47,6 +47,8 @@ const themeScript = `
 })();
 `;
 
+const umamiWebsiteId = import.meta.env.VITE_UMAMI_WEBSITE_ID;
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
@@ -55,6 +57,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: theme script must be inline to prevent FOUC */}
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+        {umamiWebsiteId ? (
+          <script
+            defer
+            src="https://umami.lloydrichards.dev/script.js"
+            data-website-id={umamiWebsiteId}
+          />
+        ) : null}
         <Meta />
         <Links />
       </head>

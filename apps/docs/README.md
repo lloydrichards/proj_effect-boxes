@@ -78,6 +78,22 @@ Make sure to deploy the output of `npm run build`
 │   └── server/    # Server-side code
 ```
 
+### Analytics (Umami)
+
+The docs app supports Umami analytics via a Vite environment variable.
+
+Set this in your deployment environment (for example, Vercel):
+
+```bash
+VITE_UMAMI_WEBSITE_ID=<your-umami-website-id>
+```
+
+When the variable is set, the app injects:
+
+```html
+<script defer src="https://umami.lloydrichards.dev/script.js" data-website-id="..." />
+```
+
 ## Styling
 
 This template comes with [Tailwind CSS](https://tailwindcss.com/) already configured for a simple default starting experience. You can use whatever CSS framework you prefer.
